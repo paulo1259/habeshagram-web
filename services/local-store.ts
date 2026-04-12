@@ -15,7 +15,33 @@ export function readState(): AppState {
   }
 
   try {
-    return JSON.parse(raw) as AppState;
+    const parsed = JSON.parse(raw) as Partial<AppState>;
+    return {
+      users: Array.isArray(parsed.users)
+        ? parsed.users.map((user) => ({
+            id: user.id || "",
+            username: user.username || "habesha_user",
+            email: user.email || "",
+            profileImageURL: user.profileImageURL || "",
+            bio: user.bio || "",
+            createdAt: user.createdAt || new Date().toISOString(),
+            followerCount: typeof user.followerCount === "number" ? user.followerCount : 0,
+            followingCount: typeof user.followingCount === "number" ? user.followingCount : 0
+          }))
+        : initialState.users,
+      posts: Array.isArray(parsed.posts) ? parsed.posts : initialState.posts,
+      comments: Array.isArray(parsed.comments) ? parsed.comments : initialState.comments,
+      follows: Array.isArray(parsed.follows) ? parsed.follows : initialState.follows,
+      notifications: Array.isArray(parsed.notifications)
+        ? parsed.notifications
+        : initialState.notifications,
+      reports: Array.isArray(parsed.reports) ? parsed.reports : initialState.reports,
+      savedPosts: Array.isArray(parsed.savedPosts) ? parsed.savedPosts : initialState.savedPosts,
+      currentUserId:
+        typeof parsed.currentUserId === "string" || parsed.currentUserId === null
+          ? parsed.currentUserId
+          : initialState.currentUserId
+    };
   } catch {
     window.localStorage.setItem(KEY, JSON.stringify(initialState));
     return initialState;

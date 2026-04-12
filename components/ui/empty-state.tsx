@@ -6,12 +6,15 @@ export function EmptyState({
   description: string;
 }) {
   return (
-    <div className="rounded-3xl border border-dashed border-brand-200 bg-white/90 p-8 text-center shadow-soft">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">
+    <div className="glass-card rounded-[30px] border border-dashed border-brand-200/90 p-6 text-center shadow-soft sm:p-8">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[18px] bg-gradient-to-br from-brand-100 to-orange-50 text-brand-800 shadow-sm">
+        <span className="text-lg font-black">H</span>
+      </div>
+      <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">
         Community Space
       </p>
-      <h2 className="mt-2 text-lg font-bold text-ink">{title}</h2>
-      <p className="mt-2 text-sm text-stone-600">{description}</p>
+      <h2 className="mt-2 text-lg font-black tracking-tight text-ink">{title}</h2>
+      <p className="mt-2 text-sm leading-6 text-stone-600">{description}</p>
     </div>
   );
 }

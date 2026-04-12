@@ -14,7 +14,7 @@ export function ProfileGrid({ posts }: { posts: Post[] }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       {posts.map((post) => (
-        <div key={post.id} className="overflow-hidden rounded-3xl border border-brand-100 bg-white shadow-soft">
+        <div key={post.id} className="overflow-hidden rounded-[28px] border border-brand-100/80 bg-white shadow-soft">
           {post.imageURL ? (
             <img src={post.imageURL} alt={post.text} className="aspect-square w-full object-cover" />
           ) : (

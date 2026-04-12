@@ -1,32 +1,108 @@
-const creators = [
-  { name: "@selam.addis", note: "Coffee, style, and city culture" },
-  { name: "@asmara.vibes", note: "Food stories and community moments" },
-  { name: "@habesha.events", note: "Weekend plans and local happenings" }
-];
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { useAppData } from "@/hooks/use-app-data";
+import { getSuggestedUsers, isFollowingUser, toggleFollowUser } from "@/services/follow-service";
+import { User } from "@/types";
 
 export function WhoToFollow() {
+  const { currentUser } = useAppData();
+  const [users, setUsers] = useState<User[]>([]);
+  const [followMap, setFollowMap] = useState<Record<string, boolean>>({});
+  const [loadingUserId, setLoadingUserId] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void (async () => {
+      const nextUsers = await getSuggestedUsers(currentUser?.id);
+      if (!isMounted) {
+        return;
+      }
+
+      setUsers(nextUsers);
+
+      if (currentUser) {
+        const nextEntries = await Promise.all(
+          nextUsers.map(async (user) => [user.id, await isFollowingUser(currentUser.id, user.id)] as const)
+        );
+
+        if (isMounted) {
+          setFollowMap(Object.fromEntries(nextEntries));
+        }
+      } else {
+        setFollowMap({});
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser]);
+
+  async function handleToggleFollow(user: User) {
+    if (!currentUser) {
+      return;
+    }
+
+    try {
+      setLoadingUserId(user.id);
+      const result = await toggleFollowUser({
+        actor: currentUser,
+        followingId: user.id
+      });
+      setFollowMap((current) => ({ ...current, [user.id]: result.isFollowing }));
+      setUsers((current) =>
+        current.map((item) =>
+          item.id === user.id ? { ...item, followerCount: result.followerCount } : item
+        )
+      );
+    } finally {
+      setLoadingUserId("");
+    }
+  }
+
   return (
-    <section className="rounded-[28px] border border-brand-100 bg-white/96 p-5 shadow-soft">
+    <section className="rounded-[28px] border border-brand-100/80 bg-white/96 p-5 shadow-soft">
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">
         Who To Follow
       </p>
-      <h3 className="mt-1 text-lg font-black tracking-tight text-ink">People worth checking in on</h3>
+      <h3 className="mt-1 text-lg font-black tracking-tight text-ink">Creators lighting up the timeline</h3>
       <div className="mt-4 space-y-3">
-        {creators.map((creator) => (
+        {users.map((user) => (
           <div
-            key={creator.name}
-            className="flex items-center justify-between gap-3 rounded-[22px] border border-brand-100 bg-brand-50/40 px-4 py-3"
+            key={user.id}
+            className="flex items-center justify-between gap-3 rounded-[22px] border border-brand-100 bg-brand-50/30 px-4 py-3"
           >
-            <div>
-              <p className="font-semibold text-ink">{creator.name}</p>
-              <p className="mt-1 text-sm text-stone-600">{creator.note}</p>
-            </div>
-            <button
-              type="button"
-              className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-brand-800 shadow-sm transition hover:bg-brand-100"
-            >
-              Follow
-            </button>
+            <Link href={`/profile/${user.id}`} className="flex min-w-0 items-center gap-3">
+              <Avatar username={user.username} imageURL={user.profileImageURL} className="h-11 w-11" />
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-ink">@{user.username}</p>
+                <p className="mt-1 truncate text-sm text-stone-600">{user.bio}</p>
+                <p className="mt-1 text-xs text-stone-500">{user.followerCount} followers</p>
+              </div>
+            </Link>
+
+            {currentUser ? (
+              <Button
+                type="button"
+                variant={followMap[user.id] ? "outline" : "primary"}
+                className="shrink-0 px-3 py-2 text-xs"
+                onClick={() => void handleToggleFollow(user)}
+                disabled={loadingUserId === user.id}
+              >
+                {loadingUserId === user.id ? "..." : followMap[user.id] ? "Following" : "Follow"}
+              </Button>
+            ) : (
+              <Link href="/login">
+                <Button type="button" variant="outline" className="shrink-0 px-3 py-2 text-xs">
+                  Follow
+                </Button>
+              </Link>
+            )}
           </div>
         ))}
       </div>

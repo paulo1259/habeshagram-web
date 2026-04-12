@@ -1,4 +1,4 @@
-import { LocalNewsItem, RadioStation } from "@/types";
+import { FootballNewsItem, LocalNewsItem, RadioStation } from "@/types";
 
 export const radioStations: RadioStation[] = [
   {
@@ -88,6 +88,105 @@ export const localNewsItems: LocalNewsItem[] = [
     category: "Food",
     imageURL:
       "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80",
+    link: ""
+  }
+];
+
+export const footballBuzzItems: FootballNewsItem[] = [
+  {
+    id: "football-1",
+    headline: "United fans are split again over the midfield balance, and Addis group chats are on fire",
+    source: "HabeshaGram Fan Zone",
+    summary:
+      "One side wants control, the other wants chaos. Either way, Manchester United talk is dominating late-night reactions this week.",
+    category: "Big Debate",
+    team: "Manchester United",
+    imageURL:
+      "https://images.unsplash.com/photo-1543357480-c60d40007a3f?auto=format&fit=crop&w=1200&q=80",
+    link: ""
+  },
+  {
+    id: "football-1b",
+    headline: "Manchester United watch parties in Addis are turning every late kickoff into a full tactical argument",
+    source: "Red Room Addis",
+    summary:
+      "From lineup panic to post-match optimism, United conversations are still some of the loudest in the city.",
+    category: "Fan Reactions",
+    team: "Manchester United",
+    imageURL:
+      "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80",
+    link: ""
+  },
+  {
+    id: "football-2",
+    headline: "Arsenal supporters are already calling this the kind of weekend that shapes a title race",
+    source: "Premier Addis",
+    summary:
+      "Form, nerves, and expectations are all colliding. Arsenal fans are watching every result like it might decide the season.",
+    category: "Matchday",
+    team: "Arsenal",
+    imageURL:
+      "https://images.unsplash.com/photo-1518604666860-9ed391f76460?auto=format&fit=crop&w=1200&q=80",
+    link: ""
+  },
+  {
+    id: "football-2b",
+    headline: "Arsenal fans keep asking the same question: is this finally the season that feels grown up?",
+    source: "North London Addis",
+    summary:
+      "The football is smooth, the pressure is real, and fans are weighing style against the kind of edge that wins titles.",
+    category: "Big Debate",
+    team: "Arsenal",
+    imageURL:
+      "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=1200&q=80",
+    link: ""
+  },
+  {
+    id: "football-3",
+    headline: "Chelsea fans are treating every young player rumor like the next big long-term project",
+    source: "Blue Corner Addis",
+    summary:
+      "Transfer chatter is back in full swing, and the mood swings are exactly what you would expect from a Chelsea timeline.",
+    category: "Transfer Buzz",
+    team: "Chelsea",
+    imageURL:
+      "https://images.unsplash.com/photo-1577223625816-7546f13df25d?auto=format&fit=crop&w=1200&q=80",
+    link: ""
+  },
+  {
+    id: "football-3b",
+    headline: "Chelsea supporters in Habesha timelines are still trying to decide which pieces are actually untouchable",
+    source: "Blue Corner Addis",
+    summary:
+      "The squad is full of names people want to believe in, which makes every selection choice feel bigger than it should.",
+    category: "Club News",
+    team: "Chelsea",
+    imageURL:
+      "https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?auto=format&fit=crop&w=1200&q=80",
+    link: ""
+  },
+  {
+    id: "football-4",
+    headline: "City supporters say the standards are still absurdly high, even when the performance looks comfortable",
+    source: "Touchline Addis",
+    summary:
+      "Manchester City reactions are rarely calm. Even easy wins turn into conversations about control, depth, and the next big test.",
+    category: "Club News",
+    team: "Manchester City",
+    imageURL:
+      "https://images.unsplash.com/photo-1508098682722-e99c643e7485?auto=format&fit=crop&w=1200&q=80",
+    link: ""
+  },
+  {
+    id: "football-4b",
+    headline: "Manchester City fans are already measuring the next run of fixtures like a final exam",
+    source: "Touchline Addis",
+    summary:
+      "Depth, control, and small margins still dominate City conversations, especially when the schedule tightens.",
+    category: "Matchday",
+    team: "Manchester City",
+    imageURL:
+      "https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=1200&q=80",
     link: ""
   }
 ];

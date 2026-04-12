@@ -13,7 +13,7 @@ export function NewsCard({
 }) {
   return (
     <article
-      className={`overflow-hidden border border-brand-100 bg-white/98 shadow-soft transition ${
+      className={`overflow-hidden border border-brand-100/80 bg-white/98 shadow-soft transition ${
         compact ? "rounded-[24px]" : "rounded-[28px] hover:-translate-y-0.5 hover:shadow-lg"
       }`}
     >
@@ -22,7 +22,7 @@ export function NewsCard({
           <img
             src={item.imageURL}
             alt={item.headline}
-            className={compact ? "h-36 w-full object-cover" : "h-48 w-full object-cover"}
+            className={compact ? "h-36 w-full object-cover" : "h-52 w-full object-cover"}
           />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/20 to-transparent" />
         </div>

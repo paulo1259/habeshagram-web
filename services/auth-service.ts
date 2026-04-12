@@ -37,7 +37,9 @@ function createFallbackUser(input: {
     email: input.email.trim().toLowerCase(),
     profileImageURL: "",
     bio: getFallbackBio(input.bio),
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    followerCount: 0,
+    followingCount: 0
   };
 }
 

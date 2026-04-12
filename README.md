@@ -111,6 +111,128 @@ Each user document stores:
 - `bio`
 - `createdAt`
 
+## Production Readiness
+
+HabeshaGram is ready for a public MVP, but you should tighten Firebase Console before launch.
+
+### Firestore Rules
+
+This repo now includes a safer MVP rules file:
+
+- [firestore.rules](/C:/Users/Mesfi/Downloads/ios/habeshagram-web/firestore.rules)
+
+It keeps the current app working while narrowing the riskiest client writes:
+
+- public reads for public profiles and posts
+- self-only writes for saved posts
+- self-only notification read-state updates
+- authenticated comment creation
+- authenticated post creation
+- limited post updates for likes and comment counters only
+- a locked-down `reports` collection that clients can create into but not read back from
+
+Important tradeoff:
+
+- follower/following counters are still updated client-side, so the included rules allow counter-only user document updates
+- this is safer than fully open user updates, but the best long-term production path is moving counter updates and notifications to Cloud Functions or another trusted backend
+
+### Firestore Indexes You Will Likely Need
+
+Because HabeshaGram now uses multiple compound queries, Firestore may ask you to create indexes. The most likely ones are:
+
+- `posts` on `userId + createdAt`
+- `posts` on `hashtags + createdAt`
+- `posts` on `userId(in) + createdAt`
+
+When Firestore throws an index error, it usually gives you a direct Console link to create the exact index.
+
+### Auth Authorized Domains
+
+Before launch, make sure Firebase Authentication includes:
+
+- `localhost`
+- your Vercel preview domain if you test sign-in there
+- your final production domain
+- your default `*.vercel.app` domain if you plan to use it
+
+### Storage Path Assumptions
+
+The app uploads files to:
+
+- post images: `posts/{userId}/{postId}-{timestamp}.{ext}`
+- profile image: `users/{userId}/profile.jpg`
+
+Your Storage rules should allow authenticated users to write only inside their own uid path and allow public reads for rendered media.
+
+### Reporting / Moderation MVP
+
+Post reports are stored in:
+
+- `reports/{reportId}`
+
+Each report includes:
+
+- `postId`
+- `reportedUserId`
+- `reporterUserId`
+- `reporterUsername`
+- `reason`
+- `details`
+- `status`
+- `postTextPreview`
+- `postImageURL`
+- `createdAt`
+
+Clients can submit reports, but should not be able to read the reports collection back from the public app. Review reports in Firebase Console or later through an admin-only dashboard.
+
+## Soft Launch Checklist
+
+Before inviting real users, run through this short checklist:
+
+### Firebase setup
+
+- Publish the Firestore rules from [firestore.rules](/C:/Users/Mesfi/Downloads/ios/habeshagram-web/firestore.rules)
+- Publish Storage rules for:
+  - `posts/{userId}/...`
+  - `users/{userId}/profile.jpg`
+- Enable Firebase Authentication with Email/Password
+- Add Authorized domains for:
+  - `localhost`
+  - your `vercel.app` preview domain
+  - your production domain
+
+### Likely Firestore indexes
+
+- `posts` with `userId` + `createdAt`
+- `posts` with `hashtags` + `createdAt`
+- `posts` with `userId (in)` + `createdAt`
+- any index Firestore prompts for when testing topic pages, following feed, or comments
+
+### Soft launch test flow
+
+1. Sign up a brand-new account
+2. Log out and log back in
+3. Edit profile and upload a profile image
+4. Create a text-only post
+5. Create a post with an image
+6. Create a team-tagged football post
+7. Create a hashtagged post like `#Habesha` or `#GGMU`
+8. Like, comment, save, and report a post from another account
+9. Follow another user and confirm counts update
+10. Open notifications and confirm unread count clears
+11. Open:
+    - `/saved`
+    - `/search`
+    - `/topic/habesha`
+    - one football hub page
+12. Verify mobile layout on a narrow screen before launch
+
+### Deployment sanity check
+
+- Add the same Firebase env vars to Vercel
+- Verify the deployed domain is added in Firebase Auth Authorized domains
+- Test one full login/post/image-upload flow on the deployed site before sharing it widely
+
 ## Firebase Content Later
 
 Authentication is already wired. When you want to connect the rest of the real backend, update:

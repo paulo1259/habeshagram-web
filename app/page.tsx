@@ -1,38 +1,107 @@
 "use client";
 
 import Link from "next/link";
-import { ImagePlus, PenSquare } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Flame, ImagePlus, PenSquare, Sparkles } from "lucide-react";
 import { CommunitySpotlight } from "@/components/discovery/community-spotlight";
 import { CommunityHighlights } from "@/components/discovery/community-highlights";
 import { EventHighlights } from "@/components/discovery/event-highlights";
+import { FootballBuzz } from "@/components/discovery/football-buzz";
 import { LocalNewsSection } from "@/components/discovery/local-news-section";
 import { RadioShowcase } from "@/components/discovery/radio-showcase";
 import { TrendingTopics } from "@/components/discovery/trending-topics";
 import { WhoToFollow } from "@/components/discovery/who-to-follow";
 import { AppShell } from "@/components/layout/app-shell";
 import { FeedList } from "@/components/posts/feed-list";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useAppData } from "@/hooks/use-app-data";
 import { isFirebaseConfigured } from "@/lib/firebase";
+import { getFollowingIds } from "@/services/follow-service";
+import { getPostsByUsers } from "@/services/post-service";
+import { Post } from "@/types";
 
 export default function HomePage() {
   const { currentUser, posts, isLoading, errorMessage } = useAppData();
+  const [feedMode, setFeedMode] = useState<"for-you" | "following">("for-you");
+  const [followingPosts, setFollowingPosts] = useState<Post[]>([]);
+  const [isFollowingLoading, setIsFollowingLoading] = useState(false);
+  const [followingError, setFollowingError] = useState("");
+  const [hasLoadedFollowing, setHasLoadedFollowing] = useState(false);
+
+  useEffect(() => {
+    setFollowingPosts([]);
+    setFollowingError("");
+    setHasLoadedFollowing(false);
+    setFeedMode("for-you");
+  }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (feedMode !== "following" || !currentUser || hasLoadedFollowing) {
+      return;
+    }
+
+    let isMounted = true;
+
+    void (async () => {
+      try {
+        setIsFollowingLoading(true);
+        setFollowingError("");
+        const followingIds = await getFollowingIds(currentUser.id);
+        const nextPosts = await getPostsByUsers(followingIds);
+
+        if (isMounted) {
+          setFollowingPosts(nextPosts);
+          setHasLoadedFollowing(true);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setFollowingError(
+            error instanceof Error ? error.message : "Unable to load your following feed."
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsFollowingLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser, feedMode, hasLoadedFollowing]);
+
+  const activePosts = feedMode === "following" ? followingPosts : posts;
+  const activeLoading = feedMode === "following" ? isFollowingLoading : isLoading;
+  const activeError = feedMode === "following" ? followingError : errorMessage;
 
   return (
     <AppShell>
       <div className="space-y-4 sm:space-y-5">
-        <section className="border-b border-brand-100 bg-white/96 px-3 py-4 sm:rounded-[28px] sm:border sm:px-5 sm:py-5 sm:shadow-soft">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <section className="relative overflow-hidden border-b border-brand-100/80 bg-white/96 px-3 py-4 sm:rounded-[32px] sm:border sm:px-5 sm:py-5 sm:shadow-soft">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-500 via-orange-400 to-brand-300 sm:rounded-t-[32px]" />
+          <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">
                 Habesha Community
               </p>
-              <h1 className="mt-1 text-[1.55rem] font-black tracking-tight text-ink sm:text-2xl">
+              <h1 className="mt-1 text-[1.65rem] font-black tracking-tight text-ink sm:text-[2.1rem]">
                 {currentUser ? `Selam, @${currentUser.username}` : "Welcome to HabeshaGram"}
               </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600">
-                Share thoughts, food, music, style, memes, and community updates in a warm,
-                mobile-first space.
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600 sm:text-[15px]">
+                Share hot takes, memes, style, football reactions, music, and culture in a warm,
+                mobile-first space built for Habesha timelines.
               </p>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium text-stone-600">
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-brand-700" />
+                  Youth culture
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1.5">
+                  <Flame className="h-3.5 w-3.5 text-orange-600" />
+                  Football buzz
+                </span>
+              </div>
             </div>
             <Link
               href="/create"
@@ -41,16 +110,16 @@ export default function HomePage() {
               Create a post
             </Link>
           </div>
-          <p className="mt-3 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-brand-900">
+          <p className="relative mt-4 rounded-[22px] bg-brand-50 px-4 py-3 text-sm text-brand-900">
             {isFirebaseConfigured
-              ? "Firebase auth is connected. Feed and discovery content still use the local MVP data layer until posts and comments are wired to Firestore."
+              ? "Firebase auth is connected. Feed, posts, likes, comments, and profiles are live, while curated discovery sections still use seeded content."
               : "Add your Firebase env values in .env.local to enable login and signup. The feed and discovery sections still work with local MVP content."}
           </p>
         </section>
 
-        <section className="border-b border-brand-100 bg-white/96 px-3 py-3 sm:rounded-[28px] sm:border sm:px-5 sm:py-4 sm:shadow-soft">
+        <section className="border-b border-brand-100/80 bg-white/96 px-3 py-3 sm:rounded-[30px] sm:border sm:px-5 sm:py-4 sm:shadow-soft">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-brand-800">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-200 to-orange-100 text-brand-800">
               {currentUser ? currentUser.username.slice(0, 1).toUpperCase() : "H"}
             </div>
             <div className="flex-1 space-y-3">
@@ -88,23 +157,69 @@ export default function HomePage() {
           <RadioShowcase />
         </section>
 
-        {errorMessage ? (
-          <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{errorMessage}</div>
+        {activeError ? (
+          <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{activeError}</div>
         ) : null}
 
         <section className="space-y-3">
           <div className="flex items-end justify-between px-3 pt-1 sm:px-1">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">
-                Community Feed
+                {feedMode === "following" ? "Following Feed" : "Community Feed"}
               </p>
               <p className="mt-1 text-sm text-stone-500">
-                Fresh posts from the Habesha community, sorted by newest first.
+                {feedMode === "following"
+                  ? "Fresh posts from the people you follow, sorted by newest first."
+                  : "Fresh posts from the Habesha community, sorted by newest first."}
               </p>
             </div>
+            <div className="inline-flex rounded-full border border-brand-100 bg-white p-1 shadow-soft">
+              <button
+                type="button"
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  feedMode === "for-you"
+                    ? "bg-gradient-to-r from-brand-500 to-orange-400 text-white"
+                    : "text-stone-600 hover:bg-brand-50"
+                }`}
+                onClick={() => setFeedMode("for-you")}
+              >
+                For You
+              </button>
+              <button
+                type="button"
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  feedMode === "following"
+                    ? "bg-gradient-to-r from-brand-500 to-orange-400 text-white"
+                    : "text-stone-600 hover:bg-brand-50"
+                } ${!currentUser ? "cursor-not-allowed opacity-50" : ""}`}
+                onClick={() => {
+                  if (!currentUser) {
+                    return;
+                  }
+                  setFeedMode("following");
+                }}
+                disabled={!currentUser}
+              >
+                Following
+              </button>
+            </div>
           </div>
-          <FeedList posts={posts} isLoading={isLoading} />
+          {feedMode === "following" && !currentUser ? (
+            <EmptyState
+              title="Log in to see your following feed"
+              description="Once you follow a few people, their newest posts will show up here."
+            />
+          ) : feedMode === "following" && !activeLoading && !followingPosts.length ? (
+            <EmptyState
+              title="Your following feed is waiting"
+              description="Follow a few creators, football fans, or culture pages to make this tab feel alive."
+            />
+          ) : (
+            <FeedList posts={activePosts} isLoading={activeLoading} />
+          )}
         </section>
+
+        <FootballBuzz />
         <LocalNewsSection />
         <div className="grid gap-4 xl:hidden">
           <TrendingTopics />

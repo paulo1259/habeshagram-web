@@ -1,0 +1,106 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      allow read: if true;
+
+      allow create: if isSelf(userId)
+        && request.resource.data.id == userId;
+
+      allow update: if isSelf(userId)
+        || (
+          isSignedIn()
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(["followerCount", "followingCount"])
+          && request.resource.data.id == resource.data.id
+          && request.resource.data.username == resource.data.username
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.profileImageURL == resource.data.profileImageURL
+          && request.resource.data.bio == resource.data.bio
+          && request.resource.data.createdAt == resource.data.createdAt
+        );
+
+      allow delete: if false;
+
+      match /following/{targetUserId} {
+        allow read: if isSignedIn();
+        allow create: if isSelf(userId)
+          && request.resource.data.followerId == userId
+          && request.resource.data.followingId == targetUserId;
+        allow delete: if isSelf(userId);
+        allow update: if false;
+      }
+
+      match /followers/{followerUserId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn()
+          && request.auth.uid == followerUserId
+          && request.resource.data.followerId == followerUserId
+          && request.resource.data.followingId == userId;
+        allow delete: if isSignedIn() && request.auth.uid == followerUserId;
+        allow update: if false;
+      }
+
+      match /notifications/{notificationId} {
+        allow read: if isSelf(userId);
+        allow create: if isSignedIn()
+          && request.resource.data.recipientUserId == userId
+          && request.resource.data.actorUserId == request.auth.uid;
+        allow update: if isSelf(userId)
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(["isRead"]);
+        allow delete: if false;
+      }
+
+      match /savedPosts/{postId} {
+        allow read: if isSelf(userId);
+        allow create: if isSelf(userId)
+          && request.resource.data.postId == postId;
+        allow delete: if isSelf(userId);
+        allow update: if false;
+      }
+    }
+
+    match /posts/{postId} {
+      allow read: if true;
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+
+      allow update: if isSignedIn()
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(["likedBy", "likeCount", "commentCount"])
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.username == resource.data.username
+        && request.resource.data.userProfileImageURL == resource.data.userProfileImageURL
+        && request.resource.data.text == resource.data.text
+        && request.resource.data.imageURL == resource.data.imageURL
+        && request.resource.data.teamTag == resource.data.teamTag
+        && request.resource.data.hashtags == resource.data.hashtags
+        && request.resource.data.createdAt == resource.data.createdAt;
+
+      allow delete: if false;
+
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isSignedIn()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.postId == postId;
+        allow update, delete: if false;
+      }
+    }
+
+    match /reports/{reportId} {
+      allow create: if isSignedIn()
+        && request.resource.data.reporterUserId == request.auth.uid
+        && request.resource.data.status == "open";
+      allow read, update, delete: if false;
+    }
+  }
+}

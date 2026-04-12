@@ -10,7 +10,18 @@ import {
   type ReactNode
 } from "react";
 import { addComment } from "@/services/comment-service";
-import { createPost, getPosts, getPostsByUser, toggleLike } from "@/services/post-service";
+import {
+  getUnreadNotificationCount,
+  subscribeToUnreadNotificationCount
+} from "@/services/notification-service";
+import {
+  createPost,
+  getPosts,
+  getPostsByUser,
+  subscribeToPosts,
+  toggleLike
+} from "@/services/post-service";
+import { getSavedPostIds, getSavedPosts, toggleSavedPost } from "@/services/saved-post-service";
 import { useAuth } from "@/hooks/use-auth";
 import { Comment, CreatePostInput, Post } from "@/types";
 
@@ -21,6 +32,10 @@ type AppContextValue = {
   isReady: boolean;
   authMode: "firebase" | "unconfigured";
   errorMessage: string;
+  unreadNotificationCount: number;
+  savedPostIds: string[];
+  refreshUnreadNotificationCount: () => Promise<void>;
+  refreshSavedPosts: () => Promise<void>;
   login: ReturnType<typeof useAuth>["login"];
   signup: ReturnType<typeof useAuth>["signup"];
   logout: ReturnType<typeof useAuth>["logout"];
@@ -30,6 +45,8 @@ type AppContextValue = {
   createNewPost: (input: CreatePostInput) => Promise<Post>;
   likePost: (postId: string) => Promise<Post | null>;
   addPostComment: (postId: string, text: string) => Promise<Comment>;
+  toggleSaved: (postId: string) => Promise<boolean>;
+  getSavedFeed: () => Promise<Post[]>;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -39,6 +56,22 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [savedPostIds, setSavedPostIds] = useState<string[]>([]);
+
+  const refreshUnreadNotificationCount = useCallback(async () => {
+    if (!currentUser) {
+      setUnreadNotificationCount(0);
+      return;
+    }
+
+    try {
+      const count = await getUnreadNotificationCount(currentUser.id);
+      setUnreadNotificationCount(count);
+    } catch {
+      setUnreadNotificationCount(0);
+    }
+  }, [currentUser]);
 
   const hydrateFeed = useCallback(async () => {
     setIsLoading(true);
@@ -58,8 +91,55 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    void hydrateFeed();
-  }, [hydrateFeed, isReady]);
+    const unsubscribe = subscribeToPosts(
+      (feed) => {
+        setPosts(feed);
+        setErrorMessage("");
+        setIsLoading(false);
+      },
+      (message) => {
+        setErrorMessage(message);
+        setIsLoading(false);
+      }
+    );
+
+    return unsubscribe;
+  }, [isReady]);
+
+  useEffect(() => {
+    if (!currentUser) {
+      setUnreadNotificationCount(0);
+      return;
+    }
+
+    const unsubscribe = subscribeToUnreadNotificationCount(
+      currentUser.id,
+      (count) => setUnreadNotificationCount(count),
+      () => {
+        void refreshUnreadNotificationCount();
+      }
+    );
+
+    return unsubscribe;
+  }, [refreshUnreadNotificationCount]);
+
+  const refreshSavedPosts = useCallback(async () => {
+    if (!currentUser) {
+      setSavedPostIds([]);
+      return;
+    }
+
+    try {
+      const ids = await getSavedPostIds(currentUser.id);
+      setSavedPostIds(ids);
+    } catch {
+      setSavedPostIds([]);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    void refreshSavedPosts();
+  }, [refreshSavedPosts]);
 
   const refreshPosts = useCallback(async () => {
     const feed = await getPosts();
@@ -86,16 +166,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         throw new Error("Please log in before liking posts.");
       }
 
-      const updatedPost = await toggleLike(postId, currentUser.id);
+      const updatedPost = await toggleLike(postId, currentUser);
       if (updatedPost) {
         setPosts((currentPosts) =>
           currentPosts.map((post) => (post.id === updatedPost.id ? updatedPost : post))
         );
       }
+      void refreshUnreadNotificationCount();
       void refreshPosts();
       return updatedPost;
     },
-    [currentUser, refreshPosts]
+    [currentUser, refreshPosts, refreshUnreadNotificationCount]
   );
 
   const addPostComment = useCallback(
@@ -110,13 +191,42 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           post.id === postId ? { ...post, commentCount: post.commentCount + 1 } : post
         )
       );
+      void refreshUnreadNotificationCount();
       void refreshPosts();
       return comment;
     },
-    [currentUser, refreshPosts]
+    [currentUser, refreshPosts, refreshUnreadNotificationCount]
   );
 
   const getProfilePosts = useCallback(async (userId: string) => getPostsByUser(userId), []);
+
+  const getSavedFeed = useCallback(async () => {
+    if (!currentUser) {
+      return [];
+    }
+
+    return getSavedPosts(currentUser.id);
+  }, [currentUser]);
+
+  const toggleSaved = useCallback(
+    async (postId: string) => {
+      if (!currentUser) {
+        throw new Error("Please log in before saving posts.");
+      }
+
+      const isSaved = await toggleSavedPost({
+        userId: currentUser.id,
+        postId
+      });
+
+      setSavedPostIds((currentIds) =>
+        isSaved ? [postId, ...currentIds.filter((id) => id !== postId)] : currentIds.filter((id) => id !== postId)
+      );
+
+      return isSaved;
+    },
+    [currentUser]
+  );
 
   const value = useMemo(
     () => ({
@@ -126,6 +236,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       isReady,
       authMode,
       errorMessage,
+      unreadNotificationCount,
+      savedPostIds,
+      refreshUnreadNotificationCount,
+      refreshSavedPosts,
       login,
       signup,
       logout,
@@ -134,7 +248,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       getProfilePosts,
       createNewPost,
       likePost,
-      addPostComment
+      addPostComment,
+      toggleSaved,
+      getSavedFeed
     }),
     [
       currentUser,
@@ -143,6 +259,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       isReady,
       authMode,
       errorMessage,
+      unreadNotificationCount,
+      savedPostIds,
+      refreshUnreadNotificationCount,
+      refreshSavedPosts,
       login,
       signup,
       logout,
@@ -151,7 +271,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       getProfilePosts,
       createNewPost,
       likePost,
-      addPostComment
+      addPostComment,
+      toggleSaved,
+      getSavedFeed
     ]
   );
 

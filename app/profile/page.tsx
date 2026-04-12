@@ -9,12 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useAppData } from "@/hooks/use-app-data";
+import { getUserDocument, subscribeToUserDocument } from "@/services/user-service";
 import { Post } from "@/types";
 
 export default function ProfilePage() {
   const { currentUser, getProfilePosts, isReady, updateProfile } = useAppData();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [profileImageURL, setProfileImageURL] = useState("");
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [createdAt, setCreatedAt] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
@@ -30,10 +35,27 @@ export default function ProfilePage() {
       return;
     }
 
+    let isMounted = true;
+
     void (async () => {
-      const next = await getProfilePosts(currentUser.id);
-      setPosts(next);
+      const nextPosts = await getProfilePosts(currentUser.id);
+      if (isMounted) {
+        setPosts(nextPosts);
+      }
     })();
+
+    const unsubscribe = subscribeToUserDocument(currentUser.id, (profile) => {
+      const resolvedProfile = profile || currentUser;
+      setProfileImageURL(resolvedProfile.profileImageURL);
+      setFollowerCount(resolvedProfile.followerCount);
+      setFollowingCount(resolvedProfile.followingCount);
+      setCreatedAt(resolvedProfile.createdAt);
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, [currentUser, getProfilePosts]);
 
   useEffect(() => {
@@ -44,19 +66,20 @@ export default function ProfilePage() {
     setUsername(currentUser.username);
     setBio(currentUser.bio);
     setProfilePreview(currentUser.profileImageURL);
+    setProfileImageURL(currentUser.profileImageURL);
     setSelectedImage(null);
   }, [currentUser]);
 
   const joinedLabel = useMemo(() => {
-    if (!currentUser?.createdAt) {
+    if (!createdAt) {
       return "";
     }
 
     return new Intl.DateTimeFormat("en-US", {
       month: "long",
       year: "numeric"
-    }).format(new Date(currentUser.createdAt));
-  }, [currentUser?.createdAt]);
+    }).format(new Date(createdAt));
+  }, [createdAt]);
 
   function clearSelectedImage() {
     if (selectedImage && profilePreview.startsWith("blob:")) {
@@ -64,7 +87,7 @@ export default function ProfilePage() {
     }
 
     setSelectedImage(null);
-    setProfilePreview(currentUser?.profileImageURL || "");
+    setProfilePreview(profileImageURL || "");
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -105,6 +128,13 @@ export default function ProfilePage() {
         bio,
         imageFile: selectedImage
       });
+      const nextProfile = await getUserDocument(currentUser!.id);
+      if (nextProfile) {
+        setProfileImageURL(nextProfile.profileImageURL);
+        setFollowerCount(nextProfile.followerCount);
+        setFollowingCount(nextProfile.followingCount);
+        setCreatedAt(nextProfile.createdAt);
+      }
       setIsEditing(false);
       setSelectedImage(null);
       setSuccessMessage("Profile updated.");
@@ -129,7 +159,7 @@ export default function ProfilePage() {
                   <div className="relative">
                     <Avatar
                       username={currentUser.username}
-                      imageURL={profilePreview || currentUser.profileImageURL}
+                      imageURL={profilePreview || profileImageURL}
                       className="h-16 w-16 text-lg"
                     />
                     {isEditing ? (
@@ -180,6 +210,8 @@ export default function ProfilePage() {
                     )}
                     <div className="mt-3 flex flex-wrap gap-3 text-sm">
                       <p className="font-medium text-brand-800">{posts.length} posts</p>
+                      <p className="text-stone-500">{followerCount} followers</p>
+                      <p className="text-stone-500">{followingCount} following</p>
                       {joinedLabel ? <p className="text-stone-500">Joined {joinedLabel}</p> : null}
                     </div>
                   </div>

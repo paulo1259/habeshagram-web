@@ -26,3 +26,18 @@ export function getInitials(username: string) {
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
 }
+
+export function normalizeHashtag(tag: string) {
+  return tag.replace(/^#+/, "").trim().toLowerCase();
+}
+
+export function parseHashtags(text: string) {
+  const matches = text.match(/#[\p{L}\p{N}_]+/gu) ?? [];
+  return Array.from(
+    new Set(
+      matches
+        .map((match) => normalizeHashtag(match))
+        .filter(Boolean)
+    )
+  );
+}

@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDocs,
+  onSnapshot,
   orderBy,
   query,
   runTransaction,
@@ -10,6 +11,7 @@ import {
 import { firebaseDb, isFirebaseConfigured } from "@/lib/firebase";
 import { createId } from "@/lib/utils";
 import { readState, writeState } from "@/services/local-store";
+import { createNotification } from "@/services/notification-service";
 import { Comment, User } from "@/types";
 
 const FIRESTORE_TIMEOUT_MS = 5000;
@@ -98,6 +100,41 @@ export async function getCommentsByPost(postId: string): Promise<Comment[]> {
     .sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt));
 }
 
+export function subscribeToCommentsByPost(
+  postId: string,
+  callback: (comments: Comment[]) => void,
+  onError?: (message: string) => void
+) {
+  if (!postId) {
+    callback([]);
+    return () => undefined;
+  }
+
+  if (!isFirebaseConfigured || !firebaseDb) {
+    const state = readState();
+    callback(
+      state.comments
+        .filter((comment) => comment.postId === postId)
+        .sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt))
+    );
+    return () => undefined;
+  }
+
+  return onSnapshot(
+    query(collection(firebaseDb, "posts", postId, "comments"), orderBy("createdAt", "asc")),
+    (snapshot) => {
+      callback(
+        snapshot.docs.map((item) =>
+          mapFirestoreComment(item.id, postId, item.data() as Partial<Comment>)
+        )
+      );
+    },
+    (error) => {
+      onError?.(mapCommentError(error));
+    }
+  );
+}
+
 export async function addComment(input: {
   postId: string;
   text: string;
@@ -124,6 +161,8 @@ export async function addComment(input: {
     const commentRef = doc(collection(firebaseDb, "posts", input.postId, "comments"));
 
     try {
+      let postOwnerId = "";
+
       await withFirestoreTimeout(
         runTransaction(firebaseDb, async (transaction) => {
           const postSnapshot = await transaction.get(postRef);
@@ -134,6 +173,7 @@ export async function addComment(input: {
           const currentCount = typeof postSnapshot.data().commentCount === "number"
             ? postSnapshot.data().commentCount
             : 0;
+          postOwnerId = typeof postSnapshot.data().userId === "string" ? postSnapshot.data().userId : "";
           const firestoreComment = {
             ...comment,
             id: commentRef.id
@@ -146,6 +186,16 @@ export async function addComment(input: {
         }),
         "Timed out while posting your comment."
       );
+
+      if (postOwnerId && postOwnerId !== user.id) {
+        void createNotification({
+          recipientUserId: postOwnerId,
+          type: "comment",
+          actor: user,
+          targetPostId: input.postId,
+          message: "commented on your post"
+        });
+      }
 
       return {
         ...comment,
@@ -166,6 +216,17 @@ export async function addComment(input: {
     posts,
     comments: [...state.comments, comment]
   });
+
+  const postOwnerId = state.posts.find((post) => post.id === input.postId)?.userId || "";
+  if (postOwnerId && postOwnerId !== user.id) {
+    void createNotification({
+      recipientUserId: postOwnerId,
+      type: "comment",
+      actor: user,
+      targetPostId: input.postId,
+      message: "commented on your post"
+    });
+  }
 
   return comment;
 }

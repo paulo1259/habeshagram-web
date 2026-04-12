@@ -1,54 +1,109 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { Heart, MessageCircle } from "lucide-react";
+import { Bookmark, Flag, Heart, MessageCircle } from "lucide-react";
 import { useAppData } from "@/hooks/use-app-data";
-import { formatDate } from "@/lib/utils";
+import { formatDate, parseHashtags } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { CommentSection } from "@/components/posts/comment-section";
-import { Post } from "@/types";
+import { getTeamSlug } from "@/services/football-hub-data";
+import { reportPost } from "@/services/report-service";
+import { Post, PostReportReason } from "@/types";
+
+const teamChipStyles = {
+  "Manchester United": "bg-red-50 text-red-700 hover:bg-red-100",
+  Arsenal: "bg-rose-50 text-rose-700 hover:bg-rose-100",
+  Chelsea: "bg-blue-50 text-blue-700 hover:bg-blue-100",
+  "Manchester City": "bg-sky-50 text-sky-700 hover:bg-sky-100"
+} as const;
 
 export function PostCard({ post }: { post: Post }) {
-  const { currentUser, likePost, addPostComment } = useAppData();
+  const { currentUser, likePost, addPostComment, savedPostIds, toggleSaved } = useAppData();
   const [showComments, setShowComments] = useState(false);
+  const [showReportForm, setShowReportForm] = useState(false);
+  const [reportReason, setReportReason] = useState<PostReportReason>("spam");
+  const [reportDetails, setReportDetails] = useState("");
+  const [isReporting, setIsReporting] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   const isLiked = currentUser ? post.likedBy.includes(currentUser.id) : false;
+  const isSaved = currentUser ? savedPostIds.includes(post.id) : false;
+  const hashtags = post.hashtags?.length ? post.hashtags : parseHashtags(post.text);
+  const reportReasons: { value: PostReportReason; label: string }[] = [
+    { value: "spam", label: "Spam" },
+    { value: "harassment", label: "Harassment" },
+    { value: "hate", label: "Hate speech" },
+    { value: "other", label: "Other" }
+  ];
 
   return (
-    <article className="border-b border-brand-100 bg-white/98 px-3 py-4 transition hover:bg-brand-50/20 sm:rounded-[24px] sm:border sm:border-brand-100 sm:px-5 sm:py-4 sm:shadow-soft">
+    <article className="group border-b border-brand-100/80 bg-white/98 px-3 py-4 transition duration-200 hover:bg-brand-50/10 sm:rounded-[28px] sm:border sm:border-brand-100/80 sm:px-5 sm:py-5 sm:shadow-soft sm:hover:-translate-y-0.5 sm:hover:shadow-md">
       <div className="flex items-start gap-3">
-        <Avatar
-          username={post.username}
-          imageURL={post.userProfileImageURL}
-          className="h-10 w-10"
-        />
+        <Link href={`/profile/${post.userId}`} className="shrink-0">
+          <Avatar
+            username={post.username}
+            imageURL={post.userProfileImageURL}
+            className="h-10 w-10 ring-2 ring-brand-50 transition duration-200 group-hover:ring-brand-100"
+          />
+        </Link>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 text-sm">
-            <p className="truncate font-semibold text-ink">@{post.username}</p>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <Link
+              href={`/profile/${post.userId}`}
+              className="truncate font-semibold text-ink transition hover:text-brand-800"
+            >
+              @{post.username}
+            </Link>
+            {post.teamTag ? (
+              <>
+                <span className="text-xs text-stone-300">&bull;</span>
+                <Link
+                  href={`/football/${getTeamSlug(post.teamTag)}`}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-sm transition ${teamChipStyles[post.teamTag]}`}
+                >
+                  {post.teamTag}
+                </Link>
+              </>
+            ) : null}
             <span className="text-xs text-stone-400">&bull;</span>
-            <p className="shrink-0 text-xs text-stone-500">{formatDate(post.createdAt)}</p>
+            <p className="shrink-0 text-xs font-medium text-stone-500">{formatDate(post.createdAt)}</p>
           </div>
 
-          <p className="mt-2.5 whitespace-pre-wrap text-[15px] leading-7 text-stone-800">
+          <p className="mt-2.5 whitespace-pre-wrap text-[15px] leading-7 text-stone-800 sm:text-[15.5px]">
             {post.text}
           </p>
 
+          {hashtags.length ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {hashtags.map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/topic/${tag}`}
+                  className="rounded-full border border-brand-100 bg-brand-50/90 px-3 py-1.5 text-xs font-semibold text-brand-800 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:bg-brand-100 hover:text-brand-900"
+                >
+                  #{tag}
+                </Link>
+              ))}
+            </div>
+          ) : null}
+
           {post.imageURL ? (
-            <div className="mt-3.5 overflow-hidden rounded-[20px] border border-brand-100 bg-brand-50/30">
+            <div className="mt-3.5 overflow-hidden rounded-[24px] border border-brand-100 bg-brand-50/30 shadow-sm transition duration-200 group-hover:shadow-md">
               <img
                 src={post.imageURL}
                 alt="Post"
-                className="h-auto max-h-[26rem] w-full object-cover"
+                className="h-auto max-h-[28rem] w-full object-cover"
               />
             </div>
           ) : null}
 
-          <div className="mt-4 flex items-center gap-1 text-stone-500">
+          <div className="mt-4 flex flex-wrap items-center gap-1 text-stone-500">
             <Button
               variant="ghost"
-              className="gap-2 rounded-full px-2.5 py-2 text-xs text-stone-500 hover:bg-red-50 hover:text-red-500 active:scale-[0.98]"
+              className="gap-2 rounded-full px-3 py-2 text-xs text-stone-500 hover:bg-red-50 hover:text-red-500"
               onClick={async () => {
                 try {
                   setErrorMessage("");
@@ -65,15 +120,134 @@ export function PostCard({ post }: { post: Post }) {
             </Button>
             <Button
               variant="ghost"
-              className="gap-2 rounded-full px-2.5 py-2 text-xs text-stone-500 hover:bg-brand-50 hover:text-brand-700 active:scale-[0.98]"
+              className="gap-2 rounded-full px-3 py-2 text-xs text-stone-500 hover:bg-brand-50 hover:text-brand-700"
               onClick={() => setShowComments((value) => !value)}
             >
               <MessageCircle className="h-[18px] w-[18px]" />
               <span className="min-w-4 text-left">{post.commentCount}</span>
             </Button>
+            <Button
+              variant="ghost"
+              className="gap-2 rounded-full px-3 py-2 text-xs text-stone-500 hover:bg-brand-50 hover:text-brand-700"
+              onClick={async () => {
+                try {
+                  setErrorMessage("");
+                  await toggleSaved(post.id);
+                } catch (error) {
+                  setErrorMessage(error instanceof Error ? error.message : "Unable to save post.");
+                }
+              }}
+            >
+              <Bookmark
+                className={`h-[18px] w-[18px] ${isSaved ? "fill-brand-700 text-brand-700" : ""}`}
+              />
+              <span>{isSaved ? "Saved" : "Save"}</span>
+            </Button>
+            {post.userId !== currentUser?.id ? (
+              <Button
+                variant="ghost"
+                className="gap-2 rounded-full px-3 py-2 text-xs text-stone-500 hover:bg-orange-50 hover:text-orange-700"
+                onClick={() => {
+                  setReportSuccess("");
+                  setErrorMessage("");
+                  setShowReportForm((value) => !value);
+                }}
+              >
+                <Flag className="h-[18px] w-[18px]" />
+                <span>Report</span>
+              </Button>
+            ) : null}
           </div>
 
           {errorMessage ? <p className="mt-2 text-sm text-red-600">{errorMessage}</p> : null}
+          {reportSuccess ? <p className="mt-2 text-sm text-green-700">{reportSuccess}</p> : null}
+
+          {showReportForm ? (
+            <div className="mt-3 rounded-[24px] border border-brand-100 bg-brand-50/55 p-4">
+              <div className="flex flex-col gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">
+                    Report post
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-stone-600">
+                    Thanks for helping keep HabeshaGram safe. Pick the closest reason and we will store it for review.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {reportReasons.map((item) => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => setReportReason(item.value)}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                        reportReason === item.value
+                          ? "border-brand-500 bg-brand-500 text-white"
+                          : "border-brand-100 bg-white text-stone-600 hover:border-brand-200 hover:bg-brand-50"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+
+                <textarea
+                  rows={2}
+                  value={reportDetails}
+                  onChange={(event) => setReportDetails(event.target.value)}
+                  placeholder="Optional details"
+                  className="w-full rounded-2xl border border-brand-100 bg-white px-4 py-3 text-sm outline-none ring-brand-300 focus:ring-2"
+                />
+
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowReportForm(false);
+                      setReportDetails("");
+                      setErrorMessage("");
+                    }}
+                    disabled={isReporting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={isReporting}
+                    onClick={async () => {
+                      try {
+                        if (!currentUser) {
+                          throw new Error("Please log in before reporting posts.");
+                        }
+
+                        setIsReporting(true);
+                        setErrorMessage("");
+                        setReportSuccess("");
+                        await reportPost({
+                          post,
+                          actor: currentUser,
+                          reason: reportReason,
+                          details: reportDetails
+                        });
+                        setShowReportForm(false);
+                        setReportDetails("");
+                        setReportSuccess("Report sent. Thanks for looking out for the community.");
+                      } catch (error) {
+                        setErrorMessage(
+                          error instanceof Error ? error.message : "Unable to send your report."
+                        );
+                      } finally {
+                        setIsReporting(false);
+                      }
+                    }}
+                  >
+                    {isReporting ? "Sending..." : "Submit report"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {showComments ? (
             <CommentSection

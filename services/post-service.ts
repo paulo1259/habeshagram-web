@@ -4,16 +4,20 @@ import {
   collection,
   doc,
   getDocs,
+  onSnapshot,
   orderBy,
   query,
   runTransaction,
-  setDoc
+  setDoc,
+  where
 } from "firebase/firestore";
 import { firebaseDb, isFirebaseConfigured } from "@/lib/firebase";
-import { createId } from "@/lib/utils";
+import { createId, normalizeHashtag, parseHashtags } from "@/lib/utils";
 import { readState, writeState } from "@/services/local-store";
+import { createNotification } from "@/services/notification-service";
 import { uploadPostImage } from "@/services/storage-service";
-import { CreatePostInput, Post, User } from "@/types";
+import { CreatePostInput, FootballTeam, Post, User } from "@/types";
+import { footballTeams } from "@/services/football-hub-data";
 
 const FIRESTORE_TIMEOUT_MS = 5000;
 
@@ -75,6 +79,10 @@ function mapFirestorePost(
     userProfileImageURL: data.userProfileImageURL || "",
     text: data.text || "",
     imageURL: data.imageURL || "",
+    teamTag: data.teamTag,
+    hashtags: Array.isArray(data.hashtags)
+      ? data.hashtags.map((tag) => normalizeHashtag(String(tag))).filter(Boolean)
+      : [],
     createdAt,
     likeCount: typeof data.likeCount === "number" ? data.likeCount : 0,
     commentCount: typeof data.commentCount === "number" ? data.commentCount : 0,
@@ -99,9 +107,140 @@ export async function getPosts(): Promise<Post[]> {
   return [...state.posts].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
 }
 
+export function subscribeToPosts(
+  callback: (posts: Post[]) => void,
+  onError?: (message: string) => void
+) {
+  if (!isFirebaseConfigured || !firebaseDb) {
+    callback([...readState().posts].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)));
+    return () => undefined;
+  }
+
+  return onSnapshot(
+    query(collection(firebaseDb, "posts"), orderBy("createdAt", "desc")),
+    (snapshot) => {
+      callback(snapshot.docs.map((item) => mapFirestorePost(item.id, item.data() as Partial<Post>)));
+    },
+    (error) => {
+      onError?.(mapPostError(error));
+    }
+  );
+}
+
 export async function getPostsByUser(userId: string): Promise<Post[]> {
   const posts = await getPosts();
   return posts.filter((post) => post.userId === userId);
+}
+
+export async function getPostsByTeam(team: FootballTeam): Promise<Post[]> {
+  const posts = await getPosts();
+  return posts.filter((post) => post.teamTag === team);
+}
+
+export async function getPostsByHashtag(tag: string): Promise<Post[]> {
+  const normalizedTag = normalizeHashtag(tag);
+
+  if (!normalizedTag) {
+    return [];
+  }
+
+  if (isFirebaseConfigured && firebaseDb) {
+    try {
+      const snapshot = await withFirestoreTimeout(
+        getDocs(
+          query(
+            collection(firebaseDb, "posts"),
+            where("hashtags", "array-contains", normalizedTag),
+            orderBy("createdAt", "desc")
+          )
+        ),
+        "Timed out while loading topic posts."
+      );
+
+      return snapshot.docs.map((item) => mapFirestorePost(item.id, item.data() as Partial<Post>));
+    } catch (error) {
+      throw new Error(mapPostError(error));
+    }
+  }
+
+  const posts = await getPosts();
+  return posts.filter((post) => (post.hashtags ?? []).includes(normalizedTag));
+}
+
+export function subscribeToPostsByUser(
+  userId: string,
+  callback: (posts: Post[]) => void,
+  onError?: (message: string) => void
+) {
+  if (!userId) {
+    callback([]);
+    return () => undefined;
+  }
+
+  if (!isFirebaseConfigured || !firebaseDb) {
+    const state = readState();
+    callback(
+      state.posts
+        .filter((post) => post.userId === userId)
+        .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
+    );
+    return () => undefined;
+  }
+
+  return onSnapshot(
+    query(collection(firebaseDb, "posts"), where("userId", "==", userId), orderBy("createdAt", "desc")),
+    (snapshot) => {
+      callback(snapshot.docs.map((item) => mapFirestorePost(item.id, item.data() as Partial<Post>)));
+    },
+    (error) => {
+      onError?.(mapPostError(error));
+    }
+  );
+}
+
+export async function getPostsByUsers(userIds: string[]): Promise<Post[]> {
+  if (!userIds.length) {
+    return [];
+  }
+
+  if (isFirebaseConfigured && firebaseDb) {
+    const db = firebaseDb;
+
+    try {
+      const chunks: string[][] = [];
+      for (let index = 0; index < userIds.length; index += 10) {
+        chunks.push(userIds.slice(index, index + 10));
+      }
+
+      const snapshots = await withFirestoreTimeout(
+        Promise.all(
+          chunks.map((chunk) =>
+            getDocs(
+              query(
+                collection(db, "posts"),
+                where("userId", "in", chunk),
+                orderBy("createdAt", "desc")
+              )
+            )
+          )
+        ),
+        "Timed out while loading your following feed."
+      );
+
+      return snapshots
+        .flatMap((snapshot) =>
+          snapshot.docs.map((item) => mapFirestorePost(item.id, item.data() as Partial<Post>))
+        )
+        .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+    } catch (error) {
+      throw new Error(mapPostError(error));
+    }
+  }
+
+  const state = readState();
+  return state.posts
+    .filter((post) => userIds.includes(post.userId))
+    .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
 }
 
 export async function createPost(input: CreatePostInput, user: User): Promise<Post> {
@@ -114,8 +253,13 @@ export async function createPost(input: CreatePostInput, user: User): Promise<Po
     throw new Error("Text is required.");
   }
 
+  if (input.teamTag && !footballTeams.includes(input.teamTag)) {
+    throw new Error("Please choose one of the supported football teams.");
+  }
+
   const postId = createId("post");
   let imageURL = input.imageURL || "";
+  const hashtags = parseHashtags(text);
 
   if (input.imageFile) {
     if (!isFirebaseConfigured || !firebaseDb) {
@@ -136,6 +280,8 @@ export async function createPost(input: CreatePostInput, user: User): Promise<Po
     userProfileImageURL: user.profileImageURL,
     text,
     imageURL,
+    teamTag: input.teamTag || undefined,
+    hashtags,
     createdAt: new Date().toISOString(),
     likeCount: 0,
     commentCount: 0,
@@ -165,12 +311,12 @@ export async function createPost(input: CreatePostInput, user: User): Promise<Po
   return post;
 }
 
-export async function toggleLike(postId: string, userId: string): Promise<Post | null> {
+export async function toggleLike(postId: string, actor: User): Promise<Post | null> {
   if (isFirebaseConfigured && firebaseDb) {
     const postRef = doc(firebaseDb, "posts", postId);
 
     try {
-      return await withFirestoreTimeout(
+      const result = await withFirestoreTimeout(
         runTransaction(firebaseDb, async (transaction) => {
           const snapshot = await transaction.get(postRef);
           if (!snapshot.exists()) {
@@ -178,14 +324,14 @@ export async function toggleLike(postId: string, userId: string): Promise<Post |
           }
 
           const post = mapFirestorePost(snapshot.id, snapshot.data() as Partial<Post>);
-          const liked = post.likedBy.includes(userId);
+          const liked = post.likedBy.includes(actor.id);
           const nextLikedBy = liked
-            ? post.likedBy.filter((id) => id !== userId)
-            : [...post.likedBy, userId];
+            ? post.likedBy.filter((id) => id !== actor.id)
+            : [...post.likedBy, actor.id];
           const nextLikeCount = liked ? Math.max(0, post.likeCount - 1) : post.likeCount + 1;
 
           transaction.update(postRef, {
-            likedBy: liked ? arrayRemove(userId) : arrayUnion(userId),
+            likedBy: liked ? arrayRemove(actor.id) : arrayUnion(actor.id),
             likeCount: nextLikeCount
           });
 
@@ -197,6 +343,22 @@ export async function toggleLike(postId: string, userId: string): Promise<Post |
         }),
         "Timed out while updating the like."
       );
+
+      if (result && !result.likedBy.includes(actor.id)) {
+        return result;
+      }
+
+      if (result && result.userId && result.userId !== actor.id && result.likedBy.includes(actor.id)) {
+        void createNotification({
+          recipientUserId: result.userId,
+          type: "like",
+          actor,
+          targetPostId: result.id,
+          message: "liked your post"
+        });
+      }
+
+      return result;
     } catch (error) {
       throw new Error(mapPostError(error));
     }
@@ -208,8 +370,8 @@ export async function toggleLike(postId: string, userId: string): Promise<Post |
       return post;
     }
 
-    const liked = post.likedBy.includes(userId);
-    const likedBy = liked ? post.likedBy.filter((id) => id !== userId) : [...post.likedBy, userId];
+    const liked = post.likedBy.includes(actor.id);
+    const likedBy = liked ? post.likedBy.filter((id) => id !== actor.id) : [...post.likedBy, actor.id];
 
     return {
       ...post,
@@ -219,5 +381,15 @@ export async function toggleLike(postId: string, userId: string): Promise<Post |
   });
 
   writeState({ ...state, posts });
-  return posts.find((post) => post.id === postId) ?? null;
+  const updatedPost = posts.find((post) => post.id === postId) ?? null;
+  if (updatedPost && updatedPost.userId !== actor.id && updatedPost.likedBy.includes(actor.id)) {
+    void createNotification({
+      recipientUserId: updatedPost.userId,
+      type: "like",
+      actor,
+      targetPostId: updatedPost.id,
+      message: "liked your post"
+    });
+  }
+  return updatedPost;
 }

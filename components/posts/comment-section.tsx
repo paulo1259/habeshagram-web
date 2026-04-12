@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { getCommentsByPost } from "@/services/comment-service";
+import { subscribeToCommentsByPost } from "@/services/comment-service";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Comment } from "@/types";
@@ -24,30 +24,22 @@ export function CommentSection({
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    let isMounted = true;
+    setIsLoading(true);
+    setErrorMessage("");
 
-    void (async () => {
-      try {
-        setIsLoading(true);
-        setErrorMessage("");
-        const nextComments = await getCommentsByPost(postId);
-        if (isMounted) {
-          setComments(nextComments);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setErrorMessage(error instanceof Error ? error.message : "Unable to load comments.");
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+    const unsubscribe = subscribeToCommentsByPost(
+      postId,
+      (nextComments) => {
+        setComments(nextComments);
+        setIsLoading(false);
+      },
+      (message) => {
+        setErrorMessage(message);
+        setIsLoading(false);
       }
-    })();
+    );
 
-    return () => {
-      isMounted = false;
-    };
+    return unsubscribe;
   }, [postId, commentCount]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -60,7 +52,11 @@ export function CommentSection({
       setIsSubmitting(true);
       setErrorMessage("");
       const nextComment = await onSubmit(text);
-      setComments((currentComments) => [...currentComments, nextComment]);
+      setComments((currentComments) =>
+        currentComments.some((comment) => comment.id === nextComment.id)
+          ? currentComments
+          : [...currentComments, nextComment]
+      );
       setText("");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Unable to add comment.");
