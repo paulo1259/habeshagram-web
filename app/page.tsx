@@ -5,9 +5,12 @@ import { useEffect, useState } from "react";
 import { Flame, ImagePlus, PenSquare, Sparkles } from "lucide-react";
 import { CommunitySpotlight } from "@/components/discovery/community-spotlight";
 import { CommunityHighlights } from "@/components/discovery/community-highlights";
+import { BreakingNow } from "@/components/discovery/breaking-now";
+import { DailyDebates } from "@/components/discovery/daily-debates";
 import { EventHighlights } from "@/components/discovery/event-highlights";
 import { FootballBuzz } from "@/components/discovery/football-buzz";
 import { LocalNewsSection } from "@/components/discovery/local-news-section";
+import { MatchdayCenter } from "@/components/discovery/matchday-center";
 import { RadioShowcase } from "@/components/discovery/radio-showcase";
 import { TrendingTopics } from "@/components/discovery/trending-topics";
 import { WhoToFollow } from "@/components/discovery/who-to-follow";
@@ -157,6 +160,9 @@ export default function HomePage() {
           <RadioShowcase />
         </section>
 
+        <BreakingNow />
+        <MatchdayCenter />
+
         {activeError ? (
           <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{activeError}</div>
         ) : null}
@@ -220,6 +226,7 @@ export default function HomePage() {
         </section>
 
         <FootballBuzz />
+        <DailyDebates />
         <LocalNewsSection />
         <div className="grid gap-4 xl:hidden">
           <TrendingTopics />

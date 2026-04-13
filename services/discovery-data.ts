@@ -1,4 +1,4 @@
-import { FootballNewsItem, LocalNewsItem, RadioStation } from "@/types";
+import { BreakingItem, DailyDebatePrompt, FootballNewsItem, LocalNewsItem, RadioStation } from "@/types";
 
 export const radioStations: RadioStation[] = [
   {
@@ -188,5 +188,94 @@ export const footballBuzzItems: FootballNewsItem[] = [
     imageURL:
       "https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=1200&q=80",
     link: ""
+  }
+];
+
+export const breakingItems: BreakingItem[] = [
+  {
+    id: "breaking-1",
+    headline: "Manchester United lineup rumors are already taking over Habesha timelines ahead of kickoff",
+    source: "Matchday Addis",
+    timestamp: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
+    category: "Football",
+    badge: "BREAKING",
+    team: "Manchester United"
+  },
+  {
+    id: "breaking-2",
+    headline: "Arsenal group chats are debating whether this is the most balanced side in the league right now",
+    source: "North London Addis",
+    timestamp: new Date(Date.now() - 1000 * 60 * 41).toISOString(),
+    category: "Football",
+    badge: "LIVE",
+    team: "Arsenal"
+  },
+  {
+    id: "breaking-3",
+    headline: "Chelsea fan pages are lighting up again after another wave of rebuild talk",
+    source: "Blue Corner Addis",
+    timestamp: new Date(Date.now() - 1000 * 60 * 66).toISOString(),
+    category: "Football",
+    badge: "JUST IN",
+    team: "Chelsea"
+  },
+  {
+    id: "breaking-4",
+    headline: "Manchester City supporters are already framing the next fixture as a season-shaping checkpoint",
+    source: "Touchline Addis",
+    timestamp: new Date(Date.now() - 1000 * 60 * 92).toISOString(),
+    category: "Football",
+    badge: "LIVE",
+    team: "Manchester City"
+  },
+  {
+    id: "breaking-5",
+    headline: "Addis creators are turning Sunday meetups into a mix of football, fashion, and community content nights",
+    source: "HabeshaGram Culture Desk",
+    timestamp: new Date(Date.now() - 1000 * 60 * 130).toISOString(),
+    category: "Community",
+    badge: "JUST IN"
+  }
+];
+
+export const dailyDebatePrompts: DailyDebatePrompt[] = [
+  {
+    id: "debate-1",
+    prompt: "Is Arsenal the most complete side in the league right now?",
+    category: "Big Debate",
+    team: "Arsenal",
+    hashtag: "COYG",
+    suggestedText: "My take on Arsenal right now: #COYG"
+  },
+  {
+    id: "debate-2",
+    prompt: "Should Chelsea rebuild again, or finally trust what they already have?",
+    category: "Big Debate",
+    team: "Chelsea",
+    hashtag: "CFC",
+    suggestedText: "My Chelsea rebuild take: #CFC"
+  },
+  {
+    id: "debate-3",
+    prompt: "Is Manchester United still a top club, or are fans living on history and hope?",
+    category: "Fan Base",
+    team: "Manchester United",
+    hashtag: "GGMU",
+    suggestedText: "My honest United take tonight: #GGMU"
+  },
+  {
+    id: "debate-4",
+    prompt: "Are Manchester City standards now so high that comfortable wins still feel underwhelming?",
+    category: "Matchday",
+    team: "Manchester City",
+    hashtag: "MCFC",
+    suggestedText: "City fans, here is my take: #MCFC"
+  },
+  {
+    id: "debate-5",
+    prompt: "Who has the loudest football fan base in the Habesha community right now?",
+    category: "Community",
+    hashtag: "HabeshaFootball",
+    suggestedText: "Today’s Habesha football debate: #HabeshaFootball"
   }
 ];

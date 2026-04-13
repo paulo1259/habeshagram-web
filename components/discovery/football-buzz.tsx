@@ -32,6 +32,14 @@ export function FootballBuzz() {
         eyebrow="Football Buzz"
         title="Premier League takes for Habesha group chats"
         description="Fun seeded matchday, transfer, and fan-reaction cards for United, Arsenal, Chelsea, and City. Swap in live data later without changing the UI."
+        action={
+          <Link
+            href="/match/live"
+            className="inline-flex items-center rounded-full bg-brand-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-brand-800 transition hover:bg-brand-100"
+          >
+            Live match center
+          </Link>
+        }
       />
 
       <div className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 lg:grid lg:grid-cols-2 lg:overflow-visible lg:pb-0">

@@ -1,4 +1,6 @@
+import { BreakingNow } from "@/components/discovery/breaking-now";
 import { CommunitySpotlight } from "@/components/discovery/community-spotlight";
+import { DailyDebates } from "@/components/discovery/daily-debates";
 import { EventHighlights } from "@/components/discovery/event-highlights";
 import { CommunityHighlights } from "@/components/discovery/community-highlights";
 import { LocalNewsSection } from "@/components/discovery/local-news-section";
@@ -10,7 +12,9 @@ export function RightSidebar() {
   return (
     <aside className="sticky top-24 hidden h-fit space-y-5 xl:block">
       <RadioShowcase compact />
+      <BreakingNow compact />
       <TrendingTopics />
+      <DailyDebates compact />
       <WhoToFollow />
       <EventHighlights />
       <CommunitySpotlight />

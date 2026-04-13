@@ -95,6 +95,73 @@ export type FootballNewsItem = {
   link: string;
 };
 
+export type BreakingBadge = "BREAKING" | "LIVE" | "JUST IN";
+
+export type BreakingItem = {
+  id: string;
+  headline: string;
+  source: string;
+  timestamp: string;
+  category: "Football" | "Culture" | "Community" | "Events";
+  badge: BreakingBadge;
+  team?: FootballTeam;
+};
+
+export type DailyDebatePrompt = {
+  id: string;
+  prompt: string;
+  category: "Big Debate" | "Fan Base" | "Matchday" | "Community";
+  team?: FootballTeam;
+  hashtag: string;
+  suggestedText: string;
+};
+
+export type LiveMatchStatus = "LIVE" | "HT" | "FT";
+
+export type LiveMatchEvent = {
+  id: string;
+  minute: string;
+  team: FootballTeam;
+  type: "goal" | "yellow" | "red";
+  player: string;
+  description: string;
+};
+
+export type LiveMatch = {
+  id: string;
+  homeTeam: FootballTeam;
+  awayTeam: FootballTeam;
+  homeScore: number;
+  awayScore: number;
+  status: LiveMatchStatus;
+  matchClock: string;
+  venue: string;
+  timeline: LiveMatchEvent[];
+};
+
+export type MatchdayFixtureStatus = "upcoming" | "live" | "finished";
+
+export type MatchdayFixture = {
+  id: string;
+  homeTeam: FootballTeam;
+  awayTeam: FootballTeam;
+  kickoffAt: string;
+  venue: string;
+  status: MatchdayFixtureStatus;
+  homeScore?: number;
+  awayScore?: number;
+  featured?: boolean;
+};
+
+export type MatchdayAlert = {
+  id: string;
+  badge: "GOAL" | "RED CARD" | "BREAKING";
+  headline: string;
+  detail: string;
+  timestamp: string;
+  team?: FootballTeam;
+};
+
 export type NotificationItem = {
   id: string;
   type: "like" | "comment" | "follow";

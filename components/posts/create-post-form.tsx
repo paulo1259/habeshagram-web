@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ImagePlus, X } from "lucide-react";
 import { useAppData } from "@/hooks/use-app-data";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ const teamAccentStyles: Record<FootballTeam, string> = {
 
 export function CreatePostForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { currentUser, createNewPost } = useAppData();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [text, setText] = useState("");
@@ -33,6 +34,22 @@ export function CreatePostForm() {
       }
     };
   }, [imagePreview]);
+
+  useEffect(() => {
+    const suggestedText = searchParams.get("text");
+    const suggestedTeam = searchParams.get("team");
+
+    if (suggestedText && !text) {
+      setText(suggestedText);
+    }
+
+    if (
+      suggestedTeam &&
+      Object.values(teamHubConfigs).some((teamConfig) => teamConfig.team === suggestedTeam)
+    ) {
+      setSelectedTeam(suggestedTeam as FootballTeam);
+    }
+  }, [searchParams, text]);
 
   function clearSelectedImage() {
     if (imagePreview) {
