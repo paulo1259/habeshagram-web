@@ -17,7 +17,12 @@ export type Post = {
   text: string;
   imageURL: string;
   teamTag?: FootballTeam;
+  matchTag?: string;
   hashtags?: string[];
+  summary?: string;
+  sourceLabel?: string;
+  sourceUrl?: string;
+  isSystem?: boolean;
   createdAt: string;
   likeCount: number;
   commentCount: number;
@@ -101,6 +106,8 @@ export type BreakingItem = {
   id: string;
   headline: string;
   source: string;
+  summary?: string;
+  link?: string;
   timestamp: string;
   category: "Football" | "Culture" | "Community" | "Events";
   badge: BreakingBadge;
@@ -137,6 +144,16 @@ export type LiveMatch = {
   matchClock: string;
   venue: string;
   timeline: LiveMatchEvent[];
+};
+
+export type LeagueStandingRow = {
+  position: number;
+  team: string;
+  teamTag?: FootballTeam;
+  tracked?: boolean;
+  played: number;
+  points: number;
+  goalDifference: number;
 };
 
 export type MatchdayFixtureStatus = "upcoming" | "live" | "finished";

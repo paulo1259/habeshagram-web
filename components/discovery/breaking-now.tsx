@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BellRing, Radio, Siren } from "lucide-react";
 import { SectionHeader } from "@/components/ui/section-header";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getBreakingDiscussionPostId } from "@/lib/utils";
 import { getTeamSlug } from "@/services/football-hub-data";
 import { getBreakingItems } from "@/services/news-service";
 import { BreakingItem, FootballTeam } from "@/types";
@@ -164,11 +164,11 @@ export function BreakingNow({
                     )}
                   </div>
                   <Link
-                    href={item.team ? `/football/${getTeamSlug(item.team)}` : "/match/live"}
+                    href={`/#post-${getBreakingDiscussionPostId(item.headline, item.source)}`}
                     className="inline-flex items-center gap-1 text-xs font-semibold text-brand-800 transition hover:text-brand-900"
                   >
                     <Radio className="h-3.5 w-3.5" />
-                    Open now
+                    Open discussion
                   </Link>
                 </div>
               </article>

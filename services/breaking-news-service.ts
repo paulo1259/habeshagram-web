@@ -91,6 +91,8 @@ function mapRssItemToBreakingItem(item: ParsedRssItem, index: number): BreakingI
     id: `rss-breaking-${index}`,
     headline: item.title,
     source: item.source,
+    summary: item.description,
+    link: item.link,
     timestamp: publishedAt.toISOString(),
     category: "Football",
     badge: badgeByAgeHours(hoursAgo),

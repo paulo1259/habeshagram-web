@@ -37,7 +37,24 @@ export function parseHashtags(text: string) {
     new Set(
       matches
         .map((match) => normalizeHashtag(match))
-        .filter(Boolean)
+      .filter(Boolean)
     )
   );
+}
+
+export function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+export function createDeterministicId(prefix: string, value: string) {
+  const normalized = slugify(value);
+  return `${prefix}_${normalized || "item"}`;
+}
+
+export function getBreakingDiscussionPostId(headline: string, source: string) {
+  return createDeterministicId("system_breaking", `${headline}-${source}`);
 }

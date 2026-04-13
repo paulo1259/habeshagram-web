@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Bookmark, Flag, Heart, MessageCircle } from "lucide-react";
+import { Bookmark, Flag, Heart, MessageCircle, Radio } from "lucide-react";
 import { useAppData } from "@/hooks/use-app-data";
 import { formatDate, parseHashtags } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
@@ -40,23 +40,40 @@ export function PostCard({ post }: { post: Post }) {
   ];
 
   return (
-    <article className="group border-b border-brand-100/80 bg-white/98 px-3 py-4 transition duration-200 hover:bg-brand-50/10 sm:rounded-[28px] sm:border sm:border-brand-100/80 sm:px-5 sm:py-5 sm:shadow-soft sm:hover:-translate-y-0.5 sm:hover:shadow-md">
+    <article
+      id={`post-${post.id}`}
+      className="group border-b border-brand-100/80 bg-white/98 px-3 py-4 transition duration-200 hover:bg-brand-50/10 sm:rounded-[28px] sm:border sm:border-brand-100/80 sm:px-5 sm:py-5 sm:shadow-soft sm:hover:-translate-y-0.5 sm:hover:shadow-md"
+    >
       <div className="flex items-start gap-3">
-        <Link href={`/profile/${post.userId}`} className="shrink-0">
-          <Avatar
-            username={post.username}
-            imageURL={post.userProfileImageURL}
-            className="h-10 w-10 ring-2 ring-brand-50 transition duration-200 group-hover:ring-brand-100"
-          />
-        </Link>
+        {post.isSystem ? (
+          <div className="shrink-0">
+            <Avatar
+              username={post.username}
+              imageURL={post.userProfileImageURL}
+              className="h-10 w-10 ring-2 ring-brand-50 transition duration-200 group-hover:ring-brand-100"
+            />
+          </div>
+        ) : (
+          <Link href={`/profile/${post.userId}`} className="shrink-0">
+            <Avatar
+              username={post.username}
+              imageURL={post.userProfileImageURL}
+              className="h-10 w-10 ring-2 ring-brand-50 transition duration-200 group-hover:ring-brand-100"
+            />
+          </Link>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <Link
-              href={`/profile/${post.userId}`}
-              className="truncate font-semibold text-ink transition hover:text-brand-800"
-            >
-              @{post.username}
-            </Link>
+            {post.isSystem ? (
+              <p className="truncate font-semibold text-ink">@{post.username}</p>
+            ) : (
+              <Link
+                href={`/profile/${post.userId}`}
+                className="truncate font-semibold text-ink transition hover:text-brand-800"
+              >
+                @{post.username}
+              </Link>
+            )}
             {post.teamTag ? (
               <>
                 <span className="text-xs text-stone-300">&bull;</span>
@@ -71,6 +88,35 @@ export function PostCard({ post }: { post: Post }) {
             <span className="text-xs text-stone-400">&bull;</span>
             <p className="shrink-0 text-xs font-medium text-stone-500">{formatDate(post.createdAt)}</p>
           </div>
+
+          {post.isSystem ? (
+            <div className="mt-3 rounded-[22px] border border-brand-100 bg-gradient-to-r from-brand-50/70 via-white to-orange-50/55 px-4 py-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-red-500 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-white">
+                  <Radio className="h-3.5 w-3.5" />
+                  Breaking
+                </span>
+                {post.sourceLabel ? (
+                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-800 shadow-sm">
+                    {post.sourceLabel}
+                  </span>
+                ) : null}
+                {post.sourceUrl ? (
+                  <Link
+                    href={post.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-semibold text-brand-800 transition hover:text-brand-900"
+                  >
+                    Source
+                  </Link>
+                ) : null}
+              </div>
+              {post.summary ? (
+                <p className="mt-2 text-sm leading-6 text-stone-600">{post.summary}</p>
+              ) : null}
+            </div>
+          ) : null}
 
           <p className="mt-2.5 whitespace-pre-wrap text-[15px] leading-7 text-stone-800 sm:text-[15.5px]">
             {post.text}

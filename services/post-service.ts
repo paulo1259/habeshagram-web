@@ -3,6 +3,7 @@ import {
   arrayUnion,
   collection,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   orderBy,
@@ -12,11 +13,17 @@ import {
   where
 } from "firebase/firestore";
 import { firebaseDb, isFirebaseConfigured } from "@/lib/firebase";
-import { createId, normalizeHashtag, parseHashtags } from "@/lib/utils";
+import {
+  createDeterministicId,
+  createId,
+  getBreakingDiscussionPostId,
+  normalizeHashtag,
+  parseHashtags
+} from "@/lib/utils";
 import { readState, writeState } from "@/services/local-store";
 import { createNotification } from "@/services/notification-service";
 import { uploadPostImage } from "@/services/storage-service";
-import { CreatePostInput, FootballTeam, Post, User } from "@/types";
+import { BreakingItem, CreatePostInput, FootballTeam, Post, User } from "@/types";
 import { footballTeams } from "@/services/football-hub-data";
 
 const FIRESTORE_TIMEOUT_MS = 5000;
@@ -80,14 +87,115 @@ function mapFirestorePost(
     text: data.text || "",
     imageURL: data.imageURL || "",
     teamTag: data.teamTag,
+    matchTag: typeof data.matchTag === "string" ? data.matchTag : undefined,
     hashtags: Array.isArray(data.hashtags)
       ? data.hashtags.map((tag) => normalizeHashtag(String(tag))).filter(Boolean)
       : [],
+    summary: typeof data.summary === "string" ? data.summary : "",
+    sourceLabel: typeof data.sourceLabel === "string" ? data.sourceLabel : "",
+    sourceUrl: typeof data.sourceUrl === "string" ? data.sourceUrl : "",
+    isSystem: Boolean(data.isSystem),
     createdAt,
     likeCount: typeof data.likeCount === "number" ? data.likeCount : 0,
     commentCount: typeof data.commentCount === "number" ? data.commentCount : 0,
     likedBy: Array.isArray(data.likedBy) ? data.likedBy : []
   };
+}
+
+const systemPostAuthor = {
+  id: "system_breaking_desk",
+  username: "Breaking Desk",
+  userProfileImageURL: ""
+} as const;
+
+function getBreakingItemHashtags(item: BreakingItem) {
+  const rawTags = [
+    item.team === "Manchester United"
+      ? "ggmu"
+      : item.team === "Arsenal"
+        ? "coyg"
+        : item.team === "Chelsea"
+          ? "cfc"
+          : item.team === "Manchester City"
+            ? "mcfc"
+            : "",
+    "breaking",
+    "football",
+    ...parseHashtags(`${item.headline} ${item.summary ?? ""}`)
+  ];
+
+  return Array.from(new Set(rawTags.map((tag) => normalizeHashtag(tag)).filter(Boolean)));
+}
+
+export function mapBreakingItemToDiscussionPost(item: BreakingItem): Post {
+  const hashtags = getBreakingItemHashtags(item);
+
+  return {
+    id: getBreakingDiscussionPostId(item.headline, item.source),
+    userId: systemPostAuthor.id,
+    username: systemPostAuthor.username,
+    userProfileImageURL: systemPostAuthor.userProfileImageURL,
+    text: item.headline,
+    summary: item.summary ?? "",
+    sourceLabel: item.source,
+    sourceUrl: item.link ?? "",
+    imageURL: "",
+    teamTag: item.team,
+    matchTag: item.team ? createDeterministicId("match", item.team) : undefined,
+    hashtags,
+    isSystem: true,
+    createdAt: item.timestamp,
+    likeCount: 0,
+    commentCount: 0,
+    likedBy: []
+  };
+}
+
+export async function syncBreakingDiscussionPosts(items: BreakingItem[], actor?: User | null) {
+  const discussionPosts = items.map(mapBreakingItemToDiscussionPost);
+
+  if (!discussionPosts.length) {
+    return [];
+  }
+
+  if (isFirebaseConfigured && firebaseDb && actor) {
+    const db = firebaseDb;
+
+    await Promise.all(
+      discussionPosts.map(async (post) => {
+        const postRef = doc(db, "posts", post.id);
+        const snapshot = await withFirestoreTimeout(
+          getDoc(postRef),
+          "Timed out while checking breaking news discussion posts."
+        );
+
+        if (snapshot.exists()) {
+          return;
+        }
+
+        await withFirestoreTimeout(
+          setDoc(postRef, post),
+          "Timed out while syncing breaking news discussion posts."
+        );
+      })
+    );
+  } else if (!isFirebaseConfigured || !firebaseDb) {
+    const state = readState();
+    const nextPosts = [...state.posts];
+
+    discussionPosts.forEach((post) => {
+      if (!nextPosts.some((item) => item.id === post.id)) {
+        nextPosts.unshift(post);
+      }
+    });
+
+    writeState({
+      ...state,
+      posts: nextPosts.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
+    });
+  }
+
+  return discussionPosts;
 }
 
 export async function getPosts(): Promise<Post[]> {

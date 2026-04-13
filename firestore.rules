@@ -9,6 +9,14 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function isBreakingSystemPost() {
+      return request.resource.data.isSystem == true
+        && request.resource.data.userId == "system_breaking_desk"
+        && request.resource.data.username == "Breaking Desk"
+        && request.resource.data.likeCount == 0
+        && request.resource.data.commentCount == 0;
+    }
+
     match /users/{userId} {
       allow read: if true;
 
@@ -71,7 +79,11 @@ service cloud.firestore {
       allow read: if true;
 
       allow create: if isSignedIn()
-        && request.resource.data.userId == request.auth.uid;
+        && (
+          (request.resource.data.isSystem != true
+            && request.resource.data.userId == request.auth.uid)
+          || isBreakingSystemPost()
+        );
 
       allow update: if isSignedIn()
         && request.resource.data.diff(resource.data).changedKeys().hasOnly(["likedBy", "likeCount", "commentCount"])
@@ -82,7 +94,12 @@ service cloud.firestore {
         && request.resource.data.text == resource.data.text
         && request.resource.data.imageURL == resource.data.imageURL
         && request.resource.data.teamTag == resource.data.teamTag
+        && request.resource.data.matchTag == resource.data.matchTag
         && request.resource.data.hashtags == resource.data.hashtags
+        && request.resource.data.summary == resource.data.summary
+        && request.resource.data.sourceLabel == resource.data.sourceLabel
+        && request.resource.data.sourceUrl == resource.data.sourceUrl
+        && request.resource.data.isSystem == resource.data.isSystem
         && request.resource.data.createdAt == resource.data.createdAt;
 
       allow delete: if false;

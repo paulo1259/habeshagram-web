@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Radio, Send, TimerReset, Zap } from "lucide-react";
 import { MatchdayCenter } from "@/components/discovery/matchday-center";
+import { PremierLeagueStandings } from "@/components/discovery/premier-league-standings";
 import { AppShell } from "@/components/layout/app-shell";
 import { TrendingTopics } from "@/components/discovery/trending-topics";
 import { Avatar } from "@/components/ui/avatar";
@@ -35,6 +36,29 @@ const statusAccent = {
   FT: "bg-stone-900 text-white",
   UPCOMING: "bg-brand-500 text-white"
 } as const;
+
+const teamShortLabel: Record<FootballTeam, string> = {
+  "Manchester United": "Man Utd",
+  Arsenal: "Arsenal",
+  Chelsea: "Chelsea",
+  "Manchester City": "Man City"
+};
+
+function getLiveScoreLine(match: LiveMatch) {
+  const score = match.status === "UPCOMING"
+    ? `${teamShortLabel[match.homeTeam]} vs ${teamShortLabel[match.awayTeam]}`
+    : `${teamShortLabel[match.homeTeam]} ${match.homeScore}-${match.awayScore} ${teamShortLabel[match.awayTeam]}`;
+  const suffix =
+    match.status === "LIVE"
+      ? " | LIVE"
+      : match.status === "HT"
+        ? " | HT"
+        : match.status === "FT"
+          ? " | FT"
+          : " | UPCOMING";
+
+  return `${match.matchClock} ${score}${suffix}`;
+}
 
 export function LiveMatchCenterPage() {
   const { posts, isLoading, currentUser, createNewPost } = useAppData();
@@ -113,6 +137,17 @@ export function LiveMatchCenterPage() {
       .slice(0, 40);
   }, [activeMatch, posts]);
 
+  const hotMatchPosts = useMemo(
+    () =>
+      [...liveReactions]
+        .sort(
+          (a, b) =>
+            b.likeCount + b.commentCount * 1.5 - (a.likeCount + a.commentCount * 1.5)
+        )
+        .slice(0, 3),
+    [liveReactions]
+  );
+
   useEffect(() => {
     const nextIds = liveReactions.map((post) => post.id);
     const previousIds = previousReactionIds.current;
@@ -182,6 +217,11 @@ export function LiveMatchCenterPage() {
                 <p className="mt-3 text-sm leading-6 text-white/90 sm:text-[15px]">
                   Real football-data.org match coverage for Premier League club nights, plus HabeshaGram fan reactions on top.
                 </p>
+                {activeMatch ? (
+                  <p className="mt-3 inline-flex rounded-full bg-white/12 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white/95">
+                    {getLiveScoreLine(activeMatch)}
+                  </p>
+                ) : null}
               </div>
 
               <div className="grid grid-cols-2 gap-2 sm:min-w-[17rem]">
@@ -251,6 +291,9 @@ export function LiveMatchCenterPage() {
                       </div>
                       <p className="text-xs font-medium text-stone-500">{match.venue}</p>
                     </div>
+                    <p className="mt-3 text-sm font-bold tracking-tight text-ink">
+                      {getLiveScoreLine(match)}
+                    </p>
                   </div>
 
                   <div className="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
@@ -345,7 +388,7 @@ export function LiveMatchCenterPage() {
                   <div className="rounded-[24px] bg-brand-50/70 px-4 py-3">
                     <div className="flex items-center gap-2 text-brand-800">
                       <Zap className="h-4 w-4" />
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em]">Simulated pulse</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em]">Live pulse</p>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-stone-700">
                       Match cards refresh from football-data.org on a lightweight polling interval, with safe fallback if the provider slows down.
@@ -365,13 +408,69 @@ export function LiveMatchCenterPage() {
 
               <TrendingTopics liveMatches={matches} compact />
               <MatchdayCenter compact liveMatches={matches} />
+              <PremierLeagueStandings compact />
 
               <section className="space-y-3">
                 <SectionHeader
-                  eyebrow="Fan Reactions"
-                  title={activeMatch ? `${activeMatch.homeTeam} vs ${activeMatch.awayTeam} live chat` : "Live discussion from team-tagged posts"}
-                  description="Fast reactions use the existing posting system and show up here instantly through the live post subscription."
+                  eyebrow="Live Fan Reactions"
+                  title={activeMatch ? `${activeMatch.homeTeam} vs ${activeMatch.awayTeam} reaction thread` : "Live discussion from team-tagged posts"}
+                  description="Fast reactions use the existing posting system, stay team-tagged, and update here automatically through the live post subscription."
                 />
+                {activeMatch ? (
+                  <section className="glass-card rounded-[30px] border border-brand-100/80 p-4 shadow-soft sm:p-5">
+                    {activeMatch.status === "UPCOMING" ? (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">
+                          Pre-match
+                        </p>
+                        <p className="text-lg font-black tracking-tight text-ink">
+                          Kickoff at {activeMatch.matchClock}
+                        </p>
+                        <p className="text-sm leading-6 text-stone-600">
+                          The thread is open early. Join the discussion before kickoff and set the tone for the fan zone.
+                        </p>
+                      </div>
+                    ) : activeMatch.status === "FT" ? (
+                      <div className="space-y-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">
+                          Post-match reactions
+                        </p>
+                        <p className="text-lg font-black tracking-tight text-ink">
+                          Final score: {teamShortLabel[activeMatch.homeTeam]} {activeMatch.homeScore}-{activeMatch.awayScore} {teamShortLabel[activeMatch.awayTeam]}
+                        </p>
+                        <p className="text-sm leading-6 text-stone-600">
+                          The match is done, but the timeline is still hot. Biggest reactions are bubbling up below.
+                        </p>
+                        {hotMatchPosts.length ? (
+                          <div className="grid gap-2">
+                            {hotMatchPosts.map((post) => (
+                              <a
+                                key={post.id}
+                                href={`#post-${post.id}`}
+                                className="rounded-[22px] border border-brand-100 bg-brand-50/40 px-4 py-3 text-sm text-stone-700 transition hover:border-brand-200 hover:bg-brand-50"
+                              >
+                                <p className="font-semibold text-ink">@{post.username}</p>
+                                <p className="mt-1 line-clamp-2 leading-6">{post.text}</p>
+                              </a>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">
+                          Match pulse
+                        </p>
+                        <p className="text-lg font-black tracking-tight text-ink">
+                          {getLiveScoreLine(activeMatch)}
+                        </p>
+                        <p className="text-sm leading-6 text-stone-600">
+                          Join the thread with a quick take, switch team sides in one tap, and watch the reaction feed update in real time.
+                        </p>
+                      </div>
+                    )}
+                  </section>
+                ) : null}
                 <section className="glass-card rounded-[30px] border border-brand-100/80 p-4 shadow-soft sm:p-5">
                   <form onSubmit={handleSubmitReaction} className="space-y-3">
                     <textarea

@@ -18,11 +18,14 @@ import {
   createPost,
   getPosts,
   getPostsByUser,
+  mapBreakingItemToDiscussionPost,
   subscribeToPosts,
+  syncBreakingDiscussionPosts,
   toggleLike
 } from "@/services/post-service";
 import { getSavedPostIds, getSavedPosts, toggleSavedPost } from "@/services/saved-post-service";
 import { useAuth } from "@/hooks/use-auth";
+import { getBreakingItems } from "@/services/news-service";
 import { Comment, CreatePostInput, Post } from "@/types";
 
 type AppContextValue = {
@@ -54,6 +57,7 @@ const AppContext = createContext<AppContextValue | null>(null);
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const { currentUser, isReady, authMode, login, signup, logout, updateProfile } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [systemPosts, setSystemPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
@@ -105,6 +109,40 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
     return unsubscribe;
   }, [isReady]);
+
+  useEffect(() => {
+    if (!isReady) {
+      return;
+    }
+
+    let isMounted = true;
+
+    void (async () => {
+      try {
+        const breakingItems = await getBreakingItems();
+        const syncedPosts = await syncBreakingDiscussionPosts(breakingItems, currentUser);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setSystemPosts(
+          syncedPosts.length ? syncedPosts : breakingItems.map((item) => mapBreakingItemToDiscussionPost(item))
+        );
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        const fallbackItems = await getBreakingItems();
+        setSystemPosts(fallbackItems.map((item) => mapBreakingItemToDiscussionPost(item)));
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser, isReady]);
 
   useEffect(() => {
     if (!currentUser) {
@@ -231,7 +269,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       currentUser,
-      posts,
+      posts: [...systemPosts, ...posts]
+        .reduce<Post[]>((accumulator, post) => {
+          if (!accumulator.some((item) => item.id === post.id)) {
+            accumulator.push(post);
+          }
+          return accumulator;
+        }, [])
+        .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
       isLoading,
       isReady,
       authMode,
@@ -255,6 +300,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [
       currentUser,
       posts,
+      systemPosts,
       isLoading,
       isReady,
       authMode,

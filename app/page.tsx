@@ -11,6 +11,7 @@ import { EventHighlights } from "@/components/discovery/event-highlights";
 import { FootballBuzz } from "@/components/discovery/football-buzz";
 import { LocalNewsSection } from "@/components/discovery/local-news-section";
 import { MatchdayCenter } from "@/components/discovery/matchday-center";
+import { PremierLeagueStandings } from "@/components/discovery/premier-league-standings";
 import { RadioShowcase } from "@/components/discovery/radio-showcase";
 import { TrendingTopics } from "@/components/discovery/trending-topics";
 import { WhoToFollow } from "@/components/discovery/who-to-follow";
@@ -162,6 +163,9 @@ export default function HomePage() {
 
         <BreakingNow />
         <MatchdayCenter />
+        <div className="xl:hidden">
+          <PremierLeagueStandings />
+        </div>
 
         {activeError ? (
           <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{activeError}</div>
