@@ -31,20 +31,53 @@ export function BreakingNow({
 }) {
   const [items, setItems] = useState<BreakingItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     let isMounted = true;
 
-    void (async () => {
-      const next = await getBreakingItems(team);
-      if (isMounted) {
-        setItems(next);
-        setIsLoading(false);
+    const loadBreakingItems = async () => {
+      try {
+        const query = team ? `?team=${encodeURIComponent(team)}` : "";
+        const response = await fetch(`/api/news/breaking${query}`, {
+          method: "GET",
+          cache: "no-store"
+        });
+
+        if (!response.ok) {
+          throw new Error(`Breaking feed request failed with ${response.status}.`);
+        }
+
+        const payload = (await response.json()) as {
+          items?: BreakingItem[];
+          message?: string;
+        };
+
+        if (isMounted) {
+          setItems(payload.items?.length ? payload.items : await getBreakingItems(team));
+          setMessage(payload.message ?? "");
+        }
+      } catch {
+        if (isMounted) {
+          setItems(await getBreakingItems(team));
+          setMessage("");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-    })();
+    };
+
+    void loadBreakingItems();
+
+    const interval = window.setInterval(() => {
+      void loadBreakingItems();
+    }, 5 * 60 * 1000);
 
     return () => {
       isMounted = false;
+      window.clearInterval(interval);
     };
   }, [team]);
 
@@ -73,6 +106,11 @@ export function BreakingNow({
       />
 
       <div className={`mt-4 ${compact ? "space-y-2.5" : "space-y-3"}`}>
+        {!isLoading && message ? (
+          <div className="rounded-[20px] border border-brand-100 bg-brand-50/50 px-4 py-3 text-sm text-brand-900">
+            {message}
+          </div>
+        ) : null}
         {isLoading
           ? [1, 2, 3].map((item) => (
               <div key={item} className="rounded-[24px] border border-brand-100 bg-brand-50/40 px-4 py-4">

@@ -116,7 +116,7 @@ export type DailyDebatePrompt = {
   suggestedText: string;
 };
 
-export type LiveMatchStatus = "LIVE" | "HT" | "FT";
+export type LiveMatchStatus = "LIVE" | "HT" | "FT" | "UPCOMING";
 
 export type LiveMatchEvent = {
   id: string;

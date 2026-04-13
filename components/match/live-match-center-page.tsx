@@ -12,7 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
 import { useAppData } from "@/hooks/use-app-data";
 import { getTeamSlug } from "@/services/football-hub-data";
-import { getInitialLiveMatches, getNextLiveMatches } from "@/services/live-match-service";
+import { fetchLiveMatches, getInitialLiveMatches } from "@/services/live-match-service";
 import { formatDate } from "@/lib/utils";
 import { FootballTeam, LiveMatch, Post } from "@/types";
 
@@ -29,9 +29,18 @@ const timelineAccent = {
   red: "bg-red-50 text-red-700 border-red-100"
 } as const;
 
+const statusAccent = {
+  LIVE: "bg-red-500 text-white",
+  HT: "bg-orange-500 text-white",
+  FT: "bg-stone-900 text-white",
+  UPCOMING: "bg-brand-500 text-white"
+} as const;
+
 export function LiveMatchCenterPage() {
   const { posts, isLoading, currentUser, createNewPost } = useAppData();
   const [matches, setMatches] = useState<LiveMatch[]>(() => getInitialLiveMatches());
+  const [isMatchLoading, setIsMatchLoading] = useState(true);
+  const [matchMessage, setMatchMessage] = useState("");
   const [activeMatchId, setActiveMatchId] = useState(getInitialLiveMatches()[0]?.id ?? "");
   const [reactionText, setReactionText] = useState("");
   const [selectedTeam, setSelectedTeam] = useState<FootballTeam | "">("");
@@ -39,21 +48,46 @@ export function LiveMatchCenterPage() {
   const [reactionError, setReactionError] = useState("");
   const [freshReactionIds, setFreshReactionIds] = useState<string[]>([]);
   const previousReactionIds = useRef<string[]>([]);
-  const [tick, setTick] = useState(1);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const loadMatches = async () => {
+      try {
+        if (isMounted) {
+          setIsMatchLoading(true);
+        }
+
+        const payload = await fetchLiveMatches();
+        if (!isMounted) {
+          return;
+        }
+
+        setMatches(payload.matches);
+        setMatchMessage(payload.message ?? "");
+        setActiveMatchId((current) =>
+          payload.matches.some((match) => match.id === current)
+            ? current
+            : (payload.matches[0]?.id ?? "")
+        );
+      } finally {
+        if (isMounted) {
+          setIsMatchLoading(false);
+        }
+      }
+    };
+
+    void loadMatches();
+
     const interval = window.setInterval(() => {
-      setMatches(getNextLiveMatches(tick));
-      setTick((current) => current + 1);
-    }, 9000);
+      void loadMatches();
+    }, 45000);
 
-    return () => window.clearInterval(interval);
-  }, [tick]);
-
-  const liveTeams = useMemo(
-    () => Array.from(new Set(matches.flatMap((match) => [match.homeTeam, match.awayTeam]))),
-    [matches]
-  );
+    return () => {
+      isMounted = false;
+      window.clearInterval(interval);
+    };
+  }, []);
 
   const activeMatch = useMemo(
     () => matches.find((match) => match.id === activeMatchId) ?? matches[0] ?? null,
@@ -146,7 +180,7 @@ export function LiveMatchCenterPage() {
                   Live Matchday Pulse
                 </h1>
                 <p className="mt-3 text-sm leading-6 text-white/90 sm:text-[15px]">
-                  Mock live scores, momentum swings, and fan reactions built to make HabeshaGram feel alive on football nights.
+                  Real football-data.org match coverage for Premier League club nights, plus HabeshaGram fan reactions on top.
                 </p>
               </div>
 
@@ -172,12 +206,32 @@ export function LiveMatchCenterPage() {
           <SectionHeader
             eyebrow="Now Live"
             title="Matches lighting up the timeline"
-            description="Updates are simulated on a short interval for now. Swap the seeded service for a real live-score API later without changing this page."
+            description="Live and nearby Premier League club fixtures poll on a lightweight interval, while fan reactions keep flowing through the existing real-time post system."
           />
+
+          {matchMessage ? (
+            <div className="rounded-[24px] border border-brand-100 bg-brand-50/60 px-4 py-3 text-sm text-brand-900">
+              {matchMessage}
+            </div>
+          ) : null}
 
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
             <div className="space-y-4">
-              {matches.map((match) => (
+              {isMatchLoading ? (
+                [1, 2].map((item) => (
+                  <article
+                    key={item}
+                    className="glass-card overflow-hidden rounded-[30px] border border-brand-100/80 shadow-soft"
+                  >
+                    <div className="h-16 animate-pulse bg-brand-100/60" />
+                    <div className="space-y-4 px-4 py-5 sm:px-5">
+                      <div className="h-16 animate-pulse rounded-[24px] bg-brand-100/60" />
+                      <div className="h-24 animate-pulse rounded-[24px] bg-brand-100/60" />
+                    </div>
+                  </article>
+                ))
+              ) : matches.length ? (
+                matches.map((match) => (
                 <article
                   key={match.id}
                   className={`glass-card overflow-hidden rounded-[30px] border shadow-soft transition ${
@@ -189,7 +243,7 @@ export function LiveMatchCenterPage() {
                   <div className="border-b border-brand-100/80 bg-gradient-to-r from-brand-50 via-white to-orange-50 px-4 py-3 sm:px-5">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-red-500 px-3 py-1 text-white">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 ${statusAccent[match.status]}`}>
                           <Radio className="h-3.5 w-3.5" />
                           {match.status}
                         </span>
@@ -271,7 +325,13 @@ export function LiveMatchCenterPage() {
                     </div>
                   </div>
                 </article>
-              ))}
+              ))
+              ) : (
+                <EmptyState
+                  title="No relevant live club matches right now"
+                  description="The live page is ready, but football-data.org did not return any matching Premier League fixtures for the tracked clubs at the moment."
+                />
+              )}
             </div>
 
             <div className="space-y-4">
@@ -288,7 +348,7 @@ export function LiveMatchCenterPage() {
                       <p className="text-xs font-semibold uppercase tracking-[0.14em]">Simulated pulse</p>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-stone-700">
-                      Match cards rotate through seeded snapshots every few seconds to simulate score and timeline movement.
+                      Match cards refresh from football-data.org on a lightweight polling interval, with safe fallback if the provider slows down.
                     </p>
                   </div>
                   <div className="rounded-[24px] bg-orange-50/80 px-4 py-3">
@@ -297,7 +357,7 @@ export function LiveMatchCenterPage() {
                       <p className="text-xs font-semibold uppercase tracking-[0.14em]">API-ready</p>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-stone-700">
-                      The page reads from a dedicated live match service, so you can replace the mock snapshots with polling or streaming later.
+                      The API key stays server-side through a Next route, so the page can stay Vercel-ready without exposing secrets in the browser.
                     </p>
                   </div>
                 </div>

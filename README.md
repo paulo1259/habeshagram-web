@@ -82,9 +82,40 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
+FOOTBALL_DATA_API_KEY=
+BREAKING_NEWS_RSS_URL=
 ```
 
 If these are blank, the app still starts, but authentication remains unavailable until you add real values and restart the dev server.
+
+`FOOTBALL_DATA_API_KEY` is server-only. Keep it in `.env.local` and in Vercel project environment variables, but do not prefix it with `NEXT_PUBLIC_`.
+`BREAKING_NEWS_RSS_URL` is also server-only and optional. If you leave it blank, HabeshaGram defaults to the BBC Sport football RSS feed.
+
+### football-data.org token setup
+
+For local development, add this exact line to `.env.local`:
+
+```env
+FOOTBALL_DATA_API_KEY=YOUR_FOOTBALL_DATA_TOKEN
+```
+
+For Vercel:
+
+1. Open your project in Vercel
+2. Go to `Project Settings > Environment Variables`
+3. Add `FOOTBALL_DATA_API_KEY`
+4. Paste your football-data.org token as the value
+5. Save it for the environments you want, usually:
+   - `Production`
+   - `Preview`
+   - `Development`
+6. Redeploy after saving the variable so the server route can read the new token
+
+Important:
+
+- do not rename it to `NEXT_PUBLIC_FOOTBALL_DATA_API_KEY`
+- do not place the token in client components
+- the browser should only call `/api/football/live`, never football-data.org directly
 
 ## Firebase Setup
 
@@ -163,6 +194,28 @@ The app uploads files to:
 - profile image: `users/{userId}/profile.jpg`
 
 Your Storage rules should allow authenticated users to write only inside their own uid path and allow public reads for rendered media.
+
+### Live Football Data
+
+HabeshaGram's Live Match Center can now read real match data from football-data.org through an internal Next.js route handler.
+
+- server route: `app/api/football/live/route.ts`
+- server env var: `FOOTBALL_DATA_API_KEY`
+- current provider focus: Premier League fixtures involving Manchester United, Arsenal, Chelsea, and Manchester City
+
+The app keeps the provider key on the server, polls the local route from the browser, and falls back to the last successful response or the built-in seeded slate if the provider is unavailable.
+
+If `FOOTBALL_DATA_API_KEY` is missing or blank, `app/api/football/live/route.ts` returns a friendly fallback payload instead of crashing the live page.
+
+### Breaking Football News
+
+HabeshaGram's Breaking Now section can read live football stories through an internal Next.js route:
+
+- server route: `app/api/news/breaking/route.ts`
+- default provider: BBC Sport football RSS
+- optional override env var: `BREAKING_NEWS_RSS_URL`
+
+The route ingests RSS on the server, filters for Manchester United, Arsenal, Chelsea, and Manchester City relevance, caches the last successful payload in memory, and falls back to the seeded editorial cards if the provider becomes unavailable.
 
 ### Reporting / Moderation MVP
 

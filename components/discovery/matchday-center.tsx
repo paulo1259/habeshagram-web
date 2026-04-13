@@ -80,7 +80,7 @@ export function MatchdayCenter({
             Matchday Center
           </p>
           <h3 className="mt-1 text-xl font-black tracking-tight text-ink">
-            {compact ? "Today’s football pulse" : "Everything shaping football day on HabeshaGram"}
+            {compact ? "Today's football pulse" : "Everything shaping football day on HabeshaGram"}
           </h3>
           <p className="mt-2 text-sm leading-6 text-stone-600">
             {compact
@@ -175,7 +175,7 @@ export function MatchdayCenter({
       <div className={`mt-4 grid gap-3 ${compact ? "" : "lg:grid-cols-[minmax(0,1fr)_18rem]"}`}>
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Today’s key fixtures</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Today's key fixtures</p>
             <Link href="/match/live" className="text-xs font-semibold text-brand-800 transition hover:text-brand-900">
               View all
             </Link>
@@ -230,13 +230,13 @@ export function MatchdayCenter({
                 </p>
               </Link>
               <p className="text-xs leading-5 text-stone-500">
-                Based on today’s recent team-tagged post activity from the live HabeshaGram feed.
+                Based on today's recent team-tagged post activity from the live HabeshaGram feed.
               </p>
             </div>
           ) : (
             <div className="mt-3 rounded-[22px] bg-brand-50/40 px-4 py-4">
               <p className="text-sm leading-6 text-stone-600">
-                Team-tagged posts will crown today’s loudest fanbase once the timeline heats up.
+                Team-tagged posts will crown today's loudest fanbase once the timeline heats up.
               </p>
             </div>
           )}

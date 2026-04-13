@@ -19,8 +19,26 @@ export async function getFootballBuzzByTeam(team: FootballTeam): Promise<Footbal
 }
 
 export async function getBreakingItems(team?: FootballTeam): Promise<BreakingItem[]> {
-  // TODO: Replace this seeded layer with a live football/news/community feed or an API route.
-  return team ? breakingItems.filter((item) => item.team === team || !item.team) : breakingItems;
+  try {
+    const query = team ? `?team=${encodeURIComponent(team)}` : "";
+    const response = await fetch(`/api/news/breaking${query}`, {
+      method: "GET",
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error(`Breaking feed request failed with ${response.status}.`);
+    }
+
+    const payload = (await response.json()) as { items?: BreakingItem[] };
+    return payload.items?.length
+      ? payload.items
+      : team
+        ? breakingItems.filter((item) => item.team === team || !item.team)
+        : breakingItems;
+  } catch {
+    return team ? breakingItems.filter((item) => item.team === team || !item.team) : breakingItems;
+  }
 }
 
 export async function getDailyDebates(team?: FootballTeam): Promise<DailyDebatePrompt[]> {
