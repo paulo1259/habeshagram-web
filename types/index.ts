@@ -143,6 +143,7 @@ export type LiveMatch = {
   status: LiveMatchStatus;
   matchClock: string;
   venue: string;
+  kickoffAt?: string;
   timeline: LiveMatchEvent[];
 };
 

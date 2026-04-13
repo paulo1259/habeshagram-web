@@ -45,19 +45,15 @@ const teamShortLabel: Record<FootballTeam, string> = {
 };
 
 function getLiveScoreLine(match: LiveMatch) {
-  const score = match.status === "UPCOMING"
-    ? `${teamShortLabel[match.homeTeam]} vs ${teamShortLabel[match.awayTeam]}`
-    : `${teamShortLabel[match.homeTeam]} ${match.homeScore}-${match.awayScore} ${teamShortLabel[match.awayTeam]}`;
-  const suffix =
-    match.status === "LIVE"
-      ? " | LIVE"
-      : match.status === "HT"
-        ? " | HT"
-        : match.status === "FT"
-          ? " | FT"
-          : " | UPCOMING";
+  if (match.status === "UPCOMING") {
+    return `${match.matchClock} ${teamShortLabel[match.homeTeam]} vs ${teamShortLabel[match.awayTeam]}`;
+  }
 
-  return `${match.matchClock} ${score}${suffix}`;
+  if (match.status === "FT") {
+    return `FT ${teamShortLabel[match.homeTeam]} ${match.homeScore}-${match.awayScore} ${teamShortLabel[match.awayTeam]}`;
+  }
+
+  return `${match.matchClock} ${teamShortLabel[match.homeTeam]} ${match.homeScore}-${match.awayScore} ${teamShortLabel[match.awayTeam]} 🔴`;
 }
 
 export function LiveMatchCenterPage() {
@@ -105,7 +101,7 @@ export function LiveMatchCenterPage() {
 
     const interval = window.setInterval(() => {
       void loadMatches();
-    }, 45000);
+    }, 15000);
 
     return () => {
       isMounted = false;
@@ -215,7 +211,7 @@ export function LiveMatchCenterPage() {
                   Live Matchday Pulse
                 </h1>
                 <p className="mt-3 text-sm leading-6 text-white/90 sm:text-[15px]">
-                  Real football-data.org match coverage for Premier League club nights, plus HabeshaGram fan reactions on top.
+                  Real Free API Live Football Data coverage for Premier League club nights, plus HabeshaGram fan reactions on top.
                 </p>
                 {activeMatch ? (
                   <p className="mt-3 inline-flex rounded-full bg-white/12 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white/95">
@@ -372,7 +368,7 @@ export function LiveMatchCenterPage() {
               ) : (
                 <EmptyState
                   title="No relevant live club matches right now"
-                  description="The live page is ready, but football-data.org did not return any matching Premier League fixtures for the tracked clubs at the moment."
+                  description="The live page is ready, but the live football provider did not return any matching Premier League fixtures for the tracked clubs at the moment."
                 />
               )}
             </div>
@@ -382,7 +378,7 @@ export function LiveMatchCenterPage() {
                 <SectionHeader
                   eyebrow="Live Notes"
                   title="What makes this feel alive"
-                  description="A tiny mock interval is enough to make the match center feel active for now."
+                  description="The live page polls frequently, keeps recent finals visible, and protects the UI with safe fallback if the provider slows down."
                 />
                 <div className="mt-4 space-y-3">
                   <div className="rounded-[24px] bg-brand-50/70 px-4 py-3">
@@ -391,7 +387,7 @@ export function LiveMatchCenterPage() {
                       <p className="text-xs font-semibold uppercase tracking-[0.14em]">Live pulse</p>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-stone-700">
-                      Match cards refresh from football-data.org on a lightweight polling interval, with safe fallback if the provider slows down.
+                      Match cards refresh every 15 seconds from the server route, so scorelines and minutes feel far more responsive during match windows.
                     </p>
                   </div>
                   <div className="rounded-[24px] bg-orange-50/80 px-4 py-3">
@@ -400,7 +396,7 @@ export function LiveMatchCenterPage() {
                       <p className="text-xs font-semibold uppercase tracking-[0.14em]">API-ready</p>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-stone-700">
-                      The API key stays server-side through a Next route, so the page can stay Vercel-ready without exposing secrets in the browser.
+                      Free API Live Football Data stays behind the Next route, so the browser never sees the RapidAPI key and the page can fall back cleanly if the provider rate-limits.
                     </p>
                   </div>
                 </div>

@@ -89,9 +89,14 @@ export function getTodayFixtures(liveMatches?: LiveMatch[]) {
     id: `live-${match.id}`,
     homeTeam: match.homeTeam,
     awayTeam: match.awayTeam,
-    kickoffAt: createUtcTime(index - 1, 30),
+    kickoffAt: match.kickoffAt ?? createUtcTime(index - 1, 30),
     venue: match.venue,
-    status: match.status === "FT" ? "finished" : "live",
+    status:
+      match.status === "FT"
+        ? "finished"
+        : match.status === "UPCOMING"
+          ? "upcoming"
+          : "live",
     homeScore: match.homeScore,
     awayScore: match.awayScore,
     featured: index === 0

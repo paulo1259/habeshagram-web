@@ -1,37 +1,5 @@
 import { FootballTeam, LiveMatch, LiveMatchEvent, LiveMatchStatus } from "@/types";
 
-type FootballDataGoal = {
-  minute?: number | null;
-  injuryTime?: number | null;
-  team?: { name?: string | null } | null;
-  scorer?: { name?: string | null } | null;
-  score?: { home?: number | null; away?: number | null } | null;
-};
-
-type FootballDataBooking = {
-  minute?: number | null;
-  team?: { name?: string | null } | null;
-  player?: { name?: string | null } | null;
-  card?: string | null;
-};
-
-type FootballDataMatch = {
-  id: number;
-  utcDate?: string | null;
-  status?: string | null;
-  minute?: number | string | null;
-  injuryTime?: number | null;
-  venue?: string | null;
-  homeTeam?: { name?: string | null; shortName?: string | null; tla?: string | null } | null;
-  awayTeam?: { name?: string | null; shortName?: string | null; tla?: string | null } | null;
-  score?: {
-    fullTime?: { home?: number | null; away?: number | null } | null;
-    halfTime?: { home?: number | null; away?: number | null } | null;
-  } | null;
-  goals?: FootballDataGoal[] | null;
-  bookings?: FootballDataBooking[] | null;
-};
-
 export type LiveMatchFeed = {
   matches: LiveMatch[];
   source: "api" | "cache" | "fallback";
@@ -40,299 +8,378 @@ export type LiveMatchFeed = {
   message?: string;
 };
 
+export type FootballProviderTeam = {
+  name?: string | null;
+};
+
+export type FootballProviderScore = {
+  home?: number | string | null;
+  away?: number | string | null;
+};
+
+export type FootballProviderIncident = {
+  id?: string | number | null;
+  minute?: number | string | null;
+  team?: string | null;
+  type?: string | null;
+  player?: string | null;
+  description?: string | null;
+};
+
+export type FootballProviderMatch = {
+  match_id?: string | number | null;
+  id?: string | number | null;
+  sport?: string | null;
+  league?: string | null;
+  competition?: string | null;
+  leagueName?: string | null;
+  status?: string | null;
+  minute?: number | string | null;
+  start_time?: string | null;
+  kickoff_at?: string | null;
+  date?: string | null;
+  timestamp?: string | null;
+  venue?: string | null;
+  home_team?: string | null;
+  away_team?: string | null;
+  homeTeam?: FootballProviderTeam | string | null;
+  awayTeam?: FootballProviderTeam | string | null;
+  homeScore?: number | string | null;
+  awayScore?: number | string | null;
+  score?: FootballProviderScore | string | null;
+  goals?: FootballProviderScore | string | null;
+  events?: FootballProviderIncident[] | null;
+  timeline?: FootballProviderIncident[] | null;
+};
+
+const trackedClubAliases: Record<FootballTeam, string[]> = {
+  "Manchester United": ["manchester united", "man united", "man utd"],
+  Arsenal: ["arsenal"],
+  Chelsea: ["chelsea"],
+  "Manchester City": ["manchester city", "man city"]
+};
+
+const teamShortLabel: Record<FootballTeam, string> = {
+  "Manchester United": "Man Utd",
+  Arsenal: "Arsenal",
+  Chelsea: "Chelsea",
+  "Manchester City": "Man City"
+};
+
 const fallbackLiveMatches: LiveMatch[] = [
   {
-    id: "fallback-match-1",
-    homeTeam: "Manchester United",
-    awayTeam: "Chelsea",
+    id: "fallback-live-chelsea-city",
+    homeTeam: "Chelsea",
+    awayTeam: "Manchester City",
     homeScore: 1,
-    awayScore: 0,
+    awayScore: 2,
     status: "LIVE",
-    matchClock: "23'",
-    venue: "Old Trafford",
+    matchClock: "56'",
+    venue: "Stamford Bridge",
+    kickoffAt: new Date(Date.now() - 1000 * 60 * 56).toISOString(),
     timeline: [
       {
-        id: "fallback-match-1-goal",
-        minute: "12'",
-        team: "Manchester United",
+        id: "fallback-event-1",
+        minute: "19'",
+        team: "Manchester City",
         type: "goal",
-        player: "Rashford",
-        description: "Drives inside and finishes low across goal."
+        player: "Haaland",
+        description: "Haaland puts Man City ahead from a cutback."
+      },
+      {
+        id: "fallback-event-2",
+        minute: "41'",
+        team: "Chelsea",
+        type: "goal",
+        player: "Palmer",
+        description: "Palmer curls Chelsea level and the reactions explode."
+      },
+      {
+        id: "fallback-event-3",
+        minute: "54'",
+        team: "Manchester City",
+        type: "goal",
+        player: "Foden",
+        description: "Foden restores the lead with a sharp finish."
       }
     ]
   },
   {
-    id: "fallback-match-2",
+    id: "fallback-upcoming-arsenal-united",
     homeTeam: "Arsenal",
-    awayTeam: "Manchester City",
+    awayTeam: "Manchester United",
     homeScore: 0,
     awayScore: 0,
-    status: "HT",
-    matchClock: "Half-time",
+    status: "UPCOMING",
+    matchClock: "Kickoff 7:30 PM",
     venue: "Emirates Stadium",
+    kickoffAt: new Date(Date.now() + 1000 * 60 * 135).toISOString(),
+    timeline: []
+  },
+  {
+    id: "fallback-finished-united-chelsea",
+    homeTeam: "Manchester United",
+    awayTeam: "Chelsea",
+    homeScore: 3,
+    awayScore: 1,
+    status: "FT",
+    matchClock: "FT",
+    venue: "Old Trafford",
+    kickoffAt: new Date(Date.now() - 1000 * 60 * 125).toISOString(),
     timeline: [
       {
-        id: "fallback-match-2-note",
-        minute: "17'",
-        team: "Arsenal",
-        type: "yellow",
-        player: "Rice",
-        description: "Midfield battle is getting heated."
+        id: "fallback-event-4",
+        minute: "12'",
+        team: "Manchester United",
+        type: "goal",
+        player: "Bruno Fernandes",
+        description: "Bruno opens the scoring from the penalty spot."
+      },
+      {
+        id: "fallback-event-5",
+        minute: "76'",
+        team: "Chelsea",
+        type: "red",
+        player: "Disasi",
+        description: "Chelsea go down to ten after a late red card."
       }
     ]
   }
 ];
 
-let liveMatchCache = fallbackLiveMatches;
-
-const supportedTeamAliases: Record<FootballTeam, string[]> = {
-  "Manchester United": ["manchester united", "man united", "man utd", "manchester united fc"],
-  Arsenal: ["arsenal", "arsenal fc"],
-  Chelsea: ["chelsea", "chelsea fc"],
-  "Manchester City": ["manchester city", "man city", "manchester city fc"]
-};
-
-function normalizeTeamName(value?: string | null) {
-  return (value ?? "").toLowerCase().replace(/fc\b/g, "").replace(/\s+/g, " ").trim();
+function normalizeName(value?: string | null) {
+  return (value ?? "").trim().toLowerCase();
 }
 
-function resolveFootballTeam(...candidates: Array<string | null | undefined>): FootballTeam | null {
-  for (const candidate of candidates) {
-    const normalized = normalizeTeamName(candidate);
-    if (!normalized) {
-      continue;
-    }
+function parseNumber(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
 
-    for (const [team, aliases] of Object.entries(supportedTeamAliases) as Array<[FootballTeam, string[]]>) {
-      if (aliases.includes(normalized)) {
-        return team;
-      }
+  if (typeof value === "string") {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  return 0;
+}
+
+function getTeamName(team: FootballProviderMatch["homeTeam"]) {
+  if (!team) {
+    return undefined;
+  }
+
+  if (typeof team === "string") {
+    return team;
+  }
+
+  return team.name ?? undefined;
+}
+
+function getScoreValue(score: FootballProviderMatch["score"] | number | string | null | undefined, side: "home" | "away") {
+  if (typeof score === "number") {
+    return score;
+  }
+
+  if (typeof score === "string") {
+    const [home, away] = score.split(/[-:]/).map((value) => parseNumber(value.trim()));
+    return side === "home" ? home : away;
+  }
+
+  if (score && typeof score === "object") {
+    return parseNumber(score[side]);
+  }
+
+  return 0;
+}
+
+export function resolveTrackedTeam(value?: string | null) {
+  const normalized = normalizeName(value);
+
+  if (!normalized) {
+    return undefined;
+  }
+
+  for (const [team, aliases] of Object.entries(trackedClubAliases) as Array<[FootballTeam, string[]]>) {
+    if (aliases.some((alias) => normalized.includes(alias) || alias.includes(normalized))) {
+      return team;
     }
+  }
+
+  return undefined;
+}
+
+function mapIncidentType(type?: string | null): LiveMatchEvent["type"] | null {
+  const normalized = normalizeName(type);
+
+  if (normalized.includes("goal")) {
+    return "goal";
+  }
+
+  if (normalized.includes("yellow")) {
+    return "yellow";
+  }
+
+  if (normalized.includes("red")) {
+    return "red";
   }
 
   return null;
 }
 
-function mapProviderStatus(status?: string | null): LiveMatchStatus | null {
-  switch (status) {
-    case "IN_PLAY":
-      return "LIVE";
-    case "PAUSED":
-      return "HT";
-    case "FINISHED":
-      return "FT";
-    case "TIMED":
-    case "SCHEDULED":
-      return "UPCOMING";
-    default:
-      return null;
-  }
-}
-
-function formatKickoffLabel(utcDate?: string | null) {
-  if (!utcDate) {
-    return "Soon";
+function formatKickoffLabel(kickoffAt?: string | null) {
+  if (!kickoffAt) {
+    return "Kickoff soon";
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  return `Kickoff ${new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit"
-  }).format(new Date(utcDate));
+  }).format(new Date(kickoffAt))}`;
 }
 
-function formatMatchClock(match: FootballDataMatch, status: LiveMatchStatus) {
-  if (status === "HT") {
-    return "Half-time";
+function formatMatchClock(status: LiveMatchStatus, minute: number | null | undefined, kickoffAt?: string | null) {
+  if (status === "LIVE" || status === "HT") {
+    return minute && minute > 0 ? `${minute}'` : status;
   }
 
   if (status === "FT") {
-    return "Full-time";
+    return "FT";
   }
 
-  if (status === "UPCOMING") {
-    return formatKickoffLabel(match.utcDate);
-  }
-
-  const minute = typeof match.minute === "number" ? match.minute : Number(match.minute ?? 0);
-  const injuryTime = match.injuryTime ?? 0;
-
-  if (minute > 0 && injuryTime > 0) {
-    return `${minute}+${injuryTime}'`;
-  }
-
-  if (minute > 0) {
-    return `${minute}'`;
-  }
-
-  return "Live";
+  return formatKickoffLabel(kickoffAt);
 }
 
-function describeGoal(goal: FootballDataGoal, team: FootballTeam) {
-  const score = goal.score?.home != null && goal.score?.away != null
-    ? ` ${goal.score.home}-${goal.score.away}.`
-    : ".";
-  return `${team} score${score}`;
-}
+function mapStatus(status?: string | null): LiveMatchStatus {
+  const normalized = normalizeName(status);
 
-function mapGoals(goals: FootballDataGoal[] | null | undefined): LiveMatchEvent[] {
-  const events: LiveMatchEvent[] = [];
-
-  (goals ?? []).forEach((goal, index) => {
-    const team = resolveFootballTeam(goal.team?.name);
-    if (!team || goal.minute == null) {
-      return;
-    }
-
-    events.push({
-      id: `goal-${index}-${goal.minute}`,
-      minute: `${goal.minute}'`,
-      team,
-      type: "goal",
-      player: goal.scorer?.name ?? `${team} scorer`,
-      description: describeGoal(goal, team)
-    });
-  });
-
-  return events;
-}
-
-function mapBookings(bookings: FootballDataBooking[] | null | undefined): LiveMatchEvent[] {
-  const events: LiveMatchEvent[] = [];
-
-  (bookings ?? []).forEach((booking, index) => {
-    const team = resolveFootballTeam(booking.team?.name);
-    if (!team || booking.minute == null) {
-      return;
-    }
-
-    const isRed = (booking.card ?? "").toUpperCase().includes("RED");
-
-    events.push({
-      id: `booking-${index}-${booking.minute}`,
-      minute: `${booking.minute}'`,
-      team,
-      type: isRed ? "red" : "yellow",
-      player: booking.player?.name ?? `${team} player`,
-      description: isRed ? "Shown a red card." : "Booked by the referee."
-    });
-  });
-
-  return events;
-}
-
-function buildTimeline(match: FootballDataMatch, homeTeam: FootballTeam): LiveMatchEvent[] {
-  const mappedTimeline = [...mapGoals(match.goals), ...mapBookings(match.bookings)].sort(
-    (a, b) => Number.parseInt(a.minute, 10) - Number.parseInt(b.minute, 10)
-  );
-
-  if (mappedTimeline.length) {
-    return mappedTimeline.slice(-6);
+  if (
+    ["live", "in_play", "inplay", "1h", "2h"].includes(normalized) ||
+    normalized.includes("live") ||
+    normalized.includes("playing")
+  ) {
+    return "LIVE";
   }
 
-  const status = mapProviderStatus(match.status);
+  if (["ht", "half-time", "halftime", "paused"].includes(normalized) || normalized.includes("half")) {
+    return "HT";
+  }
 
-  if (status === "UPCOMING") {
-    return [
-      {
-        id: `note-${match.id}`,
-        minute: "KO",
-        team: homeTeam,
-        type: "yellow",
-        player: "Matchday Desk",
-        description: `Kickoff is scheduled for ${formatKickoffLabel(match.utcDate)}.`
+  if (
+    ["ft", "finished", "full-time", "full time", "completed"].includes(normalized) ||
+    normalized.includes("final") ||
+    normalized.includes("ended")
+  ) {
+    return "FT";
+  }
+
+  return "UPCOMING";
+}
+
+function getIncidentTeam(match: Pick<LiveMatch, "homeTeam" | "awayTeam">, incident: FootballProviderIncident) {
+  const resolved = resolveTrackedTeam(incident.team);
+  if (resolved) {
+    return resolved;
+  }
+
+  return match.homeTeam;
+}
+
+function mapTimeline(match: Pick<LiveMatch, "homeTeam" | "awayTeam">, source: FootballProviderMatch) {
+  const incidents = source.events ?? source.timeline ?? [];
+
+  return incidents
+    .map((incident, index) => {
+      const type = mapIncidentType(incident.type);
+
+      if (!type) {
+        return null;
       }
-    ];
-  }
 
-  if (status === "FT") {
-    return [
-      {
-        id: `note-${match.id}`,
-        minute: "FT",
-        team: homeTeam,
-        type: "goal",
-        player: "Matchday Desk",
-        description: "Final score confirmed by football-data.org."
-      }
-    ];
-  }
-
-  return [
-    {
-      id: `note-${match.id}`,
-      minute: formatMatchClock(match, status ?? "LIVE"),
-      team: homeTeam,
-      type: "yellow",
-      player: "Matchday Desk",
-      description: "Live match data is updating from football-data.org."
-    }
-  ];
+      return {
+        id: String(incident.id ?? `${source.match_id ?? source.id ?? "match"}-${index}`),
+        minute: parseNumber(incident.minute) > 0 ? `${parseNumber(incident.minute)}'` : "Live",
+        team: getIncidentTeam(match, incident),
+        type,
+        player: incident.player?.trim() || "Match event",
+        description: incident.description?.trim() || incident.type?.trim() || "Live match update"
+      } satisfies LiveMatchEvent;
+    })
+    .filter((event): event is LiveMatchEvent => Boolean(event))
+    .slice(0, 8);
 }
 
-function getScoreValue(value?: number | null) {
-  return typeof value === "number" ? value : 0;
-}
-
-export function mapFootballDataMatchToLiveMatch(match: FootballDataMatch): LiveMatch | null {
-  const homeTeam = resolveFootballTeam(
-    match.homeTeam?.name,
-    match.homeTeam?.shortName,
-    match.homeTeam?.tla
-  );
-  const awayTeam = resolveFootballTeam(
-    match.awayTeam?.name,
-    match.awayTeam?.shortName,
-    match.awayTeam?.tla
-  );
+export function mapProviderMatchToLiveMatch(source: FootballProviderMatch): LiveMatch | null {
+  const homeTeam = resolveTrackedTeam(source.home_team ?? getTeamName(source.homeTeam));
+  const awayTeam = resolveTrackedTeam(source.away_team ?? getTeamName(source.awayTeam));
 
   if (!homeTeam || !awayTeam) {
     return null;
   }
 
-  const status = mapProviderStatus(match.status);
-  if (!status) {
-    return null;
-  }
-
-  return {
-    id: `fd-${match.id}`,
+  const kickoffAt = source.start_time ?? source.kickoff_at ?? source.date ?? source.timestamp ?? undefined;
+  const status = mapStatus(source.status);
+  const mappedMatch = {
+    id: String(source.match_id ?? source.id ?? `${homeTeam}-${awayTeam}-${kickoffAt ?? "fixture"}`),
     homeTeam,
     awayTeam,
-    homeScore: getScoreValue(match.score?.fullTime?.home),
-    awayScore: getScoreValue(match.score?.fullTime?.away),
+    homeScore:
+      source.homeScore != null
+        ? parseNumber(source.homeScore)
+        : getScoreValue(source.score ?? source.goals, "home"),
+    awayScore:
+      source.awayScore != null
+        ? parseNumber(source.awayScore)
+        : getScoreValue(source.score ?? source.goals, "away"),
     status,
-    matchClock: formatMatchClock(match, status),
-    venue: match.venue ?? "Premier League venue",
-    timeline: buildTimeline(match, homeTeam)
-  };
+    matchClock: formatMatchClock(status, parseNumber(source.minute), kickoffAt),
+    venue: source.venue?.trim() || source.leagueName?.trim() || source.league?.trim() || "Premier League venue",
+    kickoffAt,
+    timeline: [] as LiveMatchEvent[]
+  } satisfies LiveMatch;
+
+  mappedMatch.timeline = mapTimeline(mappedMatch, source);
+  return mappedMatch;
 }
 
 function getStatusPriority(status: LiveMatchStatus) {
-  switch (status) {
-    case "LIVE":
-      return 0;
-    case "HT":
-      return 1;
-    case "UPCOMING":
-      return 2;
-    case "FT":
-      return 3;
-    default:
-      return 4;
+  if (status === "LIVE") {
+    return 0;
   }
+
+  if (status === "UPCOMING") {
+    return 1;
+  }
+
+  if (status === "FT") {
+    return 2;
+  }
+
+  return 3;
 }
 
 export function prioritizeLiveMatches(matches: LiveMatch[]) {
   return [...matches]
     .sort((a, b) => {
-      const statusDelta = getStatusPriority(a.status) - getStatusPriority(b.status);
-      if (statusDelta !== 0) {
-        return statusDelta;
+      const statusDiff = getStatusPriority(a.status) - getStatusPriority(b.status);
+      if (statusDiff !== 0) {
+        return statusDiff;
       }
 
-      return a.homeTeam.localeCompare(b.homeTeam);
+      if (a.status === "FT" && b.status === "FT") {
+        return +new Date(b.kickoffAt ?? 0) - +new Date(a.kickoffAt ?? 0);
+      }
+
+      const timeDiff = +new Date(a.kickoffAt ?? 0) - +new Date(b.kickoffAt ?? 0);
+      if (timeDiff !== 0) {
+        return timeDiff;
+      }
+
+      return `${teamShortLabel[a.homeTeam]}${teamShortLabel[a.awayTeam]}`.localeCompare(
+        `${teamShortLabel[b.homeTeam]}${teamShortLabel[b.awayTeam]}`
+      );
     })
-    .slice(0, 4);
+    .slice(0, 8);
 }
 
 export function getFallbackLiveMatches() {
@@ -340,12 +387,10 @@ export function getFallbackLiveMatches() {
 }
 
 export function getInitialLiveMatches() {
-  return liveMatchCache;
+  return fallbackLiveMatches;
 }
 
-export function getNextLiveMatches() {
-  return liveMatchCache;
-}
+let liveMatchesCache = fallbackLiveMatches;
 
 export async function fetchLiveMatches(): Promise<LiveMatchFeed> {
   try {
@@ -360,19 +405,19 @@ export async function fetchLiveMatches(): Promise<LiveMatchFeed> {
 
     const payload = (await response.json()) as LiveMatchFeed;
     if (payload.matches?.length) {
-      liveMatchCache = payload.matches;
+      liveMatchesCache = payload.matches;
     }
     return payload;
   } catch (error) {
     return {
-      matches: liveMatchCache,
+      matches: liveMatchesCache,
       source: "cache",
       stale: true,
       fetchedAt: new Date().toISOString(),
       message:
         error instanceof Error
-          ? `Using the last successful live update for now. ${error.message}`
-          : "Using the last successful live update for now."
+          ? `Using the last successful live match snapshot for now. ${error.message}`
+          : "Using the last successful live match snapshot for now."
     };
   }
 }
