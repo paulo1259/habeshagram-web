@@ -17,9 +17,11 @@ import { TrendingTopics } from "@/components/discovery/trending-topics";
 import { VideoHighlights } from "@/components/discovery/video-highlights";
 import { WhoToFollow } from "@/components/discovery/who-to-follow";
 import { AppShell } from "@/components/layout/app-shell";
+import { GoalAlertStack } from "@/components/match/goal-alert-stack";
 import { FeedList } from "@/components/posts/feed-list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useAppData } from "@/hooks/use-app-data";
+import { useLiveMatchPulse } from "@/hooks/use-live-match-pulse";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { getFollowingIds } from "@/services/follow-service";
 import { getPostsByUsers } from "@/services/post-service";
@@ -27,6 +29,7 @@ import { Post } from "@/types";
 
 export default function HomePage() {
   const { currentUser, posts, isLoading, errorMessage } = useAppData();
+  const { matches: liveMatches, goalAlerts } = useLiveMatchPulse();
   const [feedMode, setFeedMode] = useState<"for-you" | "following">("for-you");
   const [followingPosts, setFollowingPosts] = useState<Post[]>([]);
   const [isFollowingLoading, setIsFollowingLoading] = useState(false);
@@ -83,6 +86,8 @@ export default function HomePage() {
   return (
     <AppShell>
       <div className="space-y-4 sm:space-y-5">
+        <GoalAlertStack alerts={goalAlerts} />
+
         <section className="relative overflow-hidden border-b border-brand-100/80 bg-white/96 px-3 py-4 sm:rounded-[32px] sm:border sm:px-5 sm:py-5 sm:shadow-soft">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-500 via-orange-400 to-brand-300 sm:rounded-t-[32px]" />
           <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -163,7 +168,7 @@ export default function HomePage() {
         </section>
 
         <BreakingNow />
-        <MatchdayCenter />
+        <MatchdayCenter liveMatches={liveMatches} />
         <VideoHighlights />
         <div className="xl:hidden">
           <PremierLeagueStandings />

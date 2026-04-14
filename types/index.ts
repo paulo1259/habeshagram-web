@@ -166,6 +166,15 @@ export type LiveMatch = {
   timeline: LiveMatchEvent[];
 };
 
+export type GoalAlertItem = {
+  id: string;
+  matchId: string;
+  message: string;
+  minute?: string;
+  scorer?: string;
+  team?: FootballTeam;
+};
+
 export type LeagueStandingRow = {
   position: number;
   team: string;

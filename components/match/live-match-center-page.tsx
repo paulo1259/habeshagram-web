@@ -6,14 +6,16 @@ import { ArrowLeft, Radio, Send, TimerReset, Zap } from "lucide-react";
 import { MatchdayCenter } from "@/components/discovery/matchday-center";
 import { PremierLeagueStandings } from "@/components/discovery/premier-league-standings";
 import { AppShell } from "@/components/layout/app-shell";
+import { GoalAlertStack } from "@/components/match/goal-alert-stack";
 import { TrendingTopics } from "@/components/discovery/trending-topics";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
 import { useAppData } from "@/hooks/use-app-data";
+import { useLiveMatchPulse } from "@/hooks/use-live-match-pulse";
 import { getTeamSlug } from "@/services/football-hub-data";
-import { fetchLiveMatches, getInitialLiveMatches } from "@/services/live-match-service";
+import { getInitialLiveMatches } from "@/services/live-match-service";
 import { formatDate } from "@/lib/utils";
 import { FootballTeam, LiveMatch, Post } from "@/types";
 
@@ -53,116 +55,25 @@ function getLiveScoreLine(match: LiveMatch) {
     return `FT ${teamShortLabel[match.homeTeam]} ${match.homeScore}-${match.awayScore} ${teamShortLabel[match.awayTeam]}`;
   }
 
-  return `${match.matchClock} ${teamShortLabel[match.homeTeam]} ${match.homeScore}-${match.awayScore} ${teamShortLabel[match.awayTeam]} 🔴`;
+  return `${match.matchClock} ${teamShortLabel[match.homeTeam]} ${match.homeScore}-${match.awayScore} ${teamShortLabel[match.awayTeam]} LIVE`;
 }
 
 export function LiveMatchCenterPage() {
   const { posts, isLoading, currentUser, createNewPost } = useAppData();
-  const [matches, setMatches] = useState<LiveMatch[]>(() => getInitialLiveMatches());
-  const [isMatchLoading, setIsMatchLoading] = useState(true);
-  const [matchMessage, setMatchMessage] = useState("");
+  const { matches, isLoading: isMatchLoading, message: matchMessage, goalAlerts } = useLiveMatchPulse();
   const [activeMatchId, setActiveMatchId] = useState(getInitialLiveMatches()[0]?.id ?? "");
   const [reactionText, setReactionText] = useState("");
   const [selectedTeam, setSelectedTeam] = useState<FootballTeam | "">("");
   const [isSubmittingReaction, setIsSubmittingReaction] = useState(false);
   const [reactionError, setReactionError] = useState("");
   const [freshReactionIds, setFreshReactionIds] = useState<string[]>([]);
-  const [goalAlerts, setGoalAlerts] = useState<Array<{ id: string; message: string }>>([]);
   const previousReactionIds = useRef<string[]>([]);
-  const previousScoresRef = useRef<Record<string, { homeScore: number; awayScore: number }>>({});
-  const seenGoalAlertKeysRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!goalAlerts.length) {
-      return;
-    }
-
-    const timers = goalAlerts.map((alert) =>
-      window.setTimeout(() => {
-        setGoalAlerts((current) => current.filter((item) => item.id !== alert.id));
-      }, 4200)
+    setActiveMatchId((current) =>
+      matches.some((match) => match.id === current) ? current : (matches[0]?.id ?? "")
     );
-
-    return () => {
-      timers.forEach((timer) => window.clearTimeout(timer));
-    };
-  }, [goalAlerts]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadMatches = async () => {
-      try {
-        if (isMounted) {
-          setIsMatchLoading(true);
-        }
-
-        const payload = await fetchLiveMatches();
-        if (!isMounted) {
-          return;
-        }
-
-        const nextScoreMap: Record<string, { homeScore: number; awayScore: number }> = {};
-        const nextAlerts: Array<{ id: string; message: string }> = [];
-
-        payload.matches.forEach((match) => {
-          nextScoreMap[match.id] = {
-            homeScore: match.homeScore,
-            awayScore: match.awayScore
-          };
-
-          const previous = previousScoresRef.current[match.id];
-          const homeScored = previous && match.homeScore > previous.homeScore;
-          const awayScored = previous && match.awayScore > previous.awayScore;
-
-          if (!homeScored && !awayScored) {
-            return;
-          }
-
-          const dedupeKey = `${match.id}:${match.homeScore}-${match.awayScore}`;
-          if (seenGoalAlertKeysRef.current.has(dedupeKey)) {
-            return;
-          }
-
-          seenGoalAlertKeysRef.current.add(dedupeKey);
-
-          nextAlerts.push({
-            id: `${dedupeKey}:${Date.now()}`,
-            message: `GOAL! ${teamShortLabel[match.homeTeam]} ${match.homeScore}-${match.awayScore} ${teamShortLabel[match.awayTeam]}${
-              match.status === "LIVE" || match.status === "HT" ? ` ${match.matchClock}` : ""
-            }`
-          });
-        });
-
-        setMatches(payload.matches);
-        setMatchMessage(payload.message ?? "");
-        if (nextAlerts.length) {
-          setGoalAlerts((current) => [...nextAlerts, ...current].slice(0, 3));
-        }
-        setActiveMatchId((current) =>
-          payload.matches.some((match) => match.id === current)
-            ? current
-            : (payload.matches[0]?.id ?? "")
-        );
-        previousScoresRef.current = nextScoreMap;
-      } finally {
-        if (isMounted) {
-          setIsMatchLoading(false);
-        }
-      }
-    };
-
-    void loadMatches();
-
-    const interval = window.setInterval(() => {
-      void loadMatches();
-    }, 15000);
-
-    return () => {
-      isMounted = false;
-      window.clearInterval(interval);
-    };
-  }, []);
+  }, [matches]);
 
   const activeMatch = useMemo(
     () => matches.find((match) => match.id === activeMatchId) ?? matches[0] ?? null,
@@ -247,22 +158,7 @@ export function LiveMatchCenterPage() {
   return (
     <AppShell>
       <div className="space-y-5">
-        {goalAlerts.length ? (
-          <div className="pointer-events-none fixed inset-x-0 top-20 z-50 flex flex-col items-center gap-2 px-4">
-            {goalAlerts.map((alert) => (
-              <div
-                key={alert.id}
-                className="w-full max-w-md rounded-[22px] border border-red-200 bg-white/95 px-4 py-3 shadow-[0_18px_40px_rgba(239,68,68,0.18)] backdrop-blur transition-all duration-300 ease-out animate-[slideDown_.35s_ease-out]"
-              >
-                <div className="flex items-center gap-2 text-red-600">
-                  <span className="text-base">⚽</span>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em]">Goal Alert</p>
-                </div>
-                <p className="mt-1 text-sm font-semibold leading-6 text-ink">{alert.message}</p>
-              </div>
-            ))}
-          </div>
-        ) : null}
+        <GoalAlertStack alerts={goalAlerts} />
 
         <section className="overflow-hidden border-b border-brand-100/80 bg-white/96 sm:rounded-[32px] sm:border sm:shadow-soft">
           <div className="bg-gradient-to-br from-brand-600 via-orange-400 to-rose-400 px-4 py-5 text-white sm:px-6 sm:py-6">
