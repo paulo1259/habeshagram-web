@@ -3,6 +3,20 @@ import { FootballTeam, LeagueStandingRow } from "@/types";
 
 export const dynamic = "force-dynamic";
 
+type FootballDataStandingTeam = {
+  name?: string | null;
+  shortName?: string | null;
+  tla?: string | null;
+};
+
+type FootballDataStandingRow = {
+  position?: number | null;
+  playedGames?: number | null;
+  points?: number | null;
+  goalDifference?: number | null;
+  team?: FootballDataStandingTeam | null;
+};
+
 type StandingsFeed = {
   standings: LeagueStandingRow[];
   source: "api" | "cache" | "fallback";
@@ -10,25 +24,6 @@ type StandingsFeed = {
   fetchedAt: string;
   message?: string;
 };
-
-type ProviderStandingRow = {
-  position?: number | null;
-  rank?: number | null;
-  played?: number | null;
-  matches?: number | null;
-  points?: number | null;
-  goal_difference?: number | null;
-  goalDifference?: number | null;
-  team?: string | { name?: string | null } | null;
-  team_name?: string | null;
-};
-
-const RAPID_API_HOST =
-  process.env.FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST?.trim() ||
-  "free-api-live-football-data.p.rapidapi.com";
-const RAPID_API_BASE_URL =
-  process.env.FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL?.trim() ||
-  `https://${RAPID_API_HOST}`;
 
 const trackedTeams: Record<FootballTeam, string[]> = {
   "Manchester United": ["manchester united", "man utd", "man united"],
@@ -48,125 +43,44 @@ const fallbackStandings: LeagueStandingRow[] = [
 
 let lastSuccessfulPayload: StandingsFeed | null = null;
 
-function buildProviderHeaders() {
-  const apiKey = process.env.FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY?.trim();
+function resolveTrackedTeam(...candidates: Array<string | null | undefined>) {
+  for (const candidate of candidates) {
+    const normalized = (candidate ?? "").toLowerCase().trim();
 
-  if (!apiKey) {
-    throw new Error("FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY is missing on the server.");
-  }
+    if (!normalized) {
+      continue;
+    }
 
-  return {
-    "X-RapidAPI-Key": apiKey,
-    "X-RapidAPI-Host": RAPID_API_HOST,
-    Accept: "application/json"
-  };
-}
-
-async function fetchProviderJson(path: string, searchParams?: Record<string, string>) {
-  const url = new URL(path, RAPID_API_BASE_URL.endsWith("/") ? RAPID_API_BASE_URL : `${RAPID_API_BASE_URL}/`);
-  Object.entries(searchParams ?? {}).forEach(([key, value]) => {
-    url.searchParams.set(key, value);
-  });
-
-  const response = await fetch(url.toString(), {
-    headers: buildProviderHeaders(),
-    cache: "no-store"
-  });
-
-  if (!response.ok) {
-    throw new Error(`Free API Live Football Data standings returned ${response.status} for ${url.pathname}.`);
-  }
-
-  return response.json();
-}
-
-function resolveTrackedTeam(name: string) {
-  const normalized = name.toLowerCase().trim();
-
-  for (const [team, aliases] of Object.entries(trackedTeams) as Array<[FootballTeam, string[]]>) {
-    if (aliases.some((alias) => normalized.includes(alias) || alias.includes(normalized))) {
-      return team;
+    for (const [team, aliases] of Object.entries(trackedTeams) as Array<[FootballTeam, string[]]>) {
+      if (aliases.some((alias) => normalized.includes(alias) || alias.includes(normalized))) {
+        return team;
+      }
     }
   }
 
   return undefined;
 }
 
-function extractStandingsRows(payload: unknown): ProviderStandingRow[] {
-  if (!payload || typeof payload !== "object") {
-    return [];
-  }
-
-  const record = payload as Record<string, unknown>;
-  const directArray = [record.data, record.response, record.standings, record.table].find(Array.isArray);
-  if (directArray) {
-    return directArray as ProviderStandingRow[];
-  }
-
-  if (record.data && typeof record.data === "object") {
-    const nested = record.data as Record<string, unknown>;
-    const nestedArray = [nested.standings, nested.table, nested.rows, nested.items].find(Array.isArray);
-    if (nestedArray) {
-      return nestedArray as ProviderStandingRow[];
-    }
-  }
-
-  return [];
-}
-
-function mapStandingRow(row: ProviderStandingRow): LeagueStandingRow | null {
-  const rawTeam =
-    typeof row.team === "string"
-      ? row.team
-      : row.team?.name || row.team_name || "";
-
-  const position = row.position ?? row.rank;
-
-  if (!rawTeam || typeof position !== "number") {
+function mapStandingRow(row: FootballDataStandingRow): LeagueStandingRow | null {
+  if (!row.team?.name || typeof row.position !== "number") {
     return null;
   }
 
-  const teamTag = resolveTrackedTeam(rawTeam);
+  const teamTag = resolveTrackedTeam(row.team.name, row.team.shortName, row.team.tla);
 
   return {
-    position,
-    team: rawTeam,
+    position: row.position,
+    team: row.team.shortName || row.team.name,
     teamTag,
     tracked: Boolean(teamTag),
-    played: row.played ?? row.matches ?? 0,
+    played: row.playedGames ?? 0,
     points: row.points ?? 0,
-    goalDifference: row.goal_difference ?? row.goalDifference ?? 0
+    goalDifference: row.goalDifference ?? 0
   };
 }
 
-async function fetchRelevantStandings() {
-  const candidates: Array<{ path: string; params?: Record<string, string> }> = [
-    { path: "/football-standings", params: { league: "Premier League", country: "England" } },
-    { path: "/football-standing", params: { league: "Premier League", country: "England" } },
-    { path: "/football-league-table", params: { league: "Premier League", country: "England" } }
-  ];
-
-  for (const candidate of candidates) {
-    try {
-      const payload = await fetchProviderJson(candidate.path, candidate.params);
-      const rows = extractStandingsRows(payload)
-        .map((row) => mapStandingRow(row))
-        .filter((row): row is LeagueStandingRow => Boolean(row))
-        .slice(0, 8);
-
-      if (rows.length) {
-        return rows;
-      }
-    } catch {
-      // Keep trying known standings shapes for this provider.
-    }
-  }
-
-  return [];
-}
-
 export async function GET() {
-  const apiKey = process.env.FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY?.trim();
+  const apiKey = process.env.FOOTBALL_DATA_API_KEY?.trim();
 
   if (!apiKey) {
     return NextResponse.json({
@@ -174,22 +88,38 @@ export async function GET() {
       source: "fallback",
       stale: true,
       fetchedAt: new Date().toISOString(),
-      message:
-        "FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY is missing on the server, so HabeshaGram is showing fallback Premier League standings."
+      message: "FOOTBALL_DATA_API_KEY is missing on the server, so HabeshaGram is showing fallback Premier League standings."
     } satisfies StandingsFeed);
   }
 
   try {
-    const standings = await fetchRelevantStandings();
+    const response = await fetch("https://api.football-data.org/v4/competitions/PL/standings", {
+      headers: {
+        "X-Auth-Token": apiKey
+      },
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error(`football-data.org standings returned ${response.status}.`);
+    }
+
+    const data = (await response.json()) as {
+      standings?: Array<{ type?: string; table?: FootballDataStandingRow[] }>;
+    };
+
+    const table = data.standings?.find((standing) => standing.type === "TOTAL")?.table ?? [];
+    const mapped = table
+      .map((row) => mapStandingRow(row))
+      .filter((row): row is LeagueStandingRow => Boolean(row))
+      .slice(0, 8);
 
     const payload: StandingsFeed = {
-      standings: standings.length ? standings : fallbackStandings,
+      standings: mapped.length ? mapped : fallbackStandings,
       source: "api",
       stale: false,
       fetchedAt: new Date().toISOString(),
-      message: standings.length
-        ? undefined
-        : "The current football provider did not return a usable Premier League table, so HabeshaGram is showing the fallback standings."
+      message: mapped.length ? undefined : "No standings were returned, so HabeshaGram is showing the fallback table."
     };
 
     lastSuccessfulPayload = payload;
@@ -200,7 +130,7 @@ export async function GET() {
         ...lastSuccessfulPayload,
         source: "cache",
         stale: true,
-        message: "Using the last successful Premier League table while the standings provider recovers."
+        message: "Using the last successful Premier League table while football-data.org recovers."
       } satisfies StandingsFeed);
     }
 

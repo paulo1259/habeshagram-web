@@ -82,6 +82,7 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
+FOOTBALL_DATA_API_KEY=
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY=
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST=free-api-live-football-data.p.rapidapi.com
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL=https://free-api-live-football-data.p.rapidapi.com
@@ -90,6 +91,7 @@ BREAKING_NEWS_RSS_URL=
 
 If these are blank, the app still starts, but authentication remains unavailable until you add real values and restart the dev server.
 
+`FOOTBALL_DATA_API_KEY` is server-only for the Premier League standings widget. Keep it in `.env.local` and in Vercel project environment variables, but do not prefix it with `NEXT_PUBLIC_`.
 `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY` is server-only for the live match center. Keep it in `.env.local` and in Vercel project environment variables, but do not prefix it with `NEXT_PUBLIC_`.
 `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST` is server-only and can usually stay at `free-api-live-football-data.p.rapidapi.com`.
 `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL` is server-only and defaults to `https://free-api-live-football-data.p.rapidapi.com`.
@@ -100,6 +102,7 @@ If these are blank, the app still starts, but authentication remains unavailable
 For local development, add this exact line to `.env.local`:
 
 ```env
+FOOTBALL_DATA_API_KEY=YOUR_FOOTBALL_DATA_TOKEN
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY=YOUR_RAPIDAPI_KEY
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST=free-api-live-football-data.p.rapidapi.com
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL=https://free-api-live-football-data.p.rapidapi.com
@@ -109,23 +112,25 @@ For Vercel:
 
 1. Open your project in Vercel
 2. Go to `Project Settings > Environment Variables`
-3. Add `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY`
-4. Paste your RapidAPI key as the value
-5. Add `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST`
-6. Set it to `free-api-live-football-data.p.rapidapi.com`
-7. Add `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL`
-8. Set it to `https://free-api-live-football-data.p.rapidapi.com`
-9. Save them for the environments you want, usually:
+3. Add `FOOTBALL_DATA_API_KEY`
+4. Paste your football-data.org token as the value
+5. Add `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY`
+6. Paste your RapidAPI key as the value
+7. Add `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST`
+8. Set it to `free-api-live-football-data.p.rapidapi.com`
+9. Add `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL`
+10. Set it to `https://free-api-live-football-data.p.rapidapi.com`
+11. Save them for the environments you want, usually:
    - `Production`
    - `Preview`
    - `Development`
-10. Redeploy after saving the variables so the server route can read the new token
+12. Redeploy after saving the variables so the server routes can read the new tokens
 
 Important:
 
 - do not rename it to `NEXT_PUBLIC_FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY`
 - do not place the token in client components
-- the browser should only call `/api/football/live` and `/api/football/standings`, never the RapidAPI provider directly
+- the browser should only call `/api/football/live` and `/api/football/standings`, never the upstream providers directly
 
 ## Firebase Setup
 
@@ -207,23 +212,27 @@ Your Storage rules should allow authenticated users to write only inside their o
 
 ### Live Football Data
 
-HabeshaGram's football match center and standings now read from Free API Live Football Data through RapidAPI using internal Next.js route handlers.
+HabeshaGram's football stack now uses split providers through internal Next.js route handlers:
 
 - server route: `app/api/football/live/route.ts`
 - standings route: `app/api/football/standings/route.ts`
-- live provider env vars:
+- live match env vars:
   - `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY`
   - `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST`
   - `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL`
+- standings env var:
+  - `FOOTBALL_DATA_API_KEY`
 - live coverage endpoints:
   - `/football-current-live`
   - `/football-scheduled-events`
   - `/football-matches`
-- current provider focus: Premier League fixtures and table coverage involving Manchester United, Arsenal, Chelsea, and Manchester City
+- standings endpoint:
+  - `https://api.football-data.org/v4/competitions/PL/standings`
+- current provider focus: Premier League fixtures and tracked-club table coverage involving Manchester United, Arsenal, Chelsea, and Manchester City
 
-The app keeps the provider key on the server, polls the local route from the browser every 15 seconds on the live page, and falls back to the last successful response or the built-in seeded slate if the provider is unavailable. If the provider does not expose a usable standings table, the standings route falls back to cached or seeded data instead of breaking the widget.
+The app keeps both provider keys on the server, polls the local live route from the browser every 15 seconds on the live page, and falls back to the last successful response or the built-in seeded slate if either upstream service is unavailable.
 
-If `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY` is missing or blank, `app/api/football/live/route.ts` returns a friendly fallback payload instead of crashing the live page.
+If `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY` is missing or blank, `app/api/football/live/route.ts` returns a friendly fallback payload instead of crashing the live page. If `FOOTBALL_DATA_API_KEY` is missing or blank, `app/api/football/standings/route.ts` returns the fallback Premier League table instead of breaking the standings widget.
 
 ### Breaking Football News
 
