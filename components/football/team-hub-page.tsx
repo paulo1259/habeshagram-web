@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Flame, MessageSquareText, Radio, Sparkles, Users } from "lucide-react";
 import { BreakingNow } from "@/components/discovery/breaking-now";
 import { DailyDebates } from "@/components/discovery/daily-debates";
+import { VideoHighlights } from "@/components/discovery/video-highlights";
 import { AppShell } from "@/components/layout/app-shell";
 import { FeedList } from "@/components/posts/feed-list";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -208,6 +209,7 @@ export function TeamHubPage({ slug }: { slug: TeamSlug }) {
 
           <div className="space-y-4">
             <BreakingNow compact team={config.team} />
+            <VideoHighlights compact team={config.team} limit={3} />
             <DailyDebates compact team={config.team} />
 
             <section className="rounded-[30px] border border-brand-100 bg-white/96 p-4 shadow-soft sm:p-5">

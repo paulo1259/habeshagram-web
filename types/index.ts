@@ -123,6 +123,25 @@ export type DailyDebatePrompt = {
   suggestedText: string;
 };
 
+export type CuratedVideoCategory = "Football Moments" | "Fan Reactions" | "Culture" | "Music";
+
+export type CuratedVideoItem = {
+  id: string;
+  title: string;
+  category: CuratedVideoCategory;
+  source: string;
+  summary: string;
+  thumbnailURL: string;
+  videoUrl: string;
+  embedUrl: string;
+  duration: string;
+  teamTag?: FootballTeam;
+  hashtags?: string[];
+  createdAt: string;
+  publishLabel?: string;
+  featured?: boolean;
+};
+
 export type LiveMatchStatus = "LIVE" | "HT" | "FT" | "UPCOMING";
 
 export type LiveMatchEvent = {

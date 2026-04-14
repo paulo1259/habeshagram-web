@@ -14,6 +14,7 @@ import { MatchdayCenter } from "@/components/discovery/matchday-center";
 import { PremierLeagueStandings } from "@/components/discovery/premier-league-standings";
 import { RadioShowcase } from "@/components/discovery/radio-showcase";
 import { TrendingTopics } from "@/components/discovery/trending-topics";
+import { VideoHighlights } from "@/components/discovery/video-highlights";
 import { WhoToFollow } from "@/components/discovery/who-to-follow";
 import { AppShell } from "@/components/layout/app-shell";
 import { FeedList } from "@/components/posts/feed-list";
@@ -163,6 +164,7 @@ export default function HomePage() {
 
         <BreakingNow />
         <MatchdayCenter />
+        <VideoHighlights />
         <div className="xl:hidden">
           <PremierLeagueStandings />
         </div>
