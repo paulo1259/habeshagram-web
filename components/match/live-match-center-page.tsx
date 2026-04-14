@@ -67,7 +67,26 @@ export function LiveMatchCenterPage() {
   const [isSubmittingReaction, setIsSubmittingReaction] = useState(false);
   const [reactionError, setReactionError] = useState("");
   const [freshReactionIds, setFreshReactionIds] = useState<string[]>([]);
+  const [goalAlerts, setGoalAlerts] = useState<Array<{ id: string; message: string }>>([]);
   const previousReactionIds = useRef<string[]>([]);
+  const previousScoresRef = useRef<Record<string, { homeScore: number; awayScore: number }>>({});
+  const seenGoalAlertKeysRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!goalAlerts.length) {
+      return;
+    }
+
+    const timers = goalAlerts.map((alert) =>
+      window.setTimeout(() => {
+        setGoalAlerts((current) => current.filter((item) => item.id !== alert.id));
+      }, 4200)
+    );
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [goalAlerts]);
 
   useEffect(() => {
     let isMounted = true;
@@ -83,13 +102,49 @@ export function LiveMatchCenterPage() {
           return;
         }
 
+        const nextScoreMap: Record<string, { homeScore: number; awayScore: number }> = {};
+        const nextAlerts: Array<{ id: string; message: string }> = [];
+
+        payload.matches.forEach((match) => {
+          nextScoreMap[match.id] = {
+            homeScore: match.homeScore,
+            awayScore: match.awayScore
+          };
+
+          const previous = previousScoresRef.current[match.id];
+          const homeScored = previous && match.homeScore > previous.homeScore;
+          const awayScored = previous && match.awayScore > previous.awayScore;
+
+          if (!homeScored && !awayScored) {
+            return;
+          }
+
+          const dedupeKey = `${match.id}:${match.homeScore}-${match.awayScore}`;
+          if (seenGoalAlertKeysRef.current.has(dedupeKey)) {
+            return;
+          }
+
+          seenGoalAlertKeysRef.current.add(dedupeKey);
+
+          nextAlerts.push({
+            id: `${dedupeKey}:${Date.now()}`,
+            message: `GOAL! ${teamShortLabel[match.homeTeam]} ${match.homeScore}-${match.awayScore} ${teamShortLabel[match.awayTeam]}${
+              match.status === "LIVE" || match.status === "HT" ? ` ${match.matchClock}` : ""
+            }`
+          });
+        });
+
         setMatches(payload.matches);
         setMatchMessage(payload.message ?? "");
+        if (nextAlerts.length) {
+          setGoalAlerts((current) => [...nextAlerts, ...current].slice(0, 3));
+        }
         setActiveMatchId((current) =>
           payload.matches.some((match) => match.id === current)
             ? current
             : (payload.matches[0]?.id ?? "")
         );
+        previousScoresRef.current = nextScoreMap;
       } finally {
         if (isMounted) {
           setIsMatchLoading(false);
@@ -192,6 +247,23 @@ export function LiveMatchCenterPage() {
   return (
     <AppShell>
       <div className="space-y-5">
+        {goalAlerts.length ? (
+          <div className="pointer-events-none fixed inset-x-0 top-20 z-50 flex flex-col items-center gap-2 px-4">
+            {goalAlerts.map((alert) => (
+              <div
+                key={alert.id}
+                className="w-full max-w-md rounded-[22px] border border-red-200 bg-white/95 px-4 py-3 shadow-[0_18px_40px_rgba(239,68,68,0.18)] backdrop-blur transition-all duration-300 ease-out animate-[slideDown_.35s_ease-out]"
+              >
+                <div className="flex items-center gap-2 text-red-600">
+                  <span className="text-base">⚽</span>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em]">Goal Alert</p>
+                </div>
+                <p className="mt-1 text-sm font-semibold leading-6 text-ink">{alert.message}</p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
         <section className="overflow-hidden border-b border-brand-100/80 bg-white/96 sm:rounded-[32px] sm:border sm:shadow-soft">
           <div className="bg-gradient-to-br from-brand-600 via-orange-400 to-rose-400 px-4 py-5 text-white sm:px-6 sm:py-6">
             <Link
