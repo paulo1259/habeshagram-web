@@ -9,9 +9,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
 import { getTeamSlug } from "@/services/football-hub-data";
 import {
-  getEditorialVideoById,
-  getRelatedEditorialVideos
-} from "@/services/editorial-content-service";
+  getCuratedVideoById,
+  getRelatedCuratedVideos
+} from "@/services/curated-video-service";
 import { useAppData } from "@/hooks/use-app-data";
 import { CuratedVideoItem, Post } from "@/types";
 
@@ -56,7 +56,7 @@ export function VideoDetailPageClient({ videoId }: { videoId: string }) {
 
     void (async () => {
       setIsVideoLoading(true);
-      const nextVideo = await getEditorialVideoById(videoId);
+      const nextVideo = await getCuratedVideoById(videoId);
       if (!isMounted) {
         return;
       }
@@ -64,7 +64,7 @@ export function VideoDetailPageClient({ videoId }: { videoId: string }) {
       setVideo(nextVideo);
 
       if (nextVideo) {
-        const nextRelatedVideos = await getRelatedEditorialVideos(nextVideo, 4);
+        const nextRelatedVideos = await getRelatedCuratedVideos(nextVideo, 4);
         if (!isMounted) {
           return;
         }

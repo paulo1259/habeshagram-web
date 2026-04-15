@@ -1,8 +1,6 @@
 import { breakingItems, footballBuzzItems } from "@/services/discovery-data";
-import {
-  getEditorialDailyDebates,
-  getEditorialLocalHighlights
-} from "@/services/editorial-content-service";
+import { getEditorialLocalHighlights } from "@/services/editorial-content-service";
+import { getDailyDebatePrompts } from "@/services/daily-debate-service";
 import { BreakingItem, DailyDebatePrompt, FootballNewsItem, FootballTeam, LocalNewsItem } from "@/types";
 
 export async function getLocalNewsItems(): Promise<LocalNewsItem[]> {
@@ -44,5 +42,5 @@ export async function getBreakingItems(team?: FootballTeam): Promise<BreakingIte
 }
 
 export async function getDailyDebates(team?: FootballTeam): Promise<DailyDebatePrompt[]> {
-  return getEditorialDailyDebates(team);
+  return getDailyDebatePrompts(team);
 }

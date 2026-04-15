@@ -120,7 +120,7 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
-    match /editorialVideos/{videoId} {
+    match /curatedVideos/{videoId} {
       allow read: if true;
       allow create, update, delete: if false;
     }

@@ -64,8 +64,8 @@ export function DailyDebates({
               </div>
             ))
           : visiblePrompts.map((item) => {
-              const href = item.team
-                ? `/create?text=${encodeURIComponent(item.suggestedText)}&team=${encodeURIComponent(teamQueryValue[item.team])}`
+              const href = item.teamTag
+                ? `/create?text=${encodeURIComponent(item.suggestedText)}&team=${encodeURIComponent(teamQueryValue[item.teamTag])}`
                 : `/create?text=${encodeURIComponent(item.suggestedText)}`;
 
               return (
@@ -77,8 +77,11 @@ export function DailyDebates({
                     <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] shadow-sm">
                       {item.category}
                     </span>
-                    {item.team ? (
-                      <span className="text-xs font-semibold text-stone-500">{item.team}</span>
+                    {item.teamTag ? (
+                      <span className="text-xs font-semibold text-stone-500">{item.teamTag}</span>
+                    ) : null}
+                    {item.publishLabel ? (
+                      <span className="text-xs text-stone-400">{item.publishLabel}</span>
                     ) : null}
                   </div>
                   <h3 className="mt-3 text-sm font-bold leading-6 text-ink sm:text-[15px]">
@@ -92,13 +95,15 @@ export function DailyDebates({
                       <MessageSquareText className="h-3.5 w-3.5" />
                       Post your take
                     </Link>
-                    <Link
-                      href={`/topic/${item.hashtag.toLowerCase()}`}
-                      className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-brand-800 ring-1 ring-brand-100 transition hover:bg-brand-50"
-                    >
-                      <Sparkles className="h-3.5 w-3.5" />
-                      #{item.hashtag}
-                    </Link>
+                    {item.hashtag ? (
+                      <Link
+                        href={`/topic/${item.hashtag.toLowerCase()}`}
+                        className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-brand-800 ring-1 ring-brand-100 transition hover:bg-brand-50"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        #{item.hashtag}
+                      </Link>
+                    ) : null}
                   </div>
                 </article>
               );

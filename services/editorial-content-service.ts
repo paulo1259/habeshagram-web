@@ -59,7 +59,7 @@ function mapVideo(data: Partial<CuratedVideoItem>, id: string): CuratedVideoItem
 }
 
 function mapDebate(data: Partial<DailyDebatePrompt>, id: string): DailyDebatePrompt | null {
-  if (!data.prompt || !data.category || !data.hashtag || !data.suggestedText) {
+  if (!data.prompt || !data.category || !data.suggestedText) {
     return null;
   }
 
@@ -67,9 +67,13 @@ function mapDebate(data: Partial<DailyDebatePrompt>, id: string): DailyDebatePro
     id: data.id || id,
     prompt: data.prompt,
     category: data.category,
-    team: data.team,
-    hashtag: data.hashtag,
-    suggestedText: data.suggestedText
+    teamTag: data.teamTag,
+    hashtag: typeof data.hashtag === "string" ? data.hashtag : undefined,
+    suggestedText: data.suggestedText,
+    featured: Boolean(data.featured),
+    active: data.active !== false,
+    publishLabel: data.publishLabel,
+    createdAt: data.createdAt || new Date().toISOString()
   };
 }
 
@@ -172,7 +176,7 @@ export async function getRelatedEditorialVideos(video: CuratedVideoItem, limit =
 }
 
 function rotateDebates(items: DailyDebatePrompt[], team?: FootballTeam) {
-  const filtered = team ? items.filter((item) => item.team === team || !item.team) : items;
+  const filtered = team ? items.filter((item) => item.teamTag === team || !item.teamTag) : items;
 
   if (!filtered.length) {
     return [];

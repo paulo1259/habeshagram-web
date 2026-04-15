@@ -118,9 +118,13 @@ export type DailyDebatePrompt = {
   id: string;
   prompt: string;
   category: "Big Debate" | "Fan Base" | "Matchday" | "Community";
-  team?: FootballTeam;
-  hashtag: string;
+  teamTag?: FootballTeam;
+  hashtag?: string;
   suggestedText: string;
+  featured?: boolean;
+  active: boolean;
+  publishLabel?: string;
+  createdAt?: string;
 };
 
 export type CuratedVideoCategory = "Football Moments" | "Fan Reactions" | "Culture" | "Music";

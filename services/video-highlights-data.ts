@@ -99,7 +99,7 @@ export const curatedVideoHighlights: CuratedVideoItem[] = [
   }
 ];
 
-// TODO: replace this seeded editorial array with a Firestore collection or CMS-backed admin feed.
+// Fallback sample set for curatedVideos/{videoId} when Firestore is unavailable or empty.
 // TODO: once an admin dashboard exists, keep the same CuratedVideoItem shape so the UI layer can stay unchanged.
 export function getCuratedVideoHighlights() {
   return [...curatedVideoHighlights].sort(

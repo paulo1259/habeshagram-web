@@ -9,7 +9,8 @@
     "build": "npm run clean && next build",
     "build:clean": "npm run clean && next build",
     "start": "next start",
-    "lint": "node -e \"console.log('Lint is optional for this MVP.')\""
+    "lint": "node -e \"console.log('Lint is optional for this MVP.')\"",
+    "seed:content": "node --env-file=.env.local scripts/seed-content.mjs"
   },
   "engines": {
     "node": ">=20.11 <23"
@@ -17,6 +18,7 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "firebase": "^11.0.2",
+    "firebase-admin": "^13.3.0",
     "lucide-react": "^0.468.0",
     "next": "14.2.16",
     "react": "18.3.1",

@@ -243,39 +243,55 @@ export const dailyDebatePrompts: DailyDebatePrompt[] = [
     id: "debate-1",
     prompt: "Is Arsenal the most complete side in the league right now?",
     category: "Big Debate",
-    team: "Arsenal",
+    teamTag: "Arsenal",
     hashtag: "COYG",
-    suggestedText: "My take on Arsenal right now: #COYG"
+    suggestedText: "My take on Arsenal right now: #COYG",
+    active: true,
+    featured: true,
+    publishLabel: "Today",
+    createdAt: "2026-04-14T08:00:00.000Z"
   },
   {
     id: "debate-2",
     prompt: "Should Chelsea rebuild again, or finally trust what they already have?",
     category: "Big Debate",
-    team: "Chelsea",
+    teamTag: "Chelsea",
     hashtag: "CFC",
-    suggestedText: "My Chelsea rebuild take: #CFC"
+    suggestedText: "My Chelsea rebuild take: #CFC",
+    active: true,
+    publishLabel: "Today",
+    createdAt: "2026-04-14T07:30:00.000Z"
   },
   {
     id: "debate-3",
     prompt: "Is Manchester United still a top club, or are fans living on history and hope?",
     category: "Fan Base",
-    team: "Manchester United",
+    teamTag: "Manchester United",
     hashtag: "GGMU",
-    suggestedText: "My honest United take tonight: #GGMU"
+    suggestedText: "My honest United take tonight: #GGMU",
+    active: true,
+    publishLabel: "Today",
+    createdAt: "2026-04-14T07:00:00.000Z"
   },
   {
     id: "debate-4",
     prompt: "Are Manchester City standards now so high that comfortable wins still feel underwhelming?",
     category: "Matchday",
-    team: "Manchester City",
+    teamTag: "Manchester City",
     hashtag: "MCFC",
-    suggestedText: "City fans, here is my take: #MCFC"
+    suggestedText: "City fans, here is my take: #MCFC",
+    active: true,
+    publishLabel: "Today",
+    createdAt: "2026-04-14T06:30:00.000Z"
   },
   {
     id: "debate-5",
     prompt: "Who has the loudest football fan base in the Habesha community right now?",
     category: "Community",
     hashtag: "HabeshaFootball",
-    suggestedText: "Today’s Habesha football debate: #HabeshaFootball"
+    suggestedText: "Today's Habesha football debate: #HabeshaFootball",
+    active: true,
+    publishLabel: "Today",
+    createdAt: "2026-04-14T06:00:00.000Z"
   }
 ];

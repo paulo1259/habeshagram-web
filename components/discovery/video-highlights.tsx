@@ -5,11 +5,8 @@ import { useEffect, useState } from "react";
 import { Film, Play } from "lucide-react";
 import { SectionHeader } from "@/components/ui/section-header";
 import { cn } from "@/lib/utils";
+import { getCuratedVideos, getCuratedVideosByTeam } from "@/services/curated-video-service";
 import { getTeamSlug } from "@/services/football-hub-data";
-import {
-  getEditorialVideos,
-  getEditorialVideosByTeam
-} from "@/services/editorial-content-service";
 import { CuratedVideoCategory, CuratedVideoItem, FootballTeam } from "@/types";
 
 const categoryStyles: Record<CuratedVideoCategory, string> = {
@@ -39,7 +36,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
     let isMounted = true;
 
     void (async () => {
-      const base = team ? await getEditorialVideosByTeam(team) : await getEditorialVideos();
+      const base = team ? await getCuratedVideosByTeam(team) : await getCuratedVideos();
       if (!isMounted) {
         return;
       }
