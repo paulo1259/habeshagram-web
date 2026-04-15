@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Clock3, Film, Hash, PlayCircle, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { FeedList } from "@/components/posts/feed-list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
 import { getTeamSlug } from "@/services/football-hub-data";
-import { getRelatedCuratedVideoHighlights } from "@/services/video-highlights-data";
+import {
+  getEditorialVideoById,
+  getRelatedEditorialVideos
+} from "@/services/editorial-content-service";
 import { useAppData } from "@/hooks/use-app-data";
 import { CuratedVideoItem, Post } from "@/types";
 
@@ -42,11 +45,64 @@ function getRelatedPosts(posts: Post[], video: CuratedVideoItem) {
     .map((entry) => entry.post);
 }
 
-export function VideoDetailPageClient({ video }: { video: CuratedVideoItem }) {
+export function VideoDetailPageClient({ videoId }: { videoId: string }) {
   const { posts, isLoading } = useAppData();
+  const [video, setVideo] = useState<CuratedVideoItem | null>(null);
+  const [relatedVideos, setRelatedVideos] = useState<CuratedVideoItem[]>([]);
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
 
-  const relatedPosts = useMemo(() => getRelatedPosts(posts, video), [posts, video]);
-  const relatedVideos = useMemo(() => getRelatedCuratedVideoHighlights(video, 4), [video]);
+  useEffect(() => {
+    let isMounted = true;
+
+    void (async () => {
+      setIsVideoLoading(true);
+      const nextVideo = await getEditorialVideoById(videoId);
+      if (!isMounted) {
+        return;
+      }
+
+      setVideo(nextVideo);
+
+      if (nextVideo) {
+        const nextRelatedVideos = await getRelatedEditorialVideos(nextVideo, 4);
+        if (!isMounted) {
+          return;
+        }
+        setRelatedVideos(nextRelatedVideos);
+      } else {
+        setRelatedVideos([]);
+      }
+
+      setIsVideoLoading(false);
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [videoId]);
+
+  const relatedPosts = useMemo(() => (video ? getRelatedPosts(posts, video) : []), [posts, video]);
+
+  if (!isVideoLoading && !video) {
+    return (
+      <AppShell>
+        <EmptyState
+          title="This video could not be found"
+          description="The highlight may have been removed from the editorial collection, or the fallback content is unavailable right now."
+        />
+      </AppShell>
+    );
+  }
+
+  if (!video) {
+    return (
+      <AppShell>
+        <div className="rounded-[28px] border border-brand-100 bg-white/96 p-6 text-sm text-stone-500 shadow-soft">
+          Loading video highlight...
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>

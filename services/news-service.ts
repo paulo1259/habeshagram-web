@@ -1,10 +1,12 @@
-import { breakingItems, dailyDebatePrompts, footballBuzzItems, localNewsItems } from "@/services/discovery-data";
+import { breakingItems, footballBuzzItems } from "@/services/discovery-data";
+import {
+  getEditorialDailyDebates,
+  getEditorialLocalHighlights
+} from "@/services/editorial-content-service";
 import { BreakingItem, DailyDebatePrompt, FootballNewsItem, FootballTeam, LocalNewsItem } from "@/types";
 
 export async function getLocalNewsItems(): Promise<LocalNewsItem[]> {
-  // TODO: Replace this seeded fallback with a real fetch layer when you connect
-  // live entertainment / culture sources or an internal API route.
-  return localNewsItems;
+  return getEditorialLocalHighlights();
 }
 
 export async function getFootballBuzzItems(): Promise<FootballNewsItem[]> {
@@ -42,17 +44,5 @@ export async function getBreakingItems(team?: FootballTeam): Promise<BreakingIte
 }
 
 export async function getDailyDebates(team?: FootballTeam): Promise<DailyDebatePrompt[]> {
-  // TODO: Replace this seeded layer with editorial CMS or API-backed prompts when the content layer matures.
-  const items = team
-    ? dailyDebatePrompts.filter((item) => item.team === team || !item.team)
-    : dailyDebatePrompts;
-
-  if (!items.length) {
-    return [];
-  }
-
-  const daySeed = new Date().getUTCDate() + new Date().getUTCMonth() * 31;
-  const startIndex = daySeed % items.length;
-  const rotated = [...items.slice(startIndex), ...items.slice(0, startIndex)];
-  return rotated.slice(0, Math.min(team ? 3 : 4, rotated.length));
+  return getEditorialDailyDebates(team);
 }

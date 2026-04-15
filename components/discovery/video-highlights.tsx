@@ -1,12 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Film, Play } from "lucide-react";
 import { SectionHeader } from "@/components/ui/section-header";
 import { cn } from "@/lib/utils";
 import { getTeamSlug } from "@/services/football-hub-data";
-import { getCuratedVideoHighlights, getCuratedVideoHighlightsByTeam } from "@/services/video-highlights-data";
-import { CuratedVideoCategory, FootballTeam } from "@/types";
+import {
+  getEditorialVideos,
+  getEditorialVideosByTeam
+} from "@/services/editorial-content-service";
+import { CuratedVideoCategory, CuratedVideoItem, FootballTeam } from "@/types";
 
 const categoryStyles: Record<CuratedVideoCategory, string> = {
   "Football Moments": "bg-red-50 text-red-700 border-red-100",
@@ -29,8 +33,25 @@ type VideoHighlightsProps = {
 };
 
 export function VideoHighlights({ compact = false, team, limit }: VideoHighlightsProps) {
-  const base = team ? getCuratedVideoHighlightsByTeam(team) : getCuratedVideoHighlights();
-  const videos = typeof limit === "number" ? base.slice(0, limit) : base;
+  const [videos, setVideos] = useState<CuratedVideoItem[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void (async () => {
+      const base = team ? await getEditorialVideosByTeam(team) : await getEditorialVideos();
+      if (!isMounted) {
+        return;
+      }
+
+      setVideos(typeof limit === "number" ? base.slice(0, limit) : base);
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [limit, team]);
+
   const featuredVideo = videos.find((item) => item.featured) ?? videos[0] ?? null;
   const supportingVideos = featuredVideo ? videos.filter((item) => item.id !== featuredVideo.id) : videos;
 

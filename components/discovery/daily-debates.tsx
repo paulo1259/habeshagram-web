@@ -50,7 +50,7 @@ export function DailyDebates({
         description={
           compact
             ? "Quick prompts to turn scrolling into posting."
-            : "Daily seeded debate cards that nudge people to react, post, and keep the timeline moving."
+            : "Daily editorial debate cards that nudge people to react, post, and keep the timeline moving."
         }
       />
 

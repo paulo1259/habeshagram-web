@@ -119,5 +119,20 @@ service cloud.firestore {
         && request.resource.data.status == "open";
       allow read, update, delete: if false;
     }
+
+    match /editorialVideos/{videoId} {
+      allow read: if true;
+      allow create, update, delete: if false;
+    }
+
+    match /dailyDebates/{debateId} {
+      allow read: if true;
+      allow create, update, delete: if false;
+    }
+
+    match /localCultureHighlights/{itemId} {
+      allow read: if true;
+      allow create, update, delete: if false;
+    }
   }
 }

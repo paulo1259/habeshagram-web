@@ -33,7 +33,7 @@ export function LocalNewsSection({
       <SectionHeader
         eyebrow="Local Entertainment & Culture"
         title="Addis stories worth checking in on"
-        description="Editorial-style cards for arts, music, fashion, events, and culture. Replace links later with real sources or APIs."
+        description="Editorial culture cards for arts, music, fashion, events, and city energy, now ready for admin-managed updates."
       />
 
       <div className={compact ? "space-y-4" : "grid gap-4 lg:grid-cols-2"}>

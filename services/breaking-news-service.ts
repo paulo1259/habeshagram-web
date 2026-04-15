@@ -1,3 +1,4 @@
+import { createDeterministicId } from "@/lib/utils";
 import { breakingItems } from "@/services/discovery-data";
 import { BreakingBadge, BreakingItem, FootballTeam } from "@/types";
 
@@ -24,6 +25,13 @@ const teamKeywords: Record<FootballTeam, string[]> = {
   Arsenal: ["arsenal", "gunners", "arteta", "emirates stadium", "saka"],
   Chelsea: ["chelsea", "blues", "stamford bridge", "palmer", "maresca"],
   "Manchester City": ["manchester city", "man city", "etihad", "guardiola", "haaland", "foden"]
+};
+
+const teamPriority: Record<FootballTeam, number> = {
+  "Manchester United": 4,
+  Arsenal: 3,
+  Chelsea: 2,
+  "Manchester City": 1
 };
 
 const badgeByAgeHours = (hours: number): BreakingBadge => {
@@ -76,7 +84,7 @@ function detectTeam(text: string): FootballTeam | undefined {
   )?.[0];
 }
 
-function mapRssItemToBreakingItem(item: ParsedRssItem, index: number): BreakingItem | null {
+function mapRssItemToBreakingItem(item: ParsedRssItem): BreakingItem | null {
   const combined = `${item.title} ${item.description}`.trim();
   const team = detectTeam(combined);
 
@@ -88,7 +96,7 @@ function mapRssItemToBreakingItem(item: ParsedRssItem, index: number): BreakingI
   const hoursAgo = Math.max(0, (Date.now() - publishedAt.getTime()) / 36e5);
 
   return {
-    id: `rss-breaking-${index}`,
+    id: createDeterministicId("rss_breaking", `${item.title}-${item.source}`),
     headline: item.title,
     source: item.source,
     summary: item.description,
@@ -100,6 +108,15 @@ function mapRssItemToBreakingItem(item: ParsedRssItem, index: number): BreakingI
   };
 }
 
+function rankBreakingItem(item: BreakingItem) {
+  const publishedAt = new Date(item.timestamp).getTime();
+  const ageHours = Math.max(0, (Date.now() - publishedAt) / 36e5);
+  const freshnessScore = Math.max(0, 24 - ageHours);
+  const teamScore = item.team ? teamPriority[item.team] * 10 : 0;
+  const badgeScore = item.badge === "BREAKING" ? 3 : item.badge === "JUST IN" ? 2 : 1;
+  return freshnessScore + teamScore + badgeScore;
+}
+
 export function getBreakingNewsFeedUrl() {
   return process.env.BREAKING_NEWS_RSS_URL || DEFAULT_BREAKING_NEWS_RSS_URL;
 }
@@ -109,6 +126,8 @@ export function getFallbackBreakingItems(team?: FootballTeam) {
 }
 
 export async function fetchBreakingNewsFromRss(feedUrl = getBreakingNewsFeedUrl()) {
+  // TODO: Swap this single RSS provider for a multi-source server aggregator if
+  // editorial needs broader club coverage or richer summaries later.
   const response = await fetch(feedUrl, {
     headers: {
       Accept: "application/rss+xml, application/xml, text/xml;q=0.9"
@@ -124,6 +143,7 @@ export async function fetchBreakingNewsFromRss(feedUrl = getBreakingNewsFeedUrl(
   return parseRssItems(xml)
     .map(mapRssItemToBreakingItem)
     .filter((item): item is BreakingItem => Boolean(item))
+    .sort((left, right) => rankBreakingItem(right) - rankBreakingItem(left))
     .slice(0, 8);
 }
 

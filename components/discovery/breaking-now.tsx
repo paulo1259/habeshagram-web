@@ -91,7 +91,7 @@ export function BreakingNow({
         description={
           compact
             ? "Quick hits worth opening right now."
-            : "Urgent football and community updates seeded for now, with a clean path to live APIs later."
+            : "Urgent football headlines pulled from a live server-side feed and linked straight into HabeshaGram discussion."
         }
         action={
           !compact ? (
