@@ -55,7 +55,15 @@ export function TrendingTopics({
               {hottestMatch.reactionCount} live reactions in the current post stream
             </p>
           </Link>
-        ) : null}
+        ) : (
+          <div
+            className={`rounded-[22px] border border-brand-100 bg-brand-50/45 text-sm text-stone-600 ${
+              compact ? "px-4 py-3.5" : "px-4 py-4"
+            }`}
+          >
+            No live match is drawing reaction volume right now.
+          </div>
+        )}
 
         <div>
           <div className="flex items-center gap-2 text-brand-800">
@@ -114,7 +122,7 @@ export function TrendingTopics({
             <p className="text-xs font-semibold uppercase tracking-[0.14em]">Hot posts</p>
           </div>
           <div className="mt-3 space-y-2">
-            {hotPosts.slice(0, compact ? 2 : 3).map(({ post, score }) => (
+            {hotPosts.length ? hotPosts.slice(0, compact ? 2 : 3).map(({ post, score }) => (
               <Link
                 key={post.id}
                 href={post.teamTag ? `/football/${getTeamSlug(post.teamTag)}` : "/"}
@@ -126,7 +134,9 @@ export function TrendingTopics({
                 </div>
                 <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{post.text}</p>
               </Link>
-            ))}
+            )) : (
+              <p className="text-sm text-stone-500">Hot posts will show up once the feed has fresh activity.</p>
+            )}
           </div>
         </div>
       </div>

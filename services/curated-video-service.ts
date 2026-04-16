@@ -1,6 +1,5 @@
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { firebaseDb, isFirebaseConfigured } from "@/lib/firebase";
-import { curatedVideoHighlights } from "@/services/video-highlights-data";
 import { CuratedVideoItem, FootballTeam } from "@/types";
 
 const FIRESTORE_TIMEOUT_MS = 4000;
@@ -52,7 +51,7 @@ function mapCuratedVideo(data: Partial<CuratedVideoItem>, id: string): CuratedVi
 
 export async function getCuratedVideos(): Promise<CuratedVideoItem[]> {
   if (!isFirebaseConfigured || !firebaseDb) {
-    return sortByCreatedAtDesc(curatedVideoHighlights);
+    return [];
   }
 
   try {
@@ -65,9 +64,9 @@ export async function getCuratedVideos(): Promise<CuratedVideoItem[]> {
       .map((item) => mapCuratedVideo(item.data() as Partial<CuratedVideoItem>, item.id))
       .filter((item): item is CuratedVideoItem => Boolean(item));
 
-    return items.length ? sortByCreatedAtDesc(items) : sortByCreatedAtDesc(curatedVideoHighlights);
+    return sortByCreatedAtDesc(items);
   } catch {
-    return sortByCreatedAtDesc(curatedVideoHighlights);
+    return [];
   }
 }
 
@@ -78,7 +77,7 @@ export async function getCuratedVideosByTeam(team: FootballTeam) {
 
 export async function getCuratedVideoById(id: string): Promise<CuratedVideoItem | null> {
   if (!isFirebaseConfigured || !firebaseDb) {
-    return curatedVideoHighlights.find((video) => video.id === id) ?? null;
+    return null;
   }
 
   try {
@@ -91,10 +90,10 @@ export async function getCuratedVideoById(id: string): Promise<CuratedVideoItem 
       return mapCuratedVideo(snapshot.data() as Partial<CuratedVideoItem>, snapshot.id);
     }
   } catch {
-    // Fall back to the seeded admin sample set below.
+    return null;
   }
 
-  return curatedVideoHighlights.find((video) => video.id === id) ?? null;
+  return null;
 }
 
 export async function getRelatedCuratedVideos(video: CuratedVideoItem, limit = 4) {
@@ -135,4 +134,3 @@ export async function getRelatedCuratedVideos(video: CuratedVideoItem, limit = 4
 
 // TODO: Replace Firestore Console-only curation with an internal admin dashboard
 // that writes the same CuratedVideoItem shape into curatedVideos/{videoId}.
-

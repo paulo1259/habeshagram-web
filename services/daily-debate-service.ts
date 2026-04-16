@@ -1,6 +1,5 @@
 import { collection, getDocs } from "firebase/firestore";
 import { firebaseDb, isFirebaseConfigured } from "@/lib/firebase";
-import { dailyDebatePrompts } from "@/services/discovery-data";
 import { DailyDebatePrompt, FootballTeam } from "@/types";
 
 const FIRESTORE_TIMEOUT_MS = 4000;
@@ -69,7 +68,7 @@ function rotateDailyDebates(items: DailyDebatePrompt[], team?: FootballTeam) {
 
 export async function getDailyDebatePrompts(team?: FootballTeam): Promise<DailyDebatePrompt[]> {
   if (!isFirebaseConfigured || !firebaseDb) {
-    return rotateDailyDebates(dailyDebatePrompts, team);
+    return [];
   }
 
   try {
@@ -82,9 +81,9 @@ export async function getDailyDebatePrompts(team?: FootballTeam): Promise<DailyD
       .map((item) => mapDebate(item.data() as Partial<DailyDebatePrompt>, item.id))
       .filter((item): item is DailyDebatePrompt => Boolean(item));
 
-    return rotateDailyDebates(items.length ? items : dailyDebatePrompts, team);
+    return rotateDailyDebates(items, team);
   } catch {
-    return rotateDailyDebates(dailyDebatePrompts, team);
+    return [];
   }
 }
 

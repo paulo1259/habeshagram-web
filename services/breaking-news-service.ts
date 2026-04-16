@@ -1,5 +1,4 @@
 import { createDeterministicId } from "@/lib/utils";
-import { breakingItems } from "@/services/discovery-data";
 import { BreakingBadge, BreakingItem, FootballTeam } from "@/types";
 
 const DEFAULT_BREAKING_NEWS_RSS_URL = "https://feeds.bbci.co.uk/sport/football/rss.xml";
@@ -119,10 +118,6 @@ function rankBreakingItem(item: BreakingItem) {
 
 export function getBreakingNewsFeedUrl() {
   return process.env.BREAKING_NEWS_RSS_URL || DEFAULT_BREAKING_NEWS_RSS_URL;
-}
-
-export function getFallbackBreakingItems(team?: FootballTeam) {
-  return team ? breakingItems.filter((item) => item.team === team || !item.team) : breakingItems;
 }
 
 export async function fetchBreakingNewsFromRss(feedUrl = getBreakingNewsFeedUrl()) {

@@ -1,4 +1,3 @@
-import { getInitialLiveMatches } from "@/services/live-match-service";
 import { FootballTeam, LiveMatch, Post } from "@/types";
 
 type TrendingHashtag = {
@@ -70,7 +69,7 @@ export function calculateHotPosts(posts: Post[]): HotPost[] {
     .slice(0, 3);
 }
 
-export function findMostActiveMatch(posts: Post[], liveMatches: LiveMatch[] = getInitialLiveMatches()) {
+export function findMostActiveMatch(posts: Post[], liveMatches: LiveMatch[] = []) {
   const ranked = liveMatches
     .map((match) => {
       const teams = [match.homeTeam, match.awayTeam];

@@ -2,7 +2,7 @@ import { FootballTeam, LiveMatch, LiveMatchEvent, LiveMatchStatus } from "@/type
 
 export type LiveMatchFeed = {
   matches: LiveMatch[];
-  source: "api" | "cache" | "fallback";
+  source: "api" | "cache" | "empty";
   stale: boolean;
   fetchedAt: string;
   message?: string;
@@ -65,87 +65,6 @@ const teamShortLabel: Record<FootballTeam, string> = {
   Chelsea: "Chelsea",
   "Manchester City": "Man City"
 };
-
-const fallbackLiveMatches: LiveMatch[] = [
-  {
-    id: "fallback-live-chelsea-city",
-    homeTeam: "Chelsea",
-    awayTeam: "Manchester City",
-    homeScore: 1,
-    awayScore: 2,
-    status: "LIVE",
-    matchClock: "56'",
-    venue: "Stamford Bridge",
-    kickoffAt: new Date(Date.now() - 1000 * 60 * 56).toISOString(),
-    timeline: [
-      {
-        id: "fallback-event-1",
-        minute: "19'",
-        team: "Manchester City",
-        type: "goal",
-        player: "Haaland",
-        description: "Haaland puts Man City ahead from a cutback."
-      },
-      {
-        id: "fallback-event-2",
-        minute: "41'",
-        team: "Chelsea",
-        type: "goal",
-        player: "Palmer",
-        description: "Palmer curls Chelsea level and the reactions explode."
-      },
-      {
-        id: "fallback-event-3",
-        minute: "54'",
-        team: "Manchester City",
-        type: "goal",
-        player: "Foden",
-        description: "Foden restores the lead with a sharp finish."
-      }
-    ]
-  },
-  {
-    id: "fallback-upcoming-arsenal-united",
-    homeTeam: "Arsenal",
-    awayTeam: "Manchester United",
-    homeScore: 0,
-    awayScore: 0,
-    status: "UPCOMING",
-    matchClock: "Kickoff 7:30 PM",
-    venue: "Emirates Stadium",
-    kickoffAt: new Date(Date.now() + 1000 * 60 * 135).toISOString(),
-    timeline: []
-  },
-  {
-    id: "fallback-finished-united-chelsea",
-    homeTeam: "Manchester United",
-    awayTeam: "Chelsea",
-    homeScore: 3,
-    awayScore: 1,
-    status: "FT",
-    matchClock: "FT",
-    venue: "Old Trafford",
-    kickoffAt: new Date(Date.now() - 1000 * 60 * 125).toISOString(),
-    timeline: [
-      {
-        id: "fallback-event-4",
-        minute: "12'",
-        team: "Manchester United",
-        type: "goal",
-        player: "Bruno Fernandes",
-        description: "Bruno opens the scoring from the penalty spot."
-      },
-      {
-        id: "fallback-event-5",
-        minute: "76'",
-        team: "Chelsea",
-        type: "red",
-        player: "Disasi",
-        description: "Chelsea go down to ten after a late red card."
-      }
-    ]
-  }
-];
 
 function normalizeName(value?: string | null) {
   return (value ?? "").trim().toLowerCase();
@@ -382,15 +301,11 @@ export function prioritizeLiveMatches(matches: LiveMatch[]) {
     .slice(0, 8);
 }
 
-export function getFallbackLiveMatches() {
-  return fallbackLiveMatches;
+export function getInitialLiveMatches(): LiveMatch[] {
+  return [];
 }
 
-export function getInitialLiveMatches() {
-  return fallbackLiveMatches;
-}
-
-let liveMatchesCache = fallbackLiveMatches;
+let liveMatchesCache: LiveMatch[] = [];
 
 export async function fetchLiveMatches(): Promise<LiveMatchFeed> {
   try {
@@ -415,9 +330,13 @@ export async function fetchLiveMatches(): Promise<LiveMatchFeed> {
       stale: true,
       fetchedAt: new Date().toISOString(),
       message:
-        error instanceof Error
-          ? `Using the last successful live match snapshot for now. ${error.message}`
-          : "Using the last successful live match snapshot for now."
+        liveMatchesCache.length
+          ? error instanceof Error
+            ? `Using the last successful live match snapshot for now. ${error.message}`
+            : "Using the last successful live match snapshot for now."
+          : error instanceof Error
+            ? `Live football data is temporarily unavailable. ${error.message}`
+            : "Live football data is temporarily unavailable."
     };
   }
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BellRing, Radio, Siren } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
 import { formatDate, getBreakingDiscussionPostId } from "@/lib/utils";
 import { getTeamSlug } from "@/services/football-hub-data";
@@ -54,13 +55,13 @@ export function BreakingNow({
         };
 
         if (isMounted) {
-          setItems(payload.items?.length ? payload.items : await getBreakingItems(team));
+          setItems(payload.items ?? []);
           setMessage(payload.message ?? "");
         }
       } catch {
         if (isMounted) {
           setItems(await getBreakingItems(team));
-          setMessage("");
+          setMessage("Live breaking news is temporarily unavailable.");
         }
       } finally {
         if (isMounted) {
@@ -119,7 +120,16 @@ export function BreakingNow({
                 <div className="mt-2 h-3.5 w-2/3 animate-pulse rounded-full bg-brand-100" />
               </div>
             ))
-          : visibleItems.map((item, index) => (
+          : !visibleItems.length ? (
+              <EmptyState
+                title={team ? `No ${team} breaking stories right now` : "No breaking football stories right now"}
+                description={
+                  team
+                    ? `We do not have a fresh ${team} headline at the moment. Check back soon for the next club update.`
+                    : "Breaking football updates will appear here when the live news feed has fresh headlines."
+                }
+              />
+            ) : visibleItems.map((item, index) => (
               <article
                 key={item.id}
                 className="rounded-[24px] border border-brand-100/80 bg-gradient-to-r from-white via-white to-brand-50/45 px-4 py-4 transition hover:-translate-y-0.5 hover:shadow-sm"

@@ -122,8 +122,8 @@ export default function HomePage() {
           </div>
           <p className="relative mt-4 rounded-[22px] bg-brand-50 px-4 py-3 text-sm text-brand-900">
             {isFirebaseConfigured
-              ? "Firebase auth is connected. Feed, posts, likes, comments, and profiles are live, while curated discovery sections still use seeded content."
-              : "Add your Firebase env values in .env.local to enable login and signup. The feed and discovery sections still work with local MVP content."}
+              ? "Firebase auth is connected. Feed, posts, likes, comments, and profiles are live, and discovery sections now render real data or clean empty states."
+              : "Add your Firebase env values in .env.local to enable login and signup. Discovery sections will render real data when those services are configured."}
           </p>
         </section>
 

@@ -346,7 +346,7 @@ export function LiveMatchCenterPage() {
                 <SectionHeader
                   eyebrow="Live Notes"
                   title="What makes this feel alive"
-                  description="The live page polls frequently, keeps recent finals visible, and protects the UI with safe fallback if the provider slows down."
+                  description="The live page polls frequently, keeps recent finals visible, and shows a clear status message if the provider slows down."
                 />
                 <div className="mt-4 space-y-3">
                   <div className="rounded-[24px] bg-brand-50/70 px-4 py-3">

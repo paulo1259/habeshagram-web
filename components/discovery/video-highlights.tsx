@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Film, Play } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
 import { cn } from "@/lib/utils";
 import { getCuratedVideos, getCuratedVideosByTeam } from "@/services/curated-video-service";
@@ -31,17 +32,20 @@ type VideoHighlightsProps = {
 
 export function VideoHighlights({ compact = false, team, limit }: VideoHighlightsProps) {
   const [videos, setVideos] = useState<CuratedVideoItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
     void (async () => {
+      setIsLoading(true);
       const base = team ? await getCuratedVideosByTeam(team) : await getCuratedVideos();
       if (!isMounted) {
         return;
       }
 
       setVideos(typeof limit === "number" ? base.slice(0, limit) : base);
+      setIsLoading(false);
     })();
 
     return () => {
@@ -51,10 +55,6 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
 
   const featuredVideo = videos.find((item) => item.featured) ?? videos[0] ?? null;
   const supportingVideos = featuredVideo ? videos.filter((item) => item.id !== featuredVideo.id) : videos;
-
-  if (!videos.length) {
-    return null;
-  }
 
   return (
     <section
@@ -81,7 +81,27 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
         }
       />
 
-      {compact ? (
+      {isLoading ? (
+        <div className="mt-4 space-y-3">
+          {[1, 2, 3].map((item) => (
+            <div key={item} className="rounded-[24px] border border-brand-100 bg-brand-50/40 px-4 py-4">
+              <div className="h-4 w-24 animate-pulse rounded-full bg-brand-100" />
+              <div className="mt-3 h-20 animate-pulse rounded-[20px] bg-brand-100" />
+            </div>
+          ))}
+        </div>
+      ) : !videos.length ? (
+        <div className="mt-4">
+          <EmptyState
+            title={team ? `No ${team} videos available` : "No videos available"}
+            description={
+              team
+                ? `There are no curated ${team} clips in Firestore right now.`
+                : "Curated video highlights will appear here once the editorial collection is populated."
+            }
+          />
+        </div>
+      ) : compact ? (
         <div className="mt-4 space-y-3">
           {videos.slice(0, limit ?? 3).map((video) => (
             <Link

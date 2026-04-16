@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import {
   FootballProviderMatch,
-  getFallbackLiveMatches,
   LiveMatchFeed,
   mapProviderMatchToLiveMatch,
   prioritizeLiveMatches
@@ -198,12 +197,12 @@ export async function GET() {
 
   if (!apiKey) {
     return NextResponse.json({
-      matches: getFallbackLiveMatches(),
-      source: "fallback",
+      matches: [],
+      source: "empty",
       stale: true,
       fetchedAt: new Date().toISOString(),
       message:
-        "FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY is missing on the server, so HabeshaGram is showing the built-in live match fallback."
+        "Live football data is not configured on the server yet."
     } satisfies LiveMatchFeed);
   }
 
@@ -216,13 +215,13 @@ export async function GET() {
     );
 
     const payload: LiveMatchFeed = {
-      matches: mapped.length ? mapped : getFallbackLiveMatches(),
+      matches: mapped,
       source: "api",
       stale: false,
       fetchedAt: new Date().toISOString(),
       message: mapped.length
         ? `Coverage: ${liveMatches.length} live, ${todayMatches.length} today, ${finishedMatches.length} recent finals.`
-        : "Free API Live Football Data did not return tracked club fixtures right now, so HabeshaGram is showing the fallback slate."
+        : "No live or nearby tracked-club matches are available right now."
     };
 
     lastSuccessfulPayload = payload;
@@ -238,8 +237,8 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      matches: getFallbackLiveMatches(),
-      source: "fallback",
+      matches: [],
+      source: "empty",
       stale: true,
       fetchedAt: new Date().toISOString(),
       message:

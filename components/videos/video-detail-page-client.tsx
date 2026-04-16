@@ -88,7 +88,7 @@ export function VideoDetailPageClient({ videoId }: { videoId: string }) {
       <AppShell>
         <EmptyState
           title="This video could not be found"
-          description="The highlight may have been removed from the editorial collection, or the fallback content is unavailable right now."
+          description="The highlight may have been removed from the editorial collection, or no curated video has been published with this id."
         />
       </AppShell>
     );

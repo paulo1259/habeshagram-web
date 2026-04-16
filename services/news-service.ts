@@ -1,4 +1,4 @@
-import { breakingItems, footballBuzzItems } from "@/services/discovery-data";
+import { footballBuzzItems } from "@/services/discovery-data";
 import { getEditorialLocalHighlights } from "@/services/editorial-content-service";
 import { getDailyDebatePrompts } from "@/services/daily-debate-service";
 import { BreakingItem, DailyDebatePrompt, FootballNewsItem, FootballTeam, LocalNewsItem } from "@/types";
@@ -31,13 +31,9 @@ export async function getBreakingItems(team?: FootballTeam): Promise<BreakingIte
     }
 
     const payload = (await response.json()) as { items?: BreakingItem[] };
-    return payload.items?.length
-      ? payload.items
-      : team
-        ? breakingItems.filter((item) => item.team === team || !item.team)
-        : breakingItems;
+    return payload.items ?? [];
   } catch {
-    return team ? breakingItems.filter((item) => item.team === team || !item.team) : breakingItems;
+    return [];
   }
 }
 

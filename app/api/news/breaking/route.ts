@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   BreakingFeedPayload,
   fetchBreakingNewsFromRss,
-  getFallbackBreakingItems,
   getBreakingNewsFeedUrl
 } from "@/services/breaking-news-service";
 import { FootballTeam } from "@/types";
@@ -42,13 +41,15 @@ export async function GET(request: NextRequest) {
     const items = await fetchBreakingNewsFromRss();
 
     const payload: BreakingFeedPayload = {
-      items: items.length ? items : getFallbackBreakingItems(),
+      items,
       source: getBreakingNewsFeedUrl(),
       stale: false,
       fetchedAt: new Date().toISOString(),
       message: items.length
         ? undefined
-        : "No relevant club stories were found in the current breaking feed, so HabeshaGram is showing the editorial fallback."
+        : team
+          ? `No ${team} breaking stories are available right now.`
+          : "No breaking football stories are available right now."
     };
 
     lastSuccessfulPayload = payload;
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      items: getFallbackBreakingItems(team),
+      items: [],
       source: getBreakingNewsFeedUrl(),
       stale: true,
       fetchedAt: new Date().toISOString(),

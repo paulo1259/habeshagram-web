@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { MessageSquareText, Sparkles } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
 import { getDailyDebates } from "@/services/news-service";
 import { DailyDebatePrompt, FootballTeam } from "@/types";
@@ -63,7 +64,16 @@ export function DailyDebates({
                 <div className="mt-4 h-10 w-40 animate-pulse rounded-full bg-brand-100" />
               </div>
             ))
-          : visiblePrompts.map((item) => {
+          : !visiblePrompts.length ? (
+              <EmptyState
+                title={team ? `No ${team} debates today` : "No debates today"}
+                description={
+                  team
+                    ? `There is no active ${team} debate in the editorial schedule right now.`
+                    : "Fresh debate prompts will show up here once the editorial collection is updated."
+                }
+              />
+            ) : visiblePrompts.map((item) => {
               const href = item.teamTag
                 ? `/create?text=${encodeURIComponent(item.suggestedText)}&team=${encodeURIComponent(teamQueryValue[item.teamTag])}`
                 : `/create?text=${encodeURIComponent(item.suggestedText)}`;

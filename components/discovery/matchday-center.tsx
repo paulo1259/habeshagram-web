@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { BellRing, ChevronRight, Radio, Sparkles, Trophy } from "lucide-react";
 import { useAppData } from "@/hooks/use-app-data";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
 import { getTeamSlug } from "@/services/football-hub-data";
 import {
@@ -170,7 +171,14 @@ export function MatchdayCenter({
             </Link>
           </div>
         </div>
-      ) : null}
+      ) : (
+        <div className="mt-4">
+          <EmptyState
+            title="No live matches right now"
+            description="The Matchday Center will light up here when tracked club fixtures go live or upcoming coverage is available."
+          />
+        </div>
+      )}
 
       <div className={`mt-4 grid gap-3 ${compact ? "" : "lg:grid-cols-[minmax(0,1fr)_18rem]"}`}>
         <div className="space-y-3">
@@ -181,7 +189,7 @@ export function MatchdayCenter({
             </Link>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {visibleFixtures.map((fixture) => (
+            {visibleFixtures.length ? visibleFixtures.map((fixture) => (
               <article
                 key={fixture.id}
                 className="rounded-[24px] border border-brand-100/80 bg-brand-50/35 px-4 py-4 transition hover:-translate-y-0.5 hover:shadow-sm"
@@ -210,7 +218,14 @@ export function MatchdayCenter({
                   </Link>
                 </div>
               </article>
-            ))}
+            )) : (
+              <div className="sm:col-span-2">
+                <EmptyState
+                  title="No fixtures to show"
+                  description="We do not have tracked-club fixture data for this window yet."
+                />
+              </div>
+            )}
           </div>
         </div>
 
