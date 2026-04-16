@@ -96,7 +96,7 @@ If these are blank, the app still starts, but authentication remains unavailable
 `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST` is server-only and can usually stay at `free-api-live-football-data.p.rapidapi.com`.
 `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL` is server-only and defaults to `https://free-api-live-football-data.p.rapidapi.com`.
 `BREAKING_NEWS_RSS_URL` is also server-only and optional. If you leave it blank, HabeshaGram defaults to the BBC Sport football RSS feed.
-`FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` is admin-only and optional for one-time content seeding. It should never be exposed to the browser or added to Vercel public env vars.
+`FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` is admin-only for one-time content seeding. It should never be exposed to the browser or added to Vercel public env vars.
 
 ### football API setup
 
@@ -133,11 +133,11 @@ What it does:
 How to set it up locally:
 
 1. Keep your normal Firebase web config in `.env.local`
-2. Add an admin credential for the script
+2. Add the admin credential the script requires
 3. Run `npm install` if `firebase-admin` is not installed yet
 4. Run `npm run seed:content`
 
-Recommended admin credential option:
+Required admin credential for this script:
 
 1. Create a Firebase service account key JSON in Firebase Console
 2. Base64-encode the JSON
@@ -160,6 +160,7 @@ Important:
 - it does not affect the deployed runtime app
 - do not expose the service account key in client-side env vars
 - do not prefix it with `NEXT_PUBLIC_`
+- it does not use Google default credentials or `gcloud auth application-default login`
 
 For Vercel:
 

@@ -2,12 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import { fetchLiveMatches, getInitialLiveMatches } from "@/services/live-match-service";
-import { GoalAlertItem, LiveMatch } from "@/types";
+import { FootballTeam, GoalAlertItem, LiveMatch } from "@/types";
 
 const SCORE_STORAGE_KEY = "habeshagram_live_scores_v1";
 const SEEN_ALERTS_STORAGE_KEY = "habeshagram_seen_goal_alerts_v1";
 
 type StoredScoreMap = Record<string, { homeScore: number; awayScore: number }>;
+
+const teamShortLabel: Record<FootballTeam, string> = {
+  "Manchester United": "Man Utd",
+  Arsenal: "Arsenal",
+  Chelsea: "Chelsea",
+  "Manchester City": "Man City"
+};
 
 function readStoredScores(): StoredScoreMap {
   if (typeof window === "undefined") {
@@ -100,7 +107,7 @@ function buildGoalAlerts(
       team: homeScored ? match.homeTeam : match.awayTeam,
       scorer: goalEvent?.player,
       minute,
-      message: `GOAL! ${match.homeTeam} ${match.homeScore}-${match.awayScore} ${match.awayTeam}`
+      message: `⚽ GOAL! ${teamShortLabel[match.homeTeam]} ${match.homeScore}-${match.awayScore} ${teamShortLabel[match.awayTeam]}`
     });
   });
 

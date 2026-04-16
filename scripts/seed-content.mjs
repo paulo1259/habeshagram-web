@@ -1,4 +1,4 @@
-import { getApps, initializeApp, applicationDefault, cert } from "firebase-admin/app";
+import { getApps, initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || "";
@@ -164,12 +164,28 @@ const curatedVideos = [
 function getCredential() {
   const base64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64?.trim();
 
-  if (base64) {
-    const json = Buffer.from(base64, "base64").toString("utf8");
-    return cert(JSON.parse(json));
+  if (!base64) {
+    throw new Error(
+      "FIREBASE_SERVICE_ACCOUNT_KEY_BASE64 is missing. Add the base64-encoded Firebase service account JSON to .env.local before running npm run seed:content."
+    );
   }
 
-  return applicationDefault();
+  try {
+    const json = Buffer.from(base64, "base64").toString("utf8");
+    const serviceAccount = JSON.parse(json);
+
+    if (!serviceAccount.project_id || !serviceAccount.client_email || !serviceAccount.private_key) {
+      throw new Error("The decoded service account JSON is missing required fields.");
+    }
+
+    return cert(serviceAccount);
+  } catch (error) {
+    throw new Error(
+      error instanceof Error
+        ? `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64 could not be decoded. ${error.message}`
+        : "FIREBASE_SERVICE_ACCOUNT_KEY_BASE64 could not be decoded."
+    );
+  }
 }
 
 function initializeAdmin() {
