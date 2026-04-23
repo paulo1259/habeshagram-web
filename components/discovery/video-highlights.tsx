@@ -48,21 +48,6 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
         return;
       }
 
-      if (process.env.NODE_ENV !== "production") {
-        console.info("[video-highlights:load]", {
-          team: team ?? null,
-          limit: limit ?? null,
-          loadedCount: base.length,
-          videos: base.map((item) => ({
-            id: item.id,
-            title: item.title,
-            featured: Boolean(item.featured),
-            createdAt: item.createdAt,
-            teamTag: item.teamTag ?? null
-          }))
-        });
-      }
-
       setVideos(base);
       setIsLoading(false);
     })();
@@ -76,32 +61,6 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
   const homepageSelection = selectHomepageVideoHighlights(visibleVideos, compact ? limit ?? 3 : 6);
   const featuredVideo = compact ? null : homepageSelection.hero;
   const supportingVideos = compact ? visibleVideos : homepageSelection.supporting;
-
-  useEffect(() => {
-    if (process.env.NODE_ENV === "production" || compact) {
-      return;
-    }
-
-    console.info("[video-highlights:selection]", {
-      team: team ?? null,
-      totalLoaded: videos.length,
-      visibleIds: homepageSelection.visibleIds,
-      hero: featuredVideo
-        ? {
-            id: featuredVideo.id,
-            title: featuredVideo.title,
-            featured: Boolean(featuredVideo.featured),
-            createdAt: featuredVideo.createdAt
-          }
-        : null,
-      supporting: supportingVideos.map((item) => ({
-        id: item.id,
-        title: item.title,
-        featured: Boolean(item.featured),
-        createdAt: item.createdAt
-      }))
-    });
-  }, [compact, featuredVideo, homepageSelection.visibleIds, supportingVideos, team, videos.length]);
 
   return (
     <section
@@ -144,7 +103,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
             description={
               team
                 ? `There are no curated ${team} clips in Firestore right now.`
-                : "Curated video highlights will appear here once the editorial collection is populated."
+                : "Curated video highlights will appear here once the curated videos collection has published clips."
             }
           />
         </div>

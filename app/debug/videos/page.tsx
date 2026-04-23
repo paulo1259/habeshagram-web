@@ -81,8 +81,8 @@ export default function DebugVideosPage() {
               <p className="mt-2 text-sm font-bold text-ink">{snapshot.mappedDocs}</p>
             </div>
             <div className="rounded-[22px] bg-brand-50/60 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">Firebase configured</p>
-              <p className="mt-2 text-sm font-bold text-ink">{String(snapshot.isFirebaseConfigured)}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">Collection</p>
+              <p className="mt-2 text-sm font-bold text-ink">{snapshot.collection}</p>
             </div>
           </div>
           {snapshot.error ? (
