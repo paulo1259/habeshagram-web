@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { mapCuratedVideoData, sortCuratedVideos, type CuratedVideoDiagnostics } from "@/lib/curated-video-utils";
-import { getFirebaseAdminDb } from "@/lib/firebase-admin";
+import { getFirebaseAdminDb, getFirebaseAdminDiagnostics } from "@/lib/firebase-admin";
 import { CuratedVideoItem } from "@/types";
 
 const CURATED_VIDEOS_COLLECTION = "curatedVideos";
@@ -29,8 +29,10 @@ function buildDiagnostics(items: CuratedVideoItem[], totalDocs: number, rejected
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const debug = url.searchParams.get("debug") === "1";
+  const adminDiagnostics = getFirebaseAdminDiagnostics();
 
   try {
+    console.info("[api/curated-videos] using admin db", adminDiagnostics);
     const snapshot = await getFirebaseAdminDb().collection(CURATED_VIDEOS_COLLECTION).get();
     const rejectedDocs: CuratedVideoDiagnostics["rejectedDocs"] = [];
 
@@ -46,17 +48,21 @@ export async function GET(request: Request) {
       items,
       source: diagnostics.source,
       message: items.length ? undefined : "No curated videos have been published yet.",
-      ...(debug ? { diagnostics } : {})
+      ...(debug ? { diagnostics, adminDiagnostics } : {})
     });
   } catch (error) {
     const diagnostics = buildDiagnostics([], 0, [], error instanceof Error ? error.message : "Unable to read curated videos.");
+    console.error("[api/curated-videos] admin read failed", {
+      ...adminDiagnostics,
+      error: diagnostics.error
+    });
 
     return NextResponse.json(
       {
         items: [],
         source: "error",
         message: "Unable to load curated videos right now.",
-        ...(debug ? { diagnostics } : {})
+        ...(debug ? { diagnostics, adminDiagnostics } : {})
       },
       { status: 200 }
     );

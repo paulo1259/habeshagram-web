@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { mapCuratedVideoData } from "@/lib/curated-video-utils";
-import { getFirebaseAdminDb } from "@/lib/firebase-admin";
+import { getFirebaseAdminDb, getFirebaseAdminDiagnostics } from "@/lib/firebase-admin";
 import { CuratedVideoItem } from "@/types";
 
 const CURATED_VIDEOS_COLLECTION = "curatedVideos";
@@ -11,7 +11,13 @@ export async function GET(
   _request: Request,
   { params }: { params: { id: string } }
 ) {
+  const adminDiagnostics = getFirebaseAdminDiagnostics();
+
   try {
+    console.info("[api/curated-videos/:id] using admin db", {
+      ...adminDiagnostics,
+      id: params.id
+    });
     const snapshot = await getFirebaseAdminDb()
       .collection(CURATED_VIDEOS_COLLECTION)
       .doc(params.id)
@@ -38,7 +44,12 @@ export async function GET(
       source: item ? "firestore" : "empty",
       message: item ? undefined : "This curated video document is missing required fields."
     });
-  } catch {
+  } catch (error) {
+    console.error("[api/curated-videos/:id] admin read failed", {
+      ...adminDiagnostics,
+      id: params.id,
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
     return NextResponse.json(
       {
         items: [],
