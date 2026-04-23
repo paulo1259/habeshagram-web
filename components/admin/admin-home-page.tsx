@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Film, Newspaper, Sparkles } from "lucide-react";
+import { Film, Flag, Newspaper, Sparkles } from "lucide-react";
 import { AdminLayout } from "@/components/admin/admin-layout";
 
 const cards = [
@@ -25,6 +25,13 @@ const cards = [
     description:
       "Publish local culture, music, and community cards without touching Firestore by hand.",
     icon: Newspaper
+  },
+  {
+    href: "/admin/reports",
+    title: "Moderation Reports",
+    description:
+      "Review community-submitted reports privately and move each case through simple admin statuses.",
+    icon: Flag
   }
 ];
 

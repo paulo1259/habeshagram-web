@@ -5,7 +5,8 @@ HabeshaGram is a mobile-first social web app for the Ethiopian and Eritrean Habe
 This project is designed to run locally today at zero cost:
 
 - It uses real Firebase Authentication when configured
-- It keeps local mock content for posts, comments, likes, and discovery sections
+- It uses real live/admin-managed discovery content where configured
+- It falls back to clean empty states or cached real server responses instead of fake discovery cards
 - It stays runnable even if Firebase is not configured, but auth-protected actions will be unavailable until you add `.env.local`
 
 ## Run In VS Code On Windows
@@ -87,6 +88,9 @@ FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY=
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST=free-api-live-football-data.p.rapidapi.com
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL=https://free-api-live-football-data.p.rapidapi.com
 BREAKING_NEWS_RSS_URL=
+FIREBASE_SERVICE_ACCOUNT_KEY_BASE64=
+ADMIN_EMAIL_ALLOWLIST=
+ADMIN_UID_ALLOWLIST=
 ```
 
 If these are blank, the app still starts, but authentication remains unavailable until you add real values and restart the dev server.
@@ -173,6 +177,7 @@ HabeshaGram also includes a lightweight internal content workspace:
 - `/admin/videos`
 - `/admin/debates`
 - `/admin/editorial`
+- `/admin/reports`
 
 It manages these live Firestore collections:
 
@@ -320,9 +325,9 @@ HabeshaGram's football stack now uses split providers through internal Next.js r
   - `https://api.football-data.org/v4/competitions/PL/standings`
 - current provider focus: Premier League fixtures and tracked-club table coverage involving Manchester United, Arsenal, Chelsea, and Manchester City
 
-The app keeps both provider keys on the server, polls the local live route from the browser every 15 seconds on the live page, and falls back to the last successful response or the built-in seeded slate if either upstream service is unavailable.
+The app keeps both provider keys on the server, polls the local live route from the browser every 15 seconds on the live page, and falls back to the last successful real response or a clean empty response if either upstream service is unavailable.
 
-If `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY` is missing or blank, `app/api/football/live/route.ts` returns a friendly fallback payload instead of crashing the live page. If `FOOTBALL_DATA_API_KEY` is missing or blank, `app/api/football/standings/route.ts` returns the fallback Premier League table instead of breaking the standings widget.
+If `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY` is missing or blank, `app/api/football/live/route.ts` returns a friendly empty response instead of crashing the live page. If `FOOTBALL_DATA_API_KEY` is missing or blank, `app/api/football/standings/route.ts` returns an empty standings response with a clear message instead of rendering fake table data.
 
 ### Breaking Football News
 
@@ -332,7 +337,7 @@ HabeshaGram's Breaking Now section can read live football stories through an int
 - default provider: BBC Sport football RSS
 - optional override env var: `BREAKING_NEWS_RSS_URL`
 
-The route ingests RSS on the server, filters for Manchester United, Arsenal, Chelsea, and Manchester City relevance, caches the last successful payload in memory, and falls back to the seeded editorial cards if the provider becomes unavailable.
+The route ingests RSS on the server, filters for Manchester United, Arsenal, Chelsea, and Manchester City relevance, caches the last successful payload in memory, and otherwise returns a clear empty/unavailable state instead of fake stories.
 
 ### Reporting / Moderation MVP
 
@@ -353,7 +358,7 @@ Each report includes:
 - `postImageURL`
 - `createdAt`
 
-Clients can submit reports, but should not be able to read the reports collection back from the public app. Review reports in Firebase Console or later through an admin-only dashboard.
+Clients can submit reports, but should not be able to read the reports collection back from the public app. Approved admins can review and update report status through `/admin/reports`.
 
 ## Soft Launch Checklist
 
@@ -403,27 +408,27 @@ Before inviting real users, run through this short checklist:
 - Verify the deployed domain is added in Firebase Auth Authorized domains
 - Test one full login/post/image-upload flow on the deployed site before sharing it widely
 
-## Firebase Content Later
+## Firebase Content Notes
 
-Authentication is already wired. When you want to connect the rest of the real backend, update:
+Authentication is already wired. Core social data uses Firebase when configured:
 
-- `services/post-service.ts`
-- `services/comment-service.ts`
-
-The remaining content services still use mock/local data for the MVP:
-
-- Firestore for users, posts, comments, likes
+- Firestore for users, posts, comments, likes, saves, notifications, curated content, and reports
 - Firebase Storage for image uploads
+
+If Firebase is unconfigured locally, auth-protected actions stay unavailable and the app shows setup messaging instead of pretending the backend is live.
 
 ## Local Discovery Content
 
-The homepage includes discovery sections so HabeshaGram feels complete even when no live external sources are connected:
+The homepage still includes a few lightweight curated/configured discovery surfaces:
 
 - `services/discovery-data.ts`
   - `radioStations`: curated Addis Ababa / Ethiopia station cards
-  - `localNewsItems`: editorial-style Addis entertainment and culture stories
-- `services/news-service.ts`
-  - clean fallback data layer for local entertainment and culture content
+- Firestore-managed editorial content:
+  - `editorialHighlights`
+  - `dailyDebates`
+  - `curatedVideos`
+
+That means radio is still a simple curated config layer, while editorial highlights, debates, and videos are now admin-managed live content.
 
 ### Radio Data Shape
 
@@ -448,9 +453,9 @@ Use these fields in `services/discovery-data.ts`:
 
 If `embedUrl` is present, HabeshaGram renders an in-page iframe player. If `embedUrl` is missing but `streamUrl` exists, it falls back to the browser audio player. If both are blank, the radio panel shows a graceful placeholder inside the site.
 
-### Local News Data Shape
+### Editorial Highlight Data Shape
 
-Each news item includes:
+Each editorial highlight includes:
 
 - `id`
 - `headline`
@@ -459,8 +464,12 @@ Each news item includes:
 - `category`
 - `imageURL`
 - `link`
+- `featured`
+- `publishLabel`
+- `teamTag`
+- `hashtags`
 
-If `link` is blank, the UI still renders a complete editorial card and shows a placeholder action. Later, replace `services/news-service.ts` with live fetch logic from your preferred editorial source or internal API route.
+These are now best managed through `/admin/editorial` instead of editing Firestore documents manually.
 
 ## New UI Components
 

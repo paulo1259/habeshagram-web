@@ -228,7 +228,7 @@ export default function HomePage() {
               href="/match/live"
               className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-800 shadow-soft transition hover:bg-brand-50"
             >
-              Join Reactions
+              Join live reactions
             </Link>
           </div>
         </section>

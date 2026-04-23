@@ -252,6 +252,8 @@ export type SavedPostItem = {
 
 export type PostReportReason = "spam" | "harassment" | "hate" | "other";
 
+export type PostReportStatus = "open" | "reviewed" | "dismissed" | "escalated";
+
 export type PostReport = {
   id: string;
   postId: string;
@@ -261,7 +263,7 @@ export type PostReport = {
   reporterProfileImageURL: string;
   reason: PostReportReason;
   details: string;
-  status: "open";
+  status: PostReportStatus;
   postTextPreview: string;
   postImageURL: string;
   createdAt: string;
