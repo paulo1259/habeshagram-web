@@ -6,7 +6,11 @@ import { Film, Play } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
 import { cn } from "@/lib/utils";
-import { getCuratedVideos, getCuratedVideosByTeam } from "@/services/curated-video-service";
+import {
+  getCuratedVideos,
+  getCuratedVideosByTeam,
+  selectHomepageVideoHighlights
+} from "@/services/curated-video-service";
 import { getTeamSlug } from "@/services/football-hub-data";
 import { CuratedVideoCategory, CuratedVideoItem, FootballTeam } from "@/types";
 
@@ -44,7 +48,22 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
         return;
       }
 
-      setVideos(typeof limit === "number" ? base.slice(0, limit) : base);
+      if (process.env.NODE_ENV !== "production") {
+        console.info("[video-highlights:load]", {
+          team: team ?? null,
+          limit: limit ?? null,
+          loadedCount: base.length,
+          videos: base.map((item) => ({
+            id: item.id,
+            title: item.title,
+            featured: Boolean(item.featured),
+            createdAt: item.createdAt,
+            teamTag: item.teamTag ?? null
+          }))
+        });
+      }
+
+      setVideos(base);
       setIsLoading(false);
     })();
 
@@ -53,8 +72,36 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
     };
   }, [limit, team]);
 
-  const featuredVideo = videos.find((item) => item.featured) ?? videos[0] ?? null;
-  const supportingVideos = featuredVideo ? videos.filter((item) => item.id !== featuredVideo.id) : videos;
+  const visibleVideos = typeof limit === "number" ? videos.slice(0, limit) : videos;
+  const homepageSelection = selectHomepageVideoHighlights(visibleVideos, compact ? limit ?? 3 : 6);
+  const featuredVideo = compact ? null : homepageSelection.hero;
+  const supportingVideos = compact ? visibleVideos : homepageSelection.supporting;
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production" || compact) {
+      return;
+    }
+
+    console.info("[video-highlights:selection]", {
+      team: team ?? null,
+      totalLoaded: videos.length,
+      visibleIds: homepageSelection.visibleIds,
+      hero: featuredVideo
+        ? {
+            id: featuredVideo.id,
+            title: featuredVideo.title,
+            featured: Boolean(featuredVideo.featured),
+            createdAt: featuredVideo.createdAt
+          }
+        : null,
+      supporting: supportingVideos.map((item) => ({
+        id: item.id,
+        title: item.title,
+        featured: Boolean(item.featured),
+        createdAt: item.createdAt
+      }))
+    });
+  }, [compact, featuredVideo, homepageSelection.visibleIds, supportingVideos, team, videos.length]);
 
   return (
     <section
@@ -103,7 +150,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
         </div>
       ) : compact ? (
         <div className="mt-4 space-y-3">
-          {videos.slice(0, limit ?? 3).map((video) => (
+          {supportingVideos.slice(0, limit ?? 3).map((video) => (
             <Link
               key={video.id}
               href={`/videos/${video.id}`}

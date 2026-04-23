@@ -57,6 +57,13 @@ export function VideoDetailPageClient({ videoId }: { videoId: string }) {
     void (async () => {
       setIsVideoLoading(true);
       const nextVideo = await getCuratedVideoById(videoId);
+      if (process.env.NODE_ENV !== "production") {
+        console.info("[video-detail:load]", {
+          requestedId: videoId,
+          found: Boolean(nextVideo),
+          title: nextVideo?.title ?? null
+        });
+      }
       if (!isMounted) {
         return;
       }
@@ -65,6 +72,12 @@ export function VideoDetailPageClient({ videoId }: { videoId: string }) {
 
       if (nextVideo) {
         const nextRelatedVideos = await getRelatedCuratedVideos(nextVideo, 4);
+        if (process.env.NODE_ENV !== "production") {
+          console.info("[video-detail:related]", {
+            requestedId: videoId,
+            relatedIds: nextRelatedVideos.map((item) => item.id)
+          });
+        }
         if (!isMounted) {
           return;
         }
