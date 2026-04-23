@@ -36,14 +36,15 @@ export default function AdminEditorialPage() {
           hashtags: ""
         }}
         fields={[
-          { name: "headline", label: "Headline", type: "text", placeholder: "Habesha music night fills the city again" },
-          { name: "source", label: "Source", type: "text", placeholder: "HabeshaGram Desk / Community partner" },
+          { name: "headline", label: "Headline", type: "text", placeholder: "Habesha music night fills the city again", required: true },
+          { name: "source", label: "Source", type: "text", placeholder: "HabeshaGram Desk / Community partner", required: true },
           {
             name: "summary",
             label: "Summary",
             type: "textarea",
             placeholder: "A short editorial summary that reads well in discovery cards.",
-            rows: 4
+            rows: 4,
+            required: true
           },
           {
             name: "category",

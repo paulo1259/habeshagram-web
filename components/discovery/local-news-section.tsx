@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { NewsCard } from "@/components/discovery/news-card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
 import { getLocalNewsItems } from "@/services/news-service";
 import { LocalNewsItem } from "@/types";
@@ -43,9 +44,10 @@ export function LocalNewsSection({
           </div>
         ) : null}
         {!isLoading && !items.length ? (
-          <div className="rounded-[24px] border border-dashed border-brand-200 bg-white/70 p-4 text-sm text-stone-500">
-            Local entertainment stories will appear here when content is available.
-          </div>
+          <EmptyState
+            title="No editorial highlights yet"
+            description="Culture, music, events, and community picks will appear here once the editorial collection is updated."
+          />
         ) : null}
         {items.map((item) => (
           <NewsCard key={item.id} item={item} compact={compact} />

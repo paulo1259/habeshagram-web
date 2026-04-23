@@ -132,5 +132,5 @@ export async function getRelatedCuratedVideos(video: CuratedVideoItem, limit = 4
     .map(({ item }) => item);
 }
 
-// TODO: Replace Firestore Console-only curation with an internal admin dashboard
-// that writes the same CuratedVideoItem shape into curatedVideos/{videoId}.
+// The internal admin workspace now manages curatedVideos/{videoId}. This
+// service remains the lightweight public read layer for curated videos.

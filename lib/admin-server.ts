@@ -21,11 +21,11 @@ function parseAllowlist(value?: string) {
 }
 
 function getAdminEmailAllowlist() {
-  return parseAllowlist(process.env.ADMIN_EMAIL_ALLOWLIST ?? process.env.NEXT_PUBLIC_ADMIN_EMAILS);
+  return parseAllowlist(process.env.ADMIN_EMAIL_ALLOWLIST);
 }
 
 function getAdminUidAllowlist() {
-  return parseAllowlist(process.env.ADMIN_UID_ALLOWLIST ?? process.env.NEXT_PUBLIC_ADMIN_UIDS);
+  return parseAllowlist(process.env.ADMIN_UID_ALLOWLIST);
 }
 
 function readBearerToken(request: Request) {

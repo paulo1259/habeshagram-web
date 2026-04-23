@@ -87,5 +87,5 @@ export async function getDailyDebatePrompts(team?: FootballTeam): Promise<DailyD
   }
 }
 
-// TODO: Replace Firestore Console-only debate curation with an internal admin
-// dashboard that writes the same DailyDebatePrompt shape into dailyDebates/{debateId}.
+// The internal admin workspace now manages dailyDebates/{debateId}. This
+// service remains the lightweight public read layer for debate prompts.

@@ -38,7 +38,7 @@ export default function AdminVideosPage() {
           featured: false
         }}
         fields={[
-          { name: "title", label: "Title", type: "text", placeholder: "Late winner sparks fan chaos" },
+          { name: "title", label: "Title", type: "text", placeholder: "Late winner sparks fan chaos", required: true },
           {
             name: "category",
             label: "Category",
@@ -50,13 +50,14 @@ export default function AdminVideosPage() {
               { label: "Music", value: "Music" }
             ]
           },
-          { name: "source", label: "Source", type: "text", placeholder: "YouTube / BBC Sport / Club channel" },
+          { name: "source", label: "Source", type: "text", placeholder: "YouTube / BBC Sport / Club channel", required: true },
           {
             name: "summary",
             label: "Summary",
             type: "textarea",
             placeholder: "A short summary that explains why this clip matters.",
-            rows: 4
+            rows: 4,
+            required: true
           },
           { name: "thumbnailURL", label: "Thumbnail URL", type: "text", placeholder: "https://..." },
           { name: "videoUrl", label: "Video URL", type: "text", placeholder: "https://..." },
@@ -65,7 +66,8 @@ export default function AdminVideosPage() {
             label: "Embed URL",
             type: "text",
             placeholder: "https://www.youtube.com/embed/...",
-            helpText: "This is the URL the in-app player uses."
+            helpText: "This is the URL the in-app player uses.",
+            required: true
           },
           { name: "duration", label: "Duration", type: "text", placeholder: "3:14" },
           { name: "teamTag", label: "Team tag", type: "select", options: teamOptions },

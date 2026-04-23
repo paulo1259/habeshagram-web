@@ -18,6 +18,7 @@ type FieldConfig = {
   name: string;
   label: string;
   type: FieldType;
+  required?: boolean;
   placeholder?: string;
   rows?: number;
   options?: Array<{ label: string; value: string }>;
@@ -52,6 +53,10 @@ function formStateFromItem<T extends { id: string }>(
   return next;
 }
 
+function getTrimmedStringValue(value: FormValue | undefined) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 export function AdminContentManager<K extends AdminContentKind>({
   kind,
   title,
@@ -80,6 +85,7 @@ export function AdminContentManager<K extends AdminContentKind>({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -124,6 +130,11 @@ export function AdminContentManager<K extends AdminContentKind>({
     setFormState(initialValues);
   }
 
+  function resetUiState() {
+    setMessage(null);
+    setError(null);
+  }
+
   function updateField(name: string, value: FormValue) {
     setFormState((current) => ({
       ...current,
@@ -131,11 +142,31 @@ export function AdminContentManager<K extends AdminContentKind>({
     }));
   }
 
+  function validateForm() {
+    const missingFields = fields
+      .filter((field) => field.required)
+      .filter((field) => !getTrimmedStringValue(formState[field.name]))
+      .map((field) => field.label);
+
+    if (!missingFields.length) {
+      return null;
+    }
+
+    return `Please fill in: ${missingFields.join(", ")}.`;
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    resetUiState();
+
+    const validationError = validateForm();
+
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     setIsSaving(true);
-    setError(null);
-    setMessage(null);
 
     try {
       const payload = {
@@ -150,7 +181,12 @@ export function AdminContentManager<K extends AdminContentKind>({
       ]);
 
       setItems(nextItems);
-      setMessage(response.message ?? (editingId ? "Updated successfully." : "Created successfully."));
+      setMessage(
+        response.message ??
+          (editingId
+            ? "Updated successfully. Public surfaces will reflect this on their next refresh."
+            : "Created successfully. Public surfaces will reflect this on their next refresh.")
+      );
       resetForm();
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Could not save this item.");
@@ -160,8 +196,13 @@ export function AdminContentManager<K extends AdminContentKind>({
   }
 
   async function handleDelete(id: string) {
-    setError(null);
-    setMessage(null);
+    resetUiState();
+
+    if (!window.confirm("Delete this item from the live curated collection?")) {
+      return;
+    }
+
+    setPendingDeleteId(id);
 
     try {
       const response = await deleteAdminItem(kind, id);
@@ -172,6 +213,8 @@ export function AdminContentManager<K extends AdminContentKind>({
       setMessage(response.message);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Could not delete this item.");
+    } finally {
+      setPendingDeleteId(null);
     }
   }
 
@@ -231,7 +274,9 @@ export function AdminContentManager<K extends AdminContentKind>({
                     <Button
                       type="button"
                       variant="outline"
+                      disabled={isSaving || pendingDeleteId === item.id}
                       onClick={() => {
+                        resetUiState();
                         setEditingId(item.id);
                         setFormState(formStateFromItem(item, initialValues));
                       }}
@@ -239,9 +284,14 @@ export function AdminContentManager<K extends AdminContentKind>({
                       <Pencil className="mr-2 h-4 w-4" />
                       Edit
                     </Button>
-                    <Button type="button" variant="ghost" onClick={() => void handleDelete(item.id)}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      disabled={isSaving || pendingDeleteId === item.id}
+                      onClick={() => void handleDelete(item.id)}
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
+                      {pendingDeleteId === item.id ? "Deleting..." : "Delete"}
                     </Button>
                   </div>
                 </div>
@@ -258,11 +308,24 @@ export function AdminContentManager<K extends AdminContentKind>({
             title={editingId ? "Update item" : "Add new item"}
             description="Save changes straight into the live curated collection. Public reads stay intact, and only approved admins can write."
           />
-          <Button type="button" variant="outline" onClick={resetForm}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              resetUiState();
+              resetForm();
+            }}
+          >
             <Plus className="mr-2 h-4 w-4" />
             New
           </Button>
         </div>
+
+        {editingId ? (
+          <div className="mt-4 rounded-[22px] bg-brand-50 px-4 py-3 text-sm text-brand-800">
+            Editing <span className="font-semibold">{editingId}</span>. Reset to start a fresh item.
+          </div>
+        ) : null}
 
         <form className="mt-4 space-y-4" onSubmit={(event) => void handleSubmit(event)}>
           {fields.map((field) => {
@@ -272,7 +335,10 @@ export function AdminContentManager<K extends AdminContentKind>({
             if (field.type === "textarea") {
               return (
                 <label key={field.name} htmlFor={inputId} className="block space-y-2">
-                  <span className="text-sm font-semibold text-ink">{field.label}</span>
+                  <span className="text-sm font-semibold text-ink">
+                    {field.label}
+                    {field.required ? " *" : ""}
+                  </span>
                   <textarea
                     id={inputId}
                     value={typeof value === "string" ? value : ""}
@@ -291,7 +357,10 @@ export function AdminContentManager<K extends AdminContentKind>({
             if (field.type === "select") {
               return (
                 <label key={field.name} htmlFor={inputId} className="block space-y-2">
-                  <span className="text-sm font-semibold text-ink">{field.label}</span>
+                  <span className="text-sm font-semibold text-ink">
+                    {field.label}
+                    {field.required ? " *" : ""}
+                  </span>
                   <select
                     id={inputId}
                     value={typeof value === "string" ? value : ""}
@@ -335,7 +404,10 @@ export function AdminContentManager<K extends AdminContentKind>({
 
             return (
               <label key={field.name} htmlFor={inputId} className="block space-y-2">
-                <span className="text-sm font-semibold text-ink">{field.label}</span>
+                <span className="text-sm font-semibold text-ink">
+                  {field.label}
+                  {field.required ? " *" : ""}
+                </span>
                 <input
                   id={inputId}
                   type="text"
@@ -356,7 +428,15 @@ export function AdminContentManager<K extends AdminContentKind>({
               <Save className="mr-2 h-4 w-4" />
               {isSaving ? "Saving..." : submitLabel}
             </Button>
-            <Button type="button" variant="outline" onClick={resetForm} disabled={isSaving}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                resetUiState();
+                resetForm();
+              }}
+              disabled={isSaving}
+            >
               Reset
             </Button>
           </div>

@@ -5,7 +5,7 @@ import { CuratedVideoItem, DailyDebatePrompt, FootballTeam, LocalNewsItem } from
 const FIRESTORE_TIMEOUT_MS = 4000;
 
 const COLLECTIONS = {
-  videos: "editorialVideos",
+  videos: "curatedVideos",
   debates: "dailyDebates",
   localHighlights: "editorialHighlights"
 } as const;
@@ -237,6 +237,5 @@ export async function getEditorialLocalHighlights(): Promise<LocalNewsItem[]> {
   }
 }
 
-// TODO: Replace Firestore Console-only editorial highlight curation with an
-// internal admin dashboard that writes the same LocalNewsItem shape into
-// editorialHighlights/{itemId}.
+// The admin workspace now manages editorialHighlights/{itemId}. This helper
+// stays focused on public read behavior so discovery surfaces can stay simple.

@@ -39,7 +39,8 @@ export default function AdminDebatesPage() {
             label: "Prompt",
             type: "textarea",
             placeholder: "Is Arsenal the most complete side right now?",
-            rows: 3
+            rows: 3,
+            required: true
           },
           {
             name: "category",
@@ -59,7 +60,8 @@ export default function AdminDebatesPage() {
             label: "Suggested post text",
             type: "textarea",
             placeholder: "My take: Arsenal are the most balanced side right now because...",
-            rows: 4
+            rows: 4,
+            required: true
           },
           { name: "publishLabel", label: "Publish label", type: "text", placeholder: "Today / Fan Debate" },
           {
