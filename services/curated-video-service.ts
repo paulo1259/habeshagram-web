@@ -22,8 +22,14 @@ async function withFirestoreTimeout<T>(promise: Promise<T>, message: string): Pr
   }
 }
 
-function sortByCreatedAtDesc(items: CuratedVideoItem[]) {
-  return [...items].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+function sortCuratedVideos(items: CuratedVideoItem[]) {
+  return [...items].sort((a, b) => {
+    if (Boolean(a.featured) !== Boolean(b.featured)) {
+      return Number(Boolean(b.featured)) - Number(Boolean(a.featured));
+    }
+
+    return +new Date(b.createdAt) - +new Date(a.createdAt);
+  });
 }
 
 function mapCuratedVideo(data: Partial<CuratedVideoItem>, id: string): CuratedVideoItem | null {
@@ -64,7 +70,7 @@ export async function getCuratedVideos(): Promise<CuratedVideoItem[]> {
       .map((item) => mapCuratedVideo(item.data() as Partial<CuratedVideoItem>, item.id))
       .filter((item): item is CuratedVideoItem => Boolean(item));
 
-    return sortByCreatedAtDesc(items);
+    return sortCuratedVideos(items);
   } catch {
     return [];
   }

@@ -213,7 +213,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
           ) : null}
 
           <div className="space-y-3">
-            {supportingVideos.slice(0, compact ? 3 : 4).map((video) => (
+            {supportingVideos.slice(0, compact ? 3 : 5).map((video) => (
               <article
                 key={video.id}
                 className="group rounded-[26px] border border-brand-100 bg-white p-3 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200"

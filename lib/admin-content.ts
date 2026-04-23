@@ -139,22 +139,45 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
       throw new Error("Videos require title, source, summary, and embedUrl.");
     }
 
-    return {
+    const sanitizedVideo: Record<string, unknown> = {
       id: createStableId("video", title, readOptionalString(input.id)),
       title,
       category: ensureCategory(input.category, VIDEO_CATEGORIES, "Football Moments"),
       source,
       summary,
-      thumbnailURL: readString(input.thumbnailURL),
-      videoUrl: readString(input.videoUrl) || embedUrl,
       embedUrl,
       duration: readString(input.duration),
-      teamTag: readTeam(input.teamTag),
-      hashtags: readHashtags(input.hashtags),
       createdAt: readString(input.createdAt) || now,
-      publishLabel: readOptionalString(input.publishLabel),
       featured: readBoolean(input.featured)
-    } as AdminContentItemMap[K];
+    };
+
+    const thumbnailURL = readString(input.thumbnailURL);
+    const videoUrl = readString(input.videoUrl);
+    const teamTag = readTeam(input.teamTag);
+    const hashtags = readHashtags(input.hashtags);
+    const publishLabel = readOptionalString(input.publishLabel);
+
+    if (thumbnailURL) {
+      sanitizedVideo.thumbnailURL = thumbnailURL;
+    }
+
+    if (videoUrl) {
+      sanitizedVideo.videoUrl = videoUrl;
+    }
+
+    if (teamTag) {
+      sanitizedVideo.teamTag = teamTag;
+    }
+
+    if (hashtags.length) {
+      sanitizedVideo.hashtags = hashtags;
+    }
+
+    if (publishLabel) {
+      sanitizedVideo.publishLabel = publishLabel;
+    }
+
+    return sanitizedVideo as AdminContentItemMap[K];
   }
 
   if (kind === "debates") {
@@ -167,18 +190,32 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
 
     const hashtag = readOptionalString(input.hashtag);
 
-    return {
+    const sanitizedDebate: Record<string, unknown> = {
       id: createStableId("debate", prompt, readOptionalString(input.id)),
       prompt,
       category: ensureCategory(input.category, DEBATE_CATEGORIES, "Big Debate"),
-      teamTag: readTeam(input.teamTag),
-      hashtag: hashtag ? normalizeHashtag(hashtag) : undefined,
       suggestedText,
       featured: readBoolean(input.featured),
       active: readBoolean(input.active, true),
-      publishLabel: readOptionalString(input.publishLabel),
       createdAt: readString(input.createdAt) || now
-    } as AdminContentItemMap[K];
+    };
+
+    const teamTag = readTeam(input.teamTag);
+    const publishLabel = readOptionalString(input.publishLabel);
+
+    if (teamTag) {
+      sanitizedDebate.teamTag = teamTag;
+    }
+
+    if (hashtag) {
+      sanitizedDebate.hashtag = normalizeHashtag(hashtag);
+    }
+
+    if (publishLabel) {
+      sanitizedDebate.publishLabel = publishLabel;
+    }
+
+    return sanitizedDebate as AdminContentItemMap[K];
   }
 
   const headline = readString(input.headline);
@@ -189,20 +226,43 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
     throw new Error("Editorial highlights require a headline, source, and summary.");
   }
 
-  return {
+  const sanitizedHighlight: Record<string, unknown> = {
     id: createStableId("highlight", headline, readOptionalString(input.id)),
     headline,
     source,
     summary,
     category: ensureCategory(input.category, EDITORIAL_CATEGORIES, "Community"),
-    imageURL: readString(input.imageURL),
-    link: readString(input.link),
     featured: readBoolean(input.featured),
-    createdAt: readString(input.createdAt) || now,
-    publishLabel: readOptionalString(input.publishLabel),
-    teamTag: readTeam(input.teamTag),
-    hashtags: readHashtags(input.hashtags)
-  } as AdminContentItemMap[K];
+    createdAt: readString(input.createdAt) || now
+  };
+
+  const imageURL = readString(input.imageURL);
+  const link = readString(input.link);
+  const publishLabel = readOptionalString(input.publishLabel);
+  const teamTag = readTeam(input.teamTag);
+  const hashtags = readHashtags(input.hashtags);
+
+  if (imageURL) {
+    sanitizedHighlight.imageURL = imageURL;
+  }
+
+  if (link) {
+    sanitizedHighlight.link = link;
+  }
+
+  if (publishLabel) {
+    sanitizedHighlight.publishLabel = publishLabel;
+  }
+
+  if (teamTag) {
+    sanitizedHighlight.teamTag = teamTag;
+  }
+
+  if (hashtags.length) {
+    sanitizedHighlight.hashtags = hashtags;
+  }
+
+  return sanitizedHighlight as AdminContentItemMap[K];
 }
 
 export function createAdminDraftId(kind: AdminContentKind, seed: string) {
