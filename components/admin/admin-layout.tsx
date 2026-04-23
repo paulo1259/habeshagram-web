@@ -7,6 +7,7 @@ import { Film, Flag, LayoutGrid, Newspaper, ShieldCheck, Sparkles } from "lucide
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { AppShell } from "@/components/layout/app-shell";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useAuth } from "@/hooks/use-auth";
 import { verifyAdminSession } from "@/services/admin-content-service";
 import { cn } from "@/lib/utils";
 
@@ -28,10 +29,27 @@ export function AdminLayout({
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const { currentUser, isReady, authMode } = useAuth();
   const [status, setStatus] = useState<"checking" | "allowed" | "denied">("checking");
   const [message, setMessage] = useState("Checking your admin access...");
 
   useEffect(() => {
+    if (!isReady) {
+      setStatus("checking");
+      setMessage("Checking your session...");
+      return;
+    }
+
+    if (!currentUser) {
+      setStatus("checking");
+      setMessage(
+        authMode === "unconfigured"
+          ? "Firebase auth is not configured yet."
+          : "Redirecting to login..."
+      );
+      return;
+    }
+
     let isMounted = true;
 
     void (async () => {
@@ -60,7 +78,7 @@ export function AdminLayout({
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [authMode, currentUser, isReady]);
 
   return (
     <AppShell>

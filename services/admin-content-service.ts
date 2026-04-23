@@ -1,7 +1,7 @@
 "use client";
 
-import { firebaseAuth } from "@/lib/firebase";
 import { AdminContentItemMap, AdminContentKind } from "@/lib/admin-content";
+import { getAdminIdToken } from "@/services/admin-auth-client";
 
 type AdminSessionPayload = {
   uid: string;
@@ -18,18 +18,8 @@ type SaveResponse<K extends AdminContentKind> = {
   message?: string;
 };
 
-async function getAdminToken() {
-  const user = firebaseAuth?.currentUser;
-
-  if (!user) {
-    throw new Error("You need to be signed in before using the admin tools.");
-  }
-
-  return user.getIdToken();
-}
-
 async function requestAdmin<T>(path: string, init?: RequestInit) {
-  const token = await getAdminToken();
+  const token = await getAdminIdToken();
   const response = await fetch(path, {
     ...init,
     headers: {

@@ -1,7 +1,7 @@
 "use client";
 
 import { PostReport, PostReportStatus } from "@/types";
-import { firebaseAuth } from "@/lib/firebase";
+import { getAdminIdToken } from "@/services/admin-auth-client";
 
 type ReportsResponse = {
   reports: PostReport[];
@@ -13,18 +13,8 @@ type ReportUpdateResponse = {
   message?: string;
 };
 
-async function getAdminToken() {
-  const user = firebaseAuth?.currentUser;
-
-  if (!user) {
-    throw new Error("You need to be signed in before using moderation tools.");
-  }
-
-  return user.getIdToken();
-}
-
 async function requestAdmin<T>(path: string, init?: RequestInit) {
-  const token = await getAdminToken();
+  const token = await getAdminIdToken();
   const response = await fetch(path, {
     ...init,
     headers: {
