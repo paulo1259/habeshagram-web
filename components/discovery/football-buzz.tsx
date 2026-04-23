@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
 import { getTeamSlug } from "@/services/football-hub-data";
 import { getFootballBuzzItems } from "@/services/news-service";
@@ -31,7 +32,7 @@ export function FootballBuzz() {
       <SectionHeader
         eyebrow="Football Buzz"
         title="Premier League takes for Habesha group chats"
-        description="Fun seeded matchday, transfer, and fan-reaction cards for United, Arsenal, Chelsea, and City. Swap in live data later without changing the UI."
+        description="A dedicated lane for football story cards once the editorial football source is connected."
         action={
           <Link
             href="/match/live"
@@ -52,7 +53,8 @@ export function FootballBuzz() {
                 <div className="h-40 animate-pulse rounded-[22px] bg-brand-100" />
               </div>
             ))
-          : items.map((item) => (
+          : items.length
+            ? items.map((item) => (
               <article
                 key={item.id}
                 className="min-w-[82%] snap-start overflow-hidden rounded-[26px] border border-brand-100/80 bg-white shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg lg:min-w-0"
@@ -89,7 +91,15 @@ export function FootballBuzz() {
                   </div>
                 </div>
               </article>
-            ))}
+            ))
+            : (
+              <div className="min-w-full lg:col-span-2">
+                <EmptyState
+                  title="No football buzz stories right now"
+                  description="Fresh football editorial cards will appear here once the football news lane is connected."
+                />
+              </div>
+            )}
       </div>
     </section>
   );

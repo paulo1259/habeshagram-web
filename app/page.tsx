@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Flame, ImagePlus, PenSquare, Sparkles } from "lucide-react";
-import { CommunitySpotlight } from "@/components/discovery/community-spotlight";
-import { CommunityHighlights } from "@/components/discovery/community-highlights";
 import { BreakingNow } from "@/components/discovery/breaking-now";
+import { CommunityHighlights } from "@/components/discovery/community-highlights";
+import { CommunitySpotlight } from "@/components/discovery/community-spotlight";
 import { DailyDebates } from "@/components/discovery/daily-debates";
 import { EventHighlights } from "@/components/discovery/event-highlights";
 import { FootballBuzz } from "@/components/discovery/football-buzz";
@@ -24,12 +24,44 @@ import { useAppData } from "@/hooks/use-app-data";
 import { useLiveMatchPulse } from "@/hooks/use-live-match-pulse";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { getFollowingIds } from "@/services/follow-service";
+import { formatFixtureTime, getFeaturedMatch } from "@/services/matchday-service";
 import { getPostsByUsers } from "@/services/post-service";
-import { Post } from "@/types";
+import { LiveMatch, MatchdayFixture, Post } from "@/types";
+
+function getMatchStripCopy(fixture: MatchdayFixture | null) {
+  if (!fixture) {
+    return "No live matches right now";
+  }
+
+  if (fixture.status === "live") {
+    return `LIVE: ${fixture.homeTeam} ${fixture.homeScore ?? 0}-${fixture.awayScore ?? 0} ${fixture.awayTeam}`;
+  }
+
+  if (fixture.status === "finished") {
+    return `FT: ${fixture.homeTeam} ${fixture.homeScore ?? 0}-${fixture.awayScore ?? 0} ${fixture.awayTeam}`;
+  }
+
+  return `Tonight: ${fixture.homeTeam} vs ${fixture.awayTeam} (${formatFixtureTime(fixture.kickoffAt)})`;
+}
+
+function getFeaturedMatchClock(fixture: MatchdayFixture | null, liveMatches: LiveMatch[]) {
+  if (!fixture || fixture.status !== "live") {
+    return "";
+  }
+
+  const matchingLiveMatch = liveMatches.find(
+    (match) =>
+      match.homeTeam === fixture.homeTeam &&
+      match.awayTeam === fixture.awayTeam &&
+      match.status === "LIVE"
+  );
+
+  return matchingLiveMatch?.matchClock ? ` (${matchingLiveMatch.matchClock})` : "";
+}
 
 export default function HomePage() {
   const { currentUser, posts, isLoading, errorMessage } = useAppData();
-  const { matches: liveMatches, goalAlerts } = useLiveMatchPulse();
+  const { matches: liveMatches, goalAlerts } = useLiveMatchPulse({ posts });
   const [feedMode, setFeedMode] = useState<"for-you" | "following">("for-you");
   const [followingPosts, setFollowingPosts] = useState<Post[]>([]);
   const [isFollowingLoading, setIsFollowingLoading] = useState(false);
@@ -82,6 +114,8 @@ export default function HomePage() {
   const activePosts = feedMode === "following" ? followingPosts : posts;
   const activeLoading = feedMode === "following" ? isFollowingLoading : isLoading;
   const activeError = feedMode === "following" ? followingError : errorMessage;
+  const featuredMatch = getFeaturedMatch(liveMatches);
+  const featuredMatchClock = getFeaturedMatchClock(featuredMatch, liveMatches);
 
   return (
     <AppShell>
@@ -165,6 +199,38 @@ export default function HomePage() {
             </p>
           </div>
           <RadioShowcase />
+        </section>
+
+        <section className="overflow-hidden rounded-[28px] border border-brand-100/80 bg-gradient-to-r from-red-600 via-orange-400 to-brand-500 px-4 py-4 text-white shadow-soft sm:px-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/75">
+                Match Strip
+              </p>
+              <p className="mt-1 text-lg font-black tracking-tight">
+                {getMatchStripCopy(featuredMatch)}
+                {featuredMatchClock}
+              </p>
+              {featuredMatch?.heatSignal ? (
+                <p className="mt-2 inline-flex rounded-full bg-white/14 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">
+                  {featuredMatch.heatSignal}
+                </p>
+              ) : null}
+              <p className="mt-2 text-sm text-white/88">
+                {featuredMatch
+                  ? featuredMatch.status === "finished"
+                    ? "Catch the post-match chatter and jump into fresh reactions."
+                    : "Open the match center and jump straight into fan reactions."
+                  : "The next tracked football moment will show up here as soon as coverage is available."}
+              </p>
+            </div>
+            <Link
+              href="/match/live"
+              className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-800 shadow-soft transition hover:bg-brand-50"
+            >
+              Join Reactions
+            </Link>
+          </div>
         </section>
 
         <BreakingNow />

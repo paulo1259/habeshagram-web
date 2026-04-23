@@ -60,7 +60,7 @@ function getLiveScoreLine(match: LiveMatch) {
 
 export function LiveMatchCenterPage() {
   const { posts, isLoading, currentUser, createNewPost } = useAppData();
-  const { matches, isLoading: isMatchLoading, message: matchMessage, goalAlerts } = useLiveMatchPulse();
+  const { matches, isLoading: isMatchLoading, message: matchMessage, goalAlerts } = useLiveMatchPulse({ posts });
   const [activeMatchId, setActiveMatchId] = useState(getInitialLiveMatches()[0]?.id ?? "");
   const [reactionText, setReactionText] = useState("");
   const [selectedTeam, setSelectedTeam] = useState<FootballTeam | "">("");
@@ -186,6 +186,11 @@ export function LiveMatchCenterPage() {
                     {getLiveScoreLine(activeMatch)}
                   </p>
                 ) : null}
+                {activeMatch?.heatSignal ? (
+                  <p className="mt-2 inline-flex rounded-full bg-white/12 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white/95">
+                    {activeMatch.heatSignal}
+                  </p>
+                ) : null}
               </div>
 
               <div className="grid grid-cols-2 gap-2 sm:min-w-[17rem]">
@@ -251,6 +256,11 @@ export function LiveMatchCenterPage() {
                           <Radio className="h-3.5 w-3.5" />
                           {match.status}
                         </span>
+                        {match.heatSignal ? (
+                          <span className="inline-flex items-center rounded-full bg-orange-50 px-3 py-1 text-orange-700">
+                            {match.heatSignal}
+                          </span>
+                        ) : null}
                         <span>{match.matchClock}</span>
                       </div>
                       <p className="text-xs font-medium text-stone-500">{match.venue}</p>

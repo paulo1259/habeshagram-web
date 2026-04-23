@@ -1,4 +1,3 @@
-import { footballBuzzItems } from "@/services/discovery-data";
 import { getEditorialLocalHighlights } from "@/services/editorial-content-service";
 import { getDailyDebatePrompts } from "@/services/daily-debate-service";
 import { BreakingItem, DailyDebatePrompt, FootballNewsItem, FootballTeam, LocalNewsItem } from "@/types";
@@ -8,9 +7,7 @@ export async function getLocalNewsItems(): Promise<LocalNewsItem[]> {
 }
 
 export async function getFootballBuzzItems(): Promise<FootballNewsItem[]> {
-  // TODO: Replace this seeded fallback with a real football/news fetch layer or
-  // an internal API route when live sources are connected.
-  return footballBuzzItems;
+  return [];
 }
 
 export async function getFootballBuzzByTeam(team: FootballTeam): Promise<FootballNewsItem[]> {

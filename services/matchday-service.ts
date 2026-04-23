@@ -1,10 +1,42 @@
 import { FootballTeam, LiveMatch, MatchdayAlert, MatchdayFixture, Post } from "@/types";
 
+function getStatusRank(status: LiveMatch["status"]) {
+  if (status === "LIVE") {
+    return 0;
+  }
+
+  if (status === "UPCOMING") {
+    return 1;
+  }
+
+  if (status === "FT") {
+    return 2;
+  }
+
+  return 3;
+}
+
+function sortMatchesForMatchday(matches: LiveMatch[]) {
+  return [...matches].sort((a, b) => {
+    const rankDiff = getStatusRank(a.status) - getStatusRank(b.status);
+    if (rankDiff !== 0) {
+      return rankDiff;
+    }
+
+    if (a.status === "FT" && b.status === "FT") {
+      return +new Date(b.kickoffAt ?? 0) - +new Date(a.kickoffAt ?? 0);
+    }
+
+    return +new Date(a.kickoffAt ?? 0) - +new Date(b.kickoffAt ?? 0);
+  });
+}
+
 export function getTodayFixtures(liveMatches?: LiveMatch[]) {
   if (!liveMatches?.length) {
     return [];
   }
-  const liveAsFixtures: MatchdayFixture[] = liveMatches.map((match, index) => ({
+
+  const liveAsFixtures: MatchdayFixture[] = sortMatchesForMatchday(liveMatches).map((match, index) => ({
     id: `live-${match.id}`,
     homeTeam: match.homeTeam,
     awayTeam: match.awayTeam,
@@ -18,9 +50,25 @@ export function getTodayFixtures(liveMatches?: LiveMatch[]) {
           : "live",
     homeScore: match.homeScore,
     awayScore: match.awayScore,
-    featured: index === 0
+    featured: index === 0,
+    heatSignal: match.heatSignal
   }));
   return liveAsFixtures.slice(0, 4);
+}
+
+export function getFeaturedMatch(liveMatches?: LiveMatch[]) {
+  const fixtures = getTodayFixtures(liveMatches);
+  return fixtures[0] ?? null;
+}
+
+export function getMatchdayGroups(liveMatches?: LiveMatch[]) {
+  const fixtures = getTodayFixtures(liveMatches);
+
+  return {
+    live: fixtures.filter((fixture) => fixture.status === "live").slice(0, 3),
+    upcoming: fixtures.filter((fixture) => fixture.status === "upcoming").slice(0, 3),
+    results: fixtures.filter((fixture) => fixture.status === "finished").slice(0, 3)
+  };
 }
 
 export function getMatchdayAlerts() {
@@ -74,4 +122,29 @@ export function getMostActiveFanbaseToday(posts: Post[], liveMatches: LiveMatch[
   });
 
   return [...scores.values()].sort((a, b) => b.score - a.score)[0] ?? null;
+}
+
+export function getTopActiveFanbasesToday(posts: Post[], liveMatches: LiveMatch[] = [], limit = 3) {
+  const activeTeams = new Set(liveMatches.flatMap((match) => [match.homeTeam, match.awayTeam]));
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const scores = new Map<FootballTeam, { team: FootballTeam; activityCount: number; score: number }>();
+
+  posts.forEach((post) => {
+    if (!post.teamTag || !activeTeams.has(post.teamTag)) {
+      return;
+    }
+
+    if (new Date(post.createdAt) < startOfDay) {
+      return;
+    }
+
+    const current = scores.get(post.teamTag) ?? { team: post.teamTag, activityCount: 0, score: 0 };
+    current.activityCount += 1;
+    current.score += 1 + post.likeCount * 0.4 + post.commentCount * 0.8;
+    scores.set(post.teamTag, current);
+  });
+
+  return [...scores.values()].sort((a, b) => b.score - a.score).slice(0, limit);
 }

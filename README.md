@@ -97,6 +97,7 @@ If these are blank, the app still starts, but authentication remains unavailable
 `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL` is server-only and defaults to `https://free-api-live-football-data.p.rapidapi.com`.
 `BREAKING_NEWS_RSS_URL` is also server-only and optional. If you leave it blank, HabeshaGram defaults to the BBC Sport football RSS feed.
 `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` is admin-only for one-time content seeding. It should never be exposed to the browser or added to Vercel public env vars.
+`ADMIN_EMAIL_ALLOWLIST` and `ADMIN_UID_ALLOWLIST` are server-only allowlists for the internal admin workspace.
 
 ### football API setup
 
@@ -145,6 +146,8 @@ Required admin credential for this script:
 
 ```env
 FIREBASE_SERVICE_ACCOUNT_KEY_BASE64=PASTE_BASE64_SERVICE_ACCOUNT_JSON
+ADMIN_EMAIL_ALLOWLIST=you@example.com
+ADMIN_UID_ALLOWLIST=
 ```
 
 The script reads `.env.local` automatically through:
@@ -162,6 +165,37 @@ Important:
 - do not prefix it with `NEXT_PUBLIC_`
 - it does not use Google default credentials or `gcloud auth application-default login`
 
+### Internal admin workspace
+
+HabeshaGram also includes a lightweight internal content workspace:
+
+- `/admin`
+- `/admin/videos`
+- `/admin/debates`
+- `/admin/editorial`
+
+It manages these live Firestore collections:
+
+- `curatedVideos/{videoId}`
+- `dailyDebates/{debateId}`
+- `editorialHighlights/{itemId}`
+
+To enable the admin routes locally, add these server-only values to `.env.local`:
+
+```env
+FIREBASE_SERVICE_ACCOUNT_KEY_BASE64=PASTE_BASE64_SERVICE_ACCOUNT_JSON
+ADMIN_EMAIL_ALLOWLIST=you@example.com,second-admin@example.com
+ADMIN_UID_ALLOWLIST=
+```
+
+How it works:
+
+- the public app still reads curated content directly from Firestore
+- public client writes stay blocked in `firestore.rules`
+- admin create/edit/delete actions go through protected Next.js routes under `/api/admin/*`
+- those routes verify the signed-in Firebase user with the Admin SDK
+- only emails or UIDs in the server allowlist can manage curated content
+
 For Vercel:
 
 1. Open your project in Vercel
@@ -174,11 +208,13 @@ For Vercel:
 8. Set it to `free-api-live-football-data.p.rapidapi.com`
 9. Add `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL`
 10. Set it to `https://free-api-live-football-data.p.rapidapi.com`
-11. Save them for the environments you want, usually:
+11. Add `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` if you want the internal admin workspace to function on Vercel
+12. Add `ADMIN_EMAIL_ALLOWLIST` and/or `ADMIN_UID_ALLOWLIST` for your approved admins
+13. Save them for the environments you want, usually:
    - `Production`
    - `Preview`
    - `Development`
-12. Redeploy after saving the variables so the server routes can read the new tokens
+14. Redeploy after saving the variables so the server routes can read the new tokens
 
 Important:
 

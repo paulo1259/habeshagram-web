@@ -1,7 +1,5 @@
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { firebaseDb, isFirebaseConfigured } from "@/lib/firebase";
-import { dailyDebatePrompts, localNewsItems } from "@/services/discovery-data";
-import { curatedVideoHighlights } from "@/services/video-highlights-data";
 import { CuratedVideoItem, DailyDebatePrompt, FootballTeam, LocalNewsItem } from "@/types";
 
 const FIRESTORE_TIMEOUT_MS = 4000;
@@ -9,7 +7,7 @@ const FIRESTORE_TIMEOUT_MS = 4000;
 const COLLECTIONS = {
   videos: "editorialVideos",
   debates: "dailyDebates",
-  localHighlights: "localCultureHighlights"
+  localHighlights: "editorialHighlights"
 } as const;
 
 async function withFirestoreTimeout<T>(promise: Promise<T>, message: string): Promise<T> {
@@ -29,10 +27,14 @@ async function withFirestoreTimeout<T>(promise: Promise<T>, message: string): Pr
   }
 }
 
-function sortByCreatedAtDesc<T extends { createdAt?: string }>(items: T[]) {
-  return [...items].sort(
-    (a, b) => +new Date(b.createdAt ?? 0) - +new Date(a.createdAt ?? 0)
-  );
+function sortByCreatedAtDesc<T extends { createdAt?: string; featured?: boolean }>(items: T[]) {
+  return [...items].sort((a, b) => {
+    if (Boolean(a.featured) !== Boolean(b.featured)) {
+      return Number(Boolean(b.featured)) - Number(Boolean(a.featured));
+    }
+
+    return +new Date(b.createdAt ?? 0) - +new Date(a.createdAt ?? 0);
+  });
 }
 
 function mapVideo(data: Partial<CuratedVideoItem>, id: string): CuratedVideoItem | null {
@@ -89,13 +91,18 @@ function mapLocalItem(data: Partial<LocalNewsItem>, id: string): LocalNewsItem |
     summary: data.summary,
     category: data.category,
     imageURL: data.imageURL || "",
-    link: data.link || ""
+    link: data.link || "",
+    featured: Boolean(data.featured),
+    createdAt: data.createdAt || new Date().toISOString(),
+    publishLabel: data.publishLabel,
+    teamTag: data.teamTag,
+    hashtags: Array.isArray(data.hashtags) ? data.hashtags : []
   };
 }
 
 export async function getEditorialVideos(): Promise<CuratedVideoItem[]> {
   if (!isFirebaseConfigured || !firebaseDb) {
-    return sortByCreatedAtDesc(curatedVideoHighlights);
+    return [];
   }
 
   try {
@@ -108,9 +115,9 @@ export async function getEditorialVideos(): Promise<CuratedVideoItem[]> {
       .map((item) => mapVideo(item.data() as Partial<CuratedVideoItem>, item.id))
       .filter((item): item is CuratedVideoItem => Boolean(item));
 
-    return items.length ? sortByCreatedAtDesc(items) : sortByCreatedAtDesc(curatedVideoHighlights);
+    return sortByCreatedAtDesc(items);
   } catch {
-    return sortByCreatedAtDesc(curatedVideoHighlights);
+    return [];
   }
 }
 
@@ -121,7 +128,7 @@ export async function getEditorialVideosByTeam(team: FootballTeam) {
 
 export async function getEditorialVideoById(id: string): Promise<CuratedVideoItem | null> {
   if (!isFirebaseConfigured || !firebaseDb) {
-    return curatedVideoHighlights.find((item) => item.id === id) ?? null;
+    return null;
   }
 
   try {
@@ -137,7 +144,7 @@ export async function getEditorialVideoById(id: string): Promise<CuratedVideoIte
     // fall through to fallback
   }
 
-  return curatedVideoHighlights.find((item) => item.id === id) ?? null;
+  return null;
 }
 
 export async function getRelatedEditorialVideos(video: CuratedVideoItem, limit = 4) {
@@ -190,7 +197,7 @@ function rotateDebates(items: DailyDebatePrompt[], team?: FootballTeam) {
 
 export async function getEditorialDailyDebates(team?: FootballTeam): Promise<DailyDebatePrompt[]> {
   if (!isFirebaseConfigured || !firebaseDb) {
-    return rotateDebates(dailyDebatePrompts, team);
+    return [];
   }
 
   try {
@@ -203,15 +210,15 @@ export async function getEditorialDailyDebates(team?: FootballTeam): Promise<Dai
       .map((item) => mapDebate(item.data() as Partial<DailyDebatePrompt>, item.id))
       .filter((item): item is DailyDebatePrompt => Boolean(item));
 
-    return rotateDebates(items.length ? items : dailyDebatePrompts, team);
+    return rotateDebates(items, team);
   } catch {
-    return rotateDebates(dailyDebatePrompts, team);
+    return [];
   }
 }
 
 export async function getEditorialLocalHighlights(): Promise<LocalNewsItem[]> {
   if (!isFirebaseConfigured || !firebaseDb) {
-    return localNewsItems;
+    return [];
   }
 
   try {
@@ -224,8 +231,12 @@ export async function getEditorialLocalHighlights(): Promise<LocalNewsItem[]> {
       .map((item) => mapLocalItem(item.data() as Partial<LocalNewsItem>, item.id))
       .filter((item): item is LocalNewsItem => Boolean(item));
 
-    return items.length ? items : localNewsItems;
+    return sortByCreatedAtDesc(items);
   } catch {
-    return localNewsItems;
+    return [];
   }
 }
+
+// TODO: Replace Firestore Console-only editorial highlight curation with an
+// internal admin dashboard that writes the same LocalNewsItem shape into
+// editorialHighlights/{itemId}.

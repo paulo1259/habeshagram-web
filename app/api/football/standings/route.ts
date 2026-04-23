@@ -19,7 +19,7 @@ type FootballDataStandingRow = {
 
 type StandingsFeed = {
   standings: LeagueStandingRow[];
-  source: "api" | "cache" | "fallback";
+  source: "api" | "cache" | "empty";
   stale: boolean;
   fetchedAt: string;
   message?: string;
@@ -31,15 +31,6 @@ const trackedTeams: Record<FootballTeam, string[]> = {
   Chelsea: ["chelsea"],
   "Manchester City": ["manchester city", "man city"]
 };
-
-const fallbackStandings: LeagueStandingRow[] = [
-  { position: 1, team: "Arsenal", teamTag: "Arsenal", tracked: true, played: 31, points: 71, goalDifference: 35 },
-  { position: 2, team: "Manchester City", teamTag: "Manchester City", tracked: true, played: 31, points: 69, goalDifference: 31 },
-  { position: 3, team: "Liverpool", played: 31, points: 67, goalDifference: 28 },
-  { position: 4, team: "Chelsea", teamTag: "Chelsea", tracked: true, played: 31, points: 61, goalDifference: 18 },
-  { position: 5, team: "Newcastle United", played: 31, points: 57, goalDifference: 14 },
-  { position: 6, team: "Manchester United", teamTag: "Manchester United", tracked: true, played: 31, points: 54, goalDifference: 4 }
-];
 
 let lastSuccessfulPayload: StandingsFeed | null = null;
 
@@ -84,11 +75,11 @@ export async function GET() {
 
   if (!apiKey) {
     return NextResponse.json({
-      standings: fallbackStandings,
-      source: "fallback",
+      standings: [],
+      source: "empty",
       stale: true,
       fetchedAt: new Date().toISOString(),
-      message: "FOOTBALL_DATA_API_KEY is missing on the server, so HabeshaGram is showing fallback Premier League standings."
+      message: "Premier League standings are not configured on the server yet."
     } satisfies StandingsFeed);
   }
 
@@ -115,11 +106,11 @@ export async function GET() {
       .slice(0, 8);
 
     const payload: StandingsFeed = {
-      standings: mapped.length ? mapped : fallbackStandings,
+      standings: mapped,
       source: "api",
       stale: false,
       fetchedAt: new Date().toISOString(),
-      message: mapped.length ? undefined : "No standings were returned, so HabeshaGram is showing the fallback table."
+      message: mapped.length ? undefined : "No Premier League table rows are available right now."
     };
 
     lastSuccessfulPayload = payload;
@@ -135,8 +126,8 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      standings: fallbackStandings,
-      source: "fallback",
+      standings: [],
+      source: "empty",
       stale: true,
       fetchedAt: new Date().toISOString(),
       message:

@@ -73,8 +73,7 @@ export function TeamHubPage({ slug }: { slug: TeamSlug }) {
                   </div>
                 </div>
                 <p className="mt-4 max-w-xl text-sm leading-6 text-white/90 sm:text-[15px]">
-                  Club buzz, Habesha debate prompts, and community takes in one fast-moving hub.
-                  Keep this seeded for now and plug in live football APIs later if you want.
+                  Club buzz, community reactions, and team-tagged takes in one fast-moving hub.
                 </p>
               </div>
 
@@ -158,7 +157,7 @@ export function TeamHubPage({ slug }: { slug: TeamSlug }) {
               <SectionHeader
                 eyebrow="Football Buzz"
                 title={`Latest ${config.team} storylines`}
-                description="Seeded cards for now. TODO: replace this layer with live football/news APIs later without changing the page UI."
+                description="This hub is ready for club-specific editorial football stories as soon as that source is connected."
               />
               {isNewsLoading ? (
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -201,7 +200,7 @@ export function TeamHubPage({ slug }: { slug: TeamSlug }) {
               ) : (
                 <EmptyState
                   title="Fresh football stories are on the way"
-                  description={`We do not have seeded ${config.team} stories here yet, but the hub is ready for live data.`}
+                  description={`No ${config.team} football story cards are available right now.`}
                 />
               )}
             </section>
@@ -216,23 +215,12 @@ export function TeamHubPage({ slug }: { slug: TeamSlug }) {
               <SectionHeader
                 eyebrow="Debate Corner"
                 title={`${config.team} topics blowing up group chats`}
-                description="Fun prompts to make each fan zone feel social even before a full dedicated posting system exists."
+                description="A reserved space for team-specific editorial prompts when that layer is ready."
               />
-              <div className="space-y-3">
-                {config.debatePrompts.map((prompt) => (
-                  <div
-                    key={prompt}
-                    className="rounded-[24px] border border-brand-100 bg-brand-50/50 px-4 py-3"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 rounded-full bg-white p-2 text-brand-700 shadow-sm">
-                        <MessageSquareText className="h-4 w-4" />
-                      </div>
-                      <p className="text-sm leading-6 text-stone-700">{prompt}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <EmptyState
+                title="No team-only debate prompts yet"
+                description={`General debates still appear above when available, and ${config.team} prompts can be added here later.`}
+              />
             </section>
 
             <section className="rounded-[30px] border border-brand-100 bg-white/96 p-4 shadow-soft sm:p-5">
@@ -266,7 +254,7 @@ export function TeamHubPage({ slug }: { slug: TeamSlug }) {
                     <p className="text-xs font-semibold uppercase tracking-[0.14em]">Future-ready</p>
                   </div>
                   <p className="mt-2 text-sm leading-6 text-stone-700">
-                    Swap seeded stories for live football/news APIs later with a single service update.
+                    This hub is ready for richer live editorial layers without changing the page structure.
                   </p>
                 </div>
               </div>

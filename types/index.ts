@@ -71,14 +71,26 @@ export type RadioStation = {
   tags?: string[];
 };
 
+export type EditorialHighlightCategory =
+  | "Entertainment"
+  | "Culture"
+  | "Music"
+  | "Events"
+  | "Community";
+
 export type LocalNewsItem = {
   id: string;
   headline: string;
   source: string;
   summary: string;
-  category: string;
+  category: EditorialHighlightCategory | string;
   imageURL: string;
   link: string;
+  featured?: boolean;
+  createdAt?: string;
+  publishLabel?: string;
+  teamTag?: FootballTeam;
+  hashtags?: string[];
 };
 
 export type FollowRelation = {
@@ -168,7 +180,10 @@ export type LiveMatch = {
   venue: string;
   kickoffAt?: string;
   timeline: LiveMatchEvent[];
+  heatSignal?: "Heating up" | "Big drama" | "Fan storm";
 };
+
+export type MatchAlertType = "goal" | "red-card" | "ft";
 
 export type GoalAlertItem = {
   id: string;
@@ -176,7 +191,10 @@ export type GoalAlertItem = {
   message: string;
   minute?: string;
   scorer?: string;
+  player?: string;
+  contextLabel?: string;
   team?: FootballTeam;
+  type: MatchAlertType;
 };
 
 export type LeagueStandingRow = {
@@ -201,6 +219,7 @@ export type MatchdayFixture = {
   homeScore?: number;
   awayScore?: number;
   featured?: boolean;
+  heatSignal?: "Heating up" | "Big drama" | "Fan storm";
 };
 
 export type MatchdayAlert = {
