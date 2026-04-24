@@ -192,15 +192,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="space-y-2">
-          <div className="px-3 pt-1 sm:px-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">
-              Live Radio
-            </p>
-          </div>
-          <RadioShowcase />
-        </section>
-
         <section className="overflow-hidden rounded-[28px] border border-brand-100/80 bg-gradient-to-r from-red-600 via-orange-400 to-brand-500 px-4 py-4 text-white shadow-soft sm:px-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -233,9 +224,10 @@ export default function HomePage() {
           </div>
         </section>
 
+        <RadioShowcase quickPlayer />
+        <VideoHighlights />
         <BreakingNow />
         <MatchdayCenter liveMatches={liveMatches} />
-        <VideoHighlights />
         <div className="xl:hidden">
           <PremierLeagueStandings />
         </div>

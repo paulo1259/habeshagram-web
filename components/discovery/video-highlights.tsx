@@ -65,10 +65,14 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
   return (
     <section
       className={cn(
-        "rounded-[30px] border border-brand-100 bg-white/96 p-4 shadow-soft sm:p-5",
+        "relative overflow-hidden rounded-[30px] border border-brand-100 bg-white/96 p-4 shadow-soft sm:p-5",
         compact && "rounded-[28px] p-4"
       )}
     >
+      {!compact ? (
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-500 via-orange-400 to-brand-300" />
+      ) : null}
+
       <SectionHeader
         eyebrow="Video Highlights"
         title={team ? `${team} clips worth replaying` : "Curated clips lighting up the timeline"}
@@ -79,7 +83,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
         }
         action={
           !compact ? (
-            <span className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">
+            <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-gradient-to-r from-brand-50 to-orange-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-brand-700 shadow-sm">
               <Film className="h-3.5 w-3.5" />
               Admin picks
             </span>
@@ -143,7 +147,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
       ) : (
         <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
           {featuredVideo ? (
-            <article className="overflow-hidden rounded-[28px] border border-brand-100 bg-gradient-to-br from-brand-50 via-white to-orange-50 shadow-soft">
+            <article className="overflow-hidden rounded-[28px] border border-brand-100 bg-gradient-to-br from-brand-50 via-white to-orange-50 shadow-soft ring-1 ring-orange-100/60">
               <Link href={`/videos/${featuredVideo.id}`} className="group block w-full text-left">
                 <div className="relative aspect-[16/10] overflow-hidden">
                   <img
@@ -222,7 +226,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
             {supportingVideos.slice(0, compact ? 3 : 5).map((video) => (
               <article
                 key={video.id}
-                className="group rounded-[26px] border border-brand-100 bg-white p-3 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200"
+                className="group rounded-[26px] border border-brand-100 bg-white p-3 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-md"
               >
                 <div className="flex gap-3">
                   <Link

@@ -102,14 +102,16 @@ service cloud.firestore {
         && request.resource.data.isSystem == resource.data.isSystem
         && request.resource.data.createdAt == resource.data.createdAt;
 
-      allow delete: if false;
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.userId;
 
       match /comments/{commentId} {
         allow read: if true;
         allow create: if isSignedIn()
           && request.resource.data.userId == request.auth.uid
           && request.resource.data.postId == postId;
-        allow update, delete: if false;
+        allow update: if false;
+        allow delete: if isSignedIn()
+          && get(/databases/$(database)/documents/posts/$(postId)).data.userId == request.auth.uid;
       }
     }
 

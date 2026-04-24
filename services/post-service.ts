@@ -2,6 +2,7 @@ import {
   arrayRemove,
   arrayUnion,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -500,4 +501,59 @@ export async function toggleLike(postId: string, actor: User): Promise<Post | nu
     });
   }
   return updatedPost;
+}
+
+export async function deletePost(postId: string, actor: User): Promise<void> {
+  if (!actor) {
+    throw new Error("Please log in before deleting posts.");
+  }
+
+  if (isFirebaseConfigured && firebaseDb) {
+    const postRef = doc(firebaseDb, "posts", postId);
+
+    try {
+      const snapshot = await withFirestoreTimeout(
+        getDoc(postRef),
+        "Timed out while loading the post for deletion."
+      );
+
+      if (!snapshot.exists()) {
+        return;
+      }
+
+      const post = mapFirestorePost(snapshot.id, snapshot.data() as Partial<Post>);
+
+      if (post.userId !== actor.id) {
+        throw new Error("You can only delete your own posts.");
+      }
+
+      const commentsSnapshot = await withFirestoreTimeout(
+        getDocs(collection(firebaseDb, "posts", postId, "comments")),
+        "Timed out while loading post comments for deletion."
+      );
+
+      await withFirestoreTimeout(
+        Promise.all(commentsSnapshot.docs.map((comment) => deleteDoc(comment.ref))),
+        "Timed out while deleting post comments."
+      );
+
+      await withFirestoreTimeout(deleteDoc(postRef), "Timed out while deleting the post.");
+      return;
+    } catch (error) {
+      throw new Error(mapPostError(error));
+    }
+  }
+
+  const state = readState();
+  const post = state.posts.find((item) => item.id === postId);
+
+  if (post && post.userId !== actor.id) {
+    throw new Error("You can only delete your own posts.");
+  }
+
+  writeState({
+    ...state,
+    posts: state.posts.filter((item) => item.id !== postId),
+    comments: state.comments.filter((item) => item.postId !== postId)
+  });
 }

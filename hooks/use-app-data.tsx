@@ -16,6 +16,7 @@ import {
 } from "@/services/notification-service";
 import {
   createPost,
+  deletePost,
   getPosts,
   getPostsByUser,
   mapBreakingItemToDiscussionPost,
@@ -48,6 +49,7 @@ type AppContextValue = {
   createNewPost: (input: CreatePostInput) => Promise<Post>;
   likePost: (postId: string) => Promise<Post | null>;
   addPostComment: (postId: string, text: string) => Promise<Comment>;
+  deleteOwnPost: (postId: string) => Promise<void>;
   toggleSaved: (postId: string) => Promise<boolean>;
   getSavedFeed: () => Promise<Post[]>;
 };
@@ -238,6 +240,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const getProfilePosts = useCallback(async (userId: string) => getPostsByUser(userId), []);
 
+  const deleteOwnPost = useCallback(
+    async (postId: string) => {
+      if (!currentUser) {
+        throw new Error("Please log in before deleting posts.");
+      }
+
+      await deletePost(postId, currentUser);
+      setPosts((currentPosts) => currentPosts.filter((post) => post.id !== postId));
+      void refreshPosts();
+    },
+    [currentUser, refreshPosts]
+  );
+
   const getSavedFeed = useCallback(async () => {
     if (!currentUser) {
       return [];
@@ -294,6 +309,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       createNewPost,
       likePost,
       addPostComment,
+      deleteOwnPost,
       toggleSaved,
       getSavedFeed
     }),
@@ -318,6 +334,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       createNewPost,
       likePost,
       addPostComment,
+      deleteOwnPost,
       toggleSaved,
       getSavedFeed
     ]
