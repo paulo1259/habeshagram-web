@@ -18,7 +18,7 @@ import { Post, User } from "@/types";
 export default function PublicProfilePage() {
   const params = useParams<{ userId: string }>();
   const profileId = params.userId;
-  const { currentUser, getProfilePosts, isReady } = useAppData();
+  const { currentUser, deletedPostIds, getProfilePosts, isReady } = useAppData();
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,6 +86,11 @@ export default function PublicProfilePage() {
     }).format(new Date(profileUser.createdAt));
   }, [profileUser?.createdAt]);
 
+  const visiblePosts = useMemo(
+    () => posts.filter((post) => !deletedPostIds.includes(post.id)),
+    [deletedPostIds, posts]
+  );
+
   async function handleToggleFollow() {
     if (!currentUser || !profileUser || currentUser.id === profileUser.id) {
       return;
@@ -136,7 +141,7 @@ export default function PublicProfilePage() {
                   <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-700">{profileUser.bio}</p>
                   <div className="mt-4 flex flex-wrap gap-3 text-sm text-stone-600">
                     <span className="rounded-full bg-brand-50 px-3 py-1.5 font-medium text-brand-800">
-                      {posts.length} posts
+                      {visiblePosts.length} posts
                     </span>
                     <span className="rounded-full bg-white px-3 py-1.5">
                       {profileUser.followerCount} followers
@@ -167,7 +172,7 @@ export default function PublicProfilePage() {
             {errorMessage ? <p className="mt-4 text-sm text-red-600">{errorMessage}</p> : null}
           </section>
 
-          <ProfileGrid posts={posts} />
+          <ProfileGrid posts={visiblePosts} />
         </div>
       ) : (
         <EmptyState

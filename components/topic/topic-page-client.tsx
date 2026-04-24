@@ -7,12 +7,14 @@ import { AppShell } from "@/components/layout/app-shell";
 import { FeedList } from "@/components/posts/feed-list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
+import { useAppData } from "@/hooks/use-app-data";
 import { normalizeHashtag } from "@/lib/utils";
 import { getPostsByHashtag } from "@/services/post-service";
 import { Post } from "@/types";
 
 export function TopicPageClient({ initialTag }: { initialTag: string }) {
   const normalizedTag = normalizeHashtag(initialTag);
+  const { deletedPostIds } = useAppData();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -44,10 +46,15 @@ export function TopicPageClient({ initialTag }: { initialTag: string }) {
     };
   }, [normalizedTag]);
 
+  const visiblePosts = useMemo(
+    () => posts.filter((post) => !deletedPostIds.includes(post.id)),
+    [deletedPostIds, posts]
+  );
+
   const relatedTags = useMemo(() => {
     const counts = new Map<string, number>();
 
-    posts.forEach((post) => {
+    visiblePosts.forEach((post) => {
       (post.hashtags ?? []).forEach((tag) => {
         if (tag === normalizedTag) {
           return;
@@ -61,7 +68,7 @@ export function TopicPageClient({ initialTag }: { initialTag: string }) {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 4)
       .map(([tag]) => tag);
-  }, [normalizedTag, posts]);
+  }, [normalizedTag, visiblePosts]);
 
   return (
     <AppShell>
@@ -90,7 +97,7 @@ export function TopicPageClient({ initialTag }: { initialTag: string }) {
                       #{normalizedTag}
                     </h1>
                     <p className="mt-1 text-sm text-white/85">
-                      {posts.length} {posts.length === 1 ? "post" : "posts"} in this conversation
+                      {visiblePosts.length} {visiblePosts.length === 1 ? "post" : "posts"} in this conversation
                     </p>
                   </div>
                 </div>
@@ -132,13 +139,13 @@ export function TopicPageClient({ initialTag }: { initialTag: string }) {
             title={`Posts tagged #${normalizedTag}`}
             description="Same HabeshaGram feed style, filtered down to one shared conversation."
           />
-          {!isLoading && !posts.length ? (
+          {!isLoading && !visiblePosts.length ? (
             <EmptyState
               title="No posts yet for this topic"
               description={`Try posting with #${normalizedTag} to start the conversation, or search for a nearby tag to find where the community is already talking.`}
             />
           ) : (
-            <FeedList posts={posts} isLoading={isLoading} />
+            <FeedList posts={visiblePosts} isLoading={isLoading} />
           )}
         </section>
       </div>

@@ -60,7 +60,7 @@ function getFeaturedMatchClock(fixture: MatchdayFixture | null, liveMatches: Liv
 }
 
 export default function HomePage() {
-  const { currentUser, posts, isLoading, errorMessage } = useAppData();
+  const { currentUser, deletedPostIds, posts, isLoading, errorMessage } = useAppData();
   const { matches: liveMatches, goalAlerts } = useLiveMatchPulse({ posts });
   const [feedMode, setFeedMode] = useState<"for-you" | "following">("for-you");
   const [followingPosts, setFollowingPosts] = useState<Post[]>([]);
@@ -112,6 +112,7 @@ export default function HomePage() {
   }, [currentUser, feedMode, hasLoadedFollowing]);
 
   const activePosts = feedMode === "following" ? followingPosts : posts;
+  const visibleActivePosts = activePosts.filter((post) => !deletedPostIds.includes(post.id));
   const activeLoading = feedMode === "following" ? isFollowingLoading : isLoading;
   const activeError = feedMode === "following" ? followingError : errorMessage;
   const featuredMatch = getFeaturedMatch(liveMatches);
@@ -284,13 +285,13 @@ export default function HomePage() {
               title="Log in to see your following feed"
               description="Once you follow a few people, their newest posts will show up here."
             />
-          ) : feedMode === "following" && !activeLoading && !followingPosts.length ? (
+          ) : feedMode === "following" && !activeLoading && !visibleActivePosts.length ? (
             <EmptyState
               title="Your following feed is waiting"
               description="Follow a few creators, football fans, or culture pages to make this tab feel alive."
             />
           ) : (
-            <FeedList posts={activePosts} isLoading={activeLoading} />
+            <FeedList posts={visibleActivePosts} isLoading={activeLoading} />
           )}
         </section>
 

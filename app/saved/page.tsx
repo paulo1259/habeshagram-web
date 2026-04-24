@@ -9,7 +9,7 @@ import { useAppData } from "@/hooks/use-app-data";
 import { Post } from "@/types";
 
 export default function SavedPage() {
-  const { currentUser, isReady, getSavedFeed, savedPostIds } = useAppData();
+  const { currentUser, deletedPostIds, isReady, getSavedFeed, savedPostIds } = useAppData();
   const [savedPosts, setSavedPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -47,6 +47,8 @@ export default function SavedPage() {
     };
   }, [currentUser, getSavedFeed, savedPostIds]);
 
+  const visibleSavedPosts = savedPosts.filter((post) => !deletedPostIds.includes(post.id));
+
   return (
     <AppShell>
       <AuthGuard>
@@ -65,13 +67,13 @@ export default function SavedPage() {
             <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{errorMessage}</div>
           ) : null}
 
-          {!isLoading && !savedPosts.length ? (
+          {!isLoading && !visibleSavedPosts.length ? (
             <EmptyState
               title="Nothing saved yet"
               description="Tap the save icon on any post to build your own collection of posts to revisit later."
             />
           ) : (
-            <FeedList posts={savedPosts} isLoading={isLoading} />
+            <FeedList posts={visibleSavedPosts} isLoading={isLoading} />
           )}
         </div>
       </AuthGuard>

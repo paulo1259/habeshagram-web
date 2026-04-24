@@ -19,7 +19,7 @@ type SearchTab = "people" | "posts";
 
 export function SearchPageClient({ initialQuery }: { initialQuery: string }) {
   const router = useRouter();
-  const { currentUser } = useAppData();
+  const { currentUser, deletedPostIds } = useAppData();
   const [activeTab, setActiveTab] = useState<SearchTab>("people");
   const [query, setQuery] = useState(initialQuery);
   const debouncedQuery = useDebouncedValue(query, 250);
@@ -118,6 +118,8 @@ export function SearchPageClient({ initialQuery }: { initialQuery: string }) {
   }
 
   const activeCount = activeTab === "people" ? peopleResults.length : postResults.length;
+  const visiblePostResults = postResults.filter((post) => !deletedPostIds.includes(post.id));
+  const visibleActiveCount = activeTab === "people" ? peopleResults.length : visiblePostResults.length;
 
   return (
     <AppShell>
@@ -195,7 +197,7 @@ export function SearchPageClient({ initialQuery }: { initialQuery: string }) {
               </div>
             </div>
           </div>
-        ) : activeCount === 0 ? (
+        ) : visibleActiveCount === 0 ? (
           <EmptyState
             title="No matches yet"
             description="Try a broader username, football keyword, or post topic to find more results."
@@ -243,7 +245,7 @@ export function SearchPageClient({ initialQuery }: { initialQuery: string }) {
             ))}
           </section>
         ) : (
-          <FeedList posts={postResults} isLoading={false} />
+          <FeedList posts={visiblePostResults} isLoading={false} />
         )}
       </div>
     </AppShell>

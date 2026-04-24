@@ -13,7 +13,7 @@ import { getUserDocument, subscribeToUserDocument } from "@/services/user-servic
 import { Post } from "@/types";
 
 export default function ProfilePage() {
-  const { currentUser, getProfilePosts, isReady, updateProfile } = useAppData();
+  const { currentUser, deletedPostIds, getProfilePosts, isReady, updateProfile } = useAppData();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [profileImageURL, setProfileImageURL] = useState("");
@@ -80,6 +80,11 @@ export default function ProfilePage() {
       year: "numeric"
     }).format(new Date(createdAt));
   }, [createdAt]);
+
+  const visiblePosts = useMemo(
+    () => posts.filter((post) => !deletedPostIds.includes(post.id)),
+    [deletedPostIds, posts]
+  );
 
   function clearSelectedImage() {
     if (selectedImage && profilePreview.startsWith("blob:")) {
@@ -209,7 +214,7 @@ export default function ProfilePage() {
                       </>
                     )}
                     <div className="mt-3 flex flex-wrap gap-3 text-sm">
-                      <p className="font-medium text-brand-800">{posts.length} posts</p>
+                      <p className="font-medium text-brand-800">{visiblePosts.length} posts</p>
                       <p className="text-stone-500">{followerCount} followers</p>
                       <p className="text-stone-500">{followingCount} following</p>
                       {joinedLabel ? <p className="text-stone-500">Joined {joinedLabel}</p> : null}
@@ -243,7 +248,7 @@ export default function ProfilePage() {
               {errorMessage ? <p className="mt-4 text-sm text-red-600">{errorMessage}</p> : null}
             </section>
 
-            <ProfileGrid posts={posts} />
+            <ProfileGrid posts={visiblePosts} />
           </div>
         ) : (
           <EmptyState

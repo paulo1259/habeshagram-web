@@ -32,6 +32,7 @@ import { Comment, CreatePostInput, Post } from "@/types";
 type AppContextValue = {
   currentUser: ReturnType<typeof useAuth>["currentUser"];
   posts: Post[];
+  deletedPostIds: string[];
   isLoading: boolean;
   isReady: boolean;
   authMode: "firebase" | "unconfigured";
@@ -60,6 +61,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const { currentUser, isReady, authMode, login, signup, logout, updateProfile } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [systemPosts, setSystemPosts] = useState<Post[]>([]);
+  const [deletedPostIds, setDeletedPostIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
@@ -193,6 +195,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
 
       const post = await createPost(input, currentUser);
+      setDeletedPostIds((currentIds) => currentIds.filter((id) => id !== post.id));
       setPosts((currentPosts) => [post, ...currentPosts.filter((item) => item.id !== post.id)]);
       void refreshPosts();
       return post;
@@ -247,7 +250,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
 
       await deletePost(postId, currentUser);
+      setDeletedPostIds((currentIds) => (currentIds.includes(postId) ? currentIds : [postId, ...currentIds]));
       setPosts((currentPosts) => currentPosts.filter((post) => post.id !== postId));
+      setSystemPosts((currentPosts) => currentPosts.filter((post) => post.id !== postId));
+      setSavedPostIds((currentIds) => currentIds.filter((id) => id !== postId));
       void refreshPosts();
     },
     [currentUser, refreshPosts]
@@ -284,6 +290,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       currentUser,
+      deletedPostIds,
       posts: [...systemPosts, ...posts]
         .reduce<Post[]>((accumulator, post) => {
           if (!accumulator.some((item) => item.id === post.id)) {
@@ -315,6 +322,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }),
     [
       currentUser,
+      deletedPostIds,
       posts,
       systemPosts,
       isLoading,
