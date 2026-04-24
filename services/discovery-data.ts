@@ -56,6 +56,34 @@ export const radioStations: RadioStation[] = [
     featured: false,
     status: "live",
     tags: ["Religious", "Ethiopia", "Amharic", "English"]
+  },
+  {
+    id: "orthodox-radio",
+    name: "Orthodox Radio",
+    frequency: "Online",
+    city: "Ethiopia",
+    description: "Ethiopian Orthodox Church Mezmur",
+    provider: "Zeno.fm",
+    playbackMode: "widget",
+    embedUrl: "https://zeno.fm/player/orthodox",
+    streamUrl: "",
+    featured: false,
+    status: "live",
+    tags: ["Religious", "Ethiopia", "Amharic", "Orthodox"]
+  },
+  {
+    id: "voice-of-grace-radio",
+    name: "The Voice of Grace Radio",
+    frequency: "Online",
+    city: "Ethiopia",
+    description: "Christian teaching, prayer, worship song",
+    provider: "Zeno.fm",
+    playbackMode: "widget",
+    embedUrl: "https://zeno.fm/player/Thevoiceofgraceradio",
+    streamUrl: "",
+    featured: false,
+    status: "live",
+    tags: ["Religious", "Ethiopia", "Amharic", "Christian"]
   }
 ];
 
