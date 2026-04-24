@@ -61,6 +61,11 @@ export default function LoginPage() {
             placeholder="Password"
             className="w-full rounded-2xl border border-brand-100 bg-brand-50/40 px-4 py-3 outline-none ring-brand-300 focus:ring-2"
           />
+          <div className="flex justify-end">
+            <Link href="/forgot-password" className="text-sm font-medium text-brand-800 transition hover:text-brand-900">
+              Forgot password?
+            </Link>
+          </div>
           {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
           {currentUser ? (
             <p className="text-sm text-brand-700">Already logged in as @{currentUser.username}.</p>

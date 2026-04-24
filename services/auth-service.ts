@@ -1,8 +1,10 @@
 import {
+  ActionCodeSettings,
   browserLocalPersistence,
   createUserWithEmailAndPassword,
   type User as FirebaseUser,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   setPersistence,
   signInWithEmailAndPassword,
   signOut,
@@ -69,6 +71,8 @@ function mapAuthError(error: unknown) {
     case "auth/wrong-password":
     case "auth/user-not-found":
       return "Incorrect email or password.";
+    case "auth/too-many-requests":
+      return "Too many attempts were made. Please wait a bit and try again.";
     default:
       return error instanceof Error ? error.message : "Authentication failed.";
   }
@@ -194,6 +198,30 @@ export async function signupUser(input: SignupInput): Promise<User> {
     await createUserDocument(user);
     upsertStoredUser(user);
     return user;
+  } catch (error) {
+    throw new Error(mapAuthError(error));
+  }
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    throw new Error("Email is required.");
+  }
+
+  try {
+    await ensureAuthIsReady();
+
+    const actionCodeSettings: ActionCodeSettings | undefined =
+      typeof window !== "undefined"
+        ? {
+            url: `${window.location.origin}/login`,
+            handleCodeInApp: false
+          }
+        : undefined;
+
+    await sendPasswordResetEmail(firebaseAuth!, normalizedEmail, actionCodeSettings);
   } catch (error) {
     throw new Error(mapAuthError(error));
   }

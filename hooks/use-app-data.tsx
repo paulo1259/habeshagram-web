@@ -42,6 +42,7 @@ type AppContextValue = {
   refreshUnreadNotificationCount: () => Promise<void>;
   refreshSavedPosts: () => Promise<void>;
   login: ReturnType<typeof useAuth>["login"];
+  sendPasswordReset: ReturnType<typeof useAuth>["sendPasswordReset"];
   signup: ReturnType<typeof useAuth>["signup"];
   logout: ReturnType<typeof useAuth>["logout"];
   updateProfile: ReturnType<typeof useAuth>["updateProfile"];
@@ -58,7 +59,7 @@ type AppContextValue = {
 const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
-  const { currentUser, isReady, authMode, login, signup, logout, updateProfile } = useAuth();
+  const { currentUser, isReady, authMode, login, sendPasswordReset, signup, logout, updateProfile } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [systemPosts, setSystemPosts] = useState<Post[]>([]);
   const [deletedPostIds, setDeletedPostIds] = useState<string[]>([]);
@@ -308,6 +309,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       refreshUnreadNotificationCount,
       refreshSavedPosts,
       login,
+      sendPasswordReset,
       signup,
       logout,
       updateProfile,
@@ -334,6 +336,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       refreshUnreadNotificationCount,
       refreshSavedPosts,
       login,
+      sendPasswordReset,
       signup,
       logout,
       updateProfile,

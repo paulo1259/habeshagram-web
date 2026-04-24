@@ -12,6 +12,7 @@ import {
 import {
   loginUser,
   logoutUser,
+  requestPasswordReset,
   signupUser,
   subscribeToUserSession,
   updateProfileDetails
@@ -24,6 +25,7 @@ type AuthContextValue = {
   isReady: boolean;
   authMode: "firebase" | "unconfigured";
   login: (email: string, password: string) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
   signup: (input: { username: string; email: string; password: string; bio?: string }) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (input: {
@@ -61,6 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const sendPasswordReset = useCallback(async (email: string) => {
+    await requestPasswordReset(email);
+  }, []);
+
   const logout = useCallback(async () => {
     await logoutUser();
     setCurrentUser(null);
@@ -80,11 +86,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isReady,
       authMode: isFirebaseConfigured ? "firebase" : "unconfigured",
       login,
+      sendPasswordReset,
       signup,
       logout,
       updateProfile
     }),
-    [currentUser, isReady, login, logout, signup, updateProfile]
+    [currentUser, isReady, login, logout, sendPasswordReset, signup, updateProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
