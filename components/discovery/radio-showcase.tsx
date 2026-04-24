@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Headphones, Pause, Play, Radio, Volume2 } from "lucide-react";
 import { radioStations } from "@/services/discovery-data";
 import { RadioStation } from "@/types";
@@ -8,13 +8,18 @@ import { cn } from "@/lib/utils";
 
 function RadioPlayerPanel({
   station,
-  compact = false
+  compact = false,
+  autoplayToken = 0,
+  onAutoplayResult
 }: {
   station: RadioStation;
   compact?: boolean;
+  autoplayToken?: number;
+  onAutoplayResult?: (result: "started" | "blocked" | "unavailable") => void;
 }) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const usesWidget = station.playbackMode === "widget" && Boolean(station.embedUrl);
   const usesStream = !usesWidget && station.playbackMode === "stream" && Boolean(station.streamUrl);
@@ -23,6 +28,22 @@ function RadioPlayerPanel({
     setHasError(false);
     setIsLoading(usesWidget);
   }, [station.id, usesWidget]);
+
+  useEffect(() => {
+    if (!autoplayToken) {
+      return;
+    }
+
+    if (usesStream && audioRef.current) {
+      void audioRef.current
+        .play()
+        .then(() => onAutoplayResult?.("started"))
+        .catch(() => onAutoplayResult?.("blocked"));
+      return;
+    }
+
+    onAutoplayResult?.("unavailable");
+  }, [autoplayToken, onAutoplayResult, usesStream]);
 
   return (
     <section className="relative isolate overflow-hidden rounded-[28px] border border-brand-100 bg-white/96 shadow-soft">
@@ -85,6 +106,7 @@ function RadioPlayerPanel({
               <div className="flex h-full flex-col justify-center bg-brand-50/30 p-4">
                 <audio
                   key={`${station.id}-stream`}
+                  ref={audioRef}
                   controls
                   preload="none"
                   className="w-full"
@@ -166,6 +188,31 @@ export function RadioShowcase({
   );
   const [selectedStation, setSelectedStation] = useState<RadioStation>(featuredStation);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [autoplayToken, setAutoplayToken] = useState(0);
+  const [playerNotice, setPlayerNotice] = useState("");
+  const playerRef = useRef<HTMLDivElement | null>(null);
+  const shouldRevealPlayerRef = useRef(false);
+
+  const handleStationSelect = (station: RadioStation) => {
+    setSelectedStation(station);
+    setIsExpanded(true);
+    setAutoplayToken((value) => value + 1);
+    shouldRevealPlayerRef.current = true;
+    setPlayerNotice(
+      station.playbackMode === "stream"
+        ? `Opening ${station.name}. If playback is blocked, tap play to start.`
+        : `${station.name} is ready in the in-app player. If audio does not begin automatically, tap play to start.`
+    );
+  };
+
+  useEffect(() => {
+    if (!isExpanded || !shouldRevealPlayerRef.current || !playerRef.current) {
+      return;
+    }
+
+    shouldRevealPlayerRef.current = false;
+    playerRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [isExpanded, selectedStation.id]);
 
   if (quickPlayer) {
     return (
@@ -216,16 +263,37 @@ export function RadioShowcase({
           </button>
         </div>
 
+        {playerNotice ? (
+          <div className="mt-3 rounded-[20px] border border-brand-100 bg-brand-50/60 px-4 py-3 text-sm text-stone-600">
+            {playerNotice}
+          </div>
+        ) : null}
+
         {isExpanded ? (
-          <div className="mt-4 space-y-4">
-            <RadioPlayerPanel station={selectedStation} compact />
+          <div ref={playerRef} className="mt-4 space-y-4">
+            <RadioPlayerPanel
+              station={selectedStation}
+              compact
+              autoplayToken={autoplayToken}
+              onAutoplayResult={(result) => {
+                if (result === "started") {
+                  setPlayerNotice(`${selectedStation.name} is playing in the in-app player.`);
+                } else if (result === "blocked") {
+                  setPlayerNotice(`Autoplay was blocked for ${selectedStation.name}. Tap play to start.`);
+                } else {
+                  setPlayerNotice(
+                    `${selectedStation.name} is open in the in-app player. Tap play inside the widget to start.`
+                  );
+                }
+              }}
+            />
             <div className="grid gap-3">
               {radioStations.map((station) => (
                 <SecondaryStationCard
                   key={station.id}
                   station={station}
                   selected={selectedStation.id === station.id}
-                  onSelect={setSelectedStation}
+                  onSelect={handleStationSelect}
                 />
               ))}
             </div>
@@ -237,14 +305,36 @@ export function RadioShowcase({
 
   return (
     <section className="space-y-4">
-      <RadioPlayerPanel station={selectedStation} compact={compact} />
+      <div ref={playerRef}>
+        <RadioPlayerPanel
+          station={selectedStation}
+          compact={compact}
+          autoplayToken={autoplayToken}
+          onAutoplayResult={(result) => {
+            if (result === "started") {
+              setPlayerNotice(`${selectedStation.name} is playing in the in-app player.`);
+            } else if (result === "blocked") {
+              setPlayerNotice(`Autoplay was blocked for ${selectedStation.name}. Tap play to start.`);
+            } else {
+              setPlayerNotice(
+                `${selectedStation.name} is open in the in-app player. Tap play inside the widget to start.`
+              );
+            }
+          }}
+        />
+      </div>
+      {playerNotice ? (
+        <div className="rounded-[20px] border border-brand-100 bg-brand-50/60 px-4 py-3 text-sm text-stone-600">
+          {playerNotice}
+        </div>
+      ) : null}
       <div className={cn("grid gap-3", compact ? "grid-cols-1" : "sm:grid-cols-2")}>
         {secondaryStations.map((station) => (
           <SecondaryStationCard
             key={station.id}
             station={station}
             selected={selectedStation.id === station.id}
-            onSelect={setSelectedStation}
+            onSelect={handleStationSelect}
           />
         ))}
       </div>

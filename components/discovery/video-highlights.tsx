@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Film, Play } from "lucide-react";
+import { ExternalLink, Film, Play, X } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
 import { cn } from "@/lib/utils";
@@ -34,9 +34,121 @@ type VideoHighlightsProps = {
   limit?: number;
 };
 
+function VideoPlayerModal({
+  video,
+  onClose
+}: {
+  video: CuratedVideoItem | null;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    if (!video) {
+      return;
+    }
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [onClose, video]);
+
+  if (!video) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-stone-950/70 p-3 backdrop-blur-sm sm:items-center sm:p-6">
+      <button
+        type="button"
+        aria-label="Close video player"
+        className="absolute inset-0"
+        onClick={onClose}
+      />
+      <div className="relative z-10 max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-[30px] border border-white/10 bg-white shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-brand-100 bg-gradient-to-r from-brand-50 via-white to-orange-50 px-4 py-4 sm:px-5">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-700">
+              Now watching
+            </p>
+            <h3 className="mt-1 line-clamp-2 text-lg font-black tracking-tight text-ink sm:text-xl">
+              {video.title}
+            </h3>
+            <p className="mt-1 text-sm text-stone-500">
+              {video.source} · {video.duration}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/videos/${video.id}`}
+              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-brand-100 bg-white px-3.5 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-brand-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-50"
+            >
+              Full page
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Link>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-stone-600 shadow-sm transition hover:bg-brand-50 hover:text-brand-800"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="max-h-[calc(92vh-4.5rem)] overflow-y-auto">
+          <div className="aspect-video w-full bg-black">
+            <iframe
+              src={video.embedUrl}
+              title={video.title}
+              className="h-full w-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </div>
+
+          <div className="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
+            <p className="text-sm leading-6 text-stone-600">{video.summary}</p>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-stone-500">
+              <span className={cn("rounded-full border px-3 py-1.5 font-semibold", categoryStyles[video.category])}>
+                {video.category}
+              </span>
+              <span className="rounded-full bg-brand-50 px-3 py-1.5 font-medium text-brand-800">
+                {video.publishLabel ?? "Watch now"}
+              </span>
+              {video.teamTag ? (
+                <Link
+                  href={`/football/${getTeamSlug(video.teamTag)}`}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 font-semibold transition hover:-translate-y-0.5",
+                    teamChipStyles[video.teamTag]
+                  )}
+                >
+                  {video.teamTag}
+                </Link>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function VideoHighlights({ compact = false, team, limit }: VideoHighlightsProps) {
   const [videos, setVideos] = useState<CuratedVideoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeVideo, setActiveVideo] = useState<CuratedVideoItem | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -114,10 +226,11 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
       ) : compact ? (
         <div className="mt-4 space-y-3">
           {supportingVideos.slice(0, limit ?? 3).map((video) => (
-            <Link
+            <button
+              type="button"
               key={video.id}
-              href={`/videos/${video.id}`}
-              className="group flex w-full items-start gap-3 rounded-[24px] border border-brand-100 bg-brand-50/40 p-3 text-left transition hover:-translate-y-0.5 hover:border-brand-200 hover:bg-white"
+              onClick={() => setActiveVideo(video)}
+              className="group flex w-full items-start gap-3 rounded-[24px] border border-brand-100 bg-brand-50/40 p-3 text-left transition hover:-translate-y-0.5 hover:border-brand-200 hover:bg-white active:scale-[0.99]"
             >
               <div className="relative h-20 w-28 overflow-hidden rounded-[18px] bg-brand-100">
                 <img
@@ -141,14 +254,18 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                 <h3 className="mt-2 line-clamp-2 text-sm font-bold leading-6 text-ink">{video.title}</h3>
                 <p className="mt-1 text-xs text-stone-500">{video.publishLabel ?? "Watch now"}</p>
               </div>
-            </Link>
+            </button>
           ))}
         </div>
       ) : (
         <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
           {featuredVideo ? (
             <article className="overflow-hidden rounded-[28px] border border-brand-100 bg-gradient-to-br from-brand-50 via-white to-orange-50 shadow-soft ring-1 ring-orange-100/60">
-              <Link href={`/videos/${featuredVideo.id}`} className="group block w-full text-left">
+              <button
+                type="button"
+                onClick={() => setActiveVideo(featuredVideo)}
+                className="group block w-full text-left"
+              >
                 <div className="relative aspect-[16/10] overflow-hidden">
                   <img
                     src={featuredVideo.thumbnailURL}
@@ -185,7 +302,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                     </span>
                   </div>
                 </div>
-              </Link>
+              </button>
               <div className="space-y-4 p-5">
                 <p className="text-sm leading-6 text-stone-600">{featuredVideo.summary}</p>
                 <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-stone-500">
@@ -215,9 +332,26 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                       >
                         #{tag}
                       </Link>
-                    ))}
+                    ))}                  
                   </div>
                 ) : null}
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveVideo(featuredVideo)}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600 active:scale-[0.98]"
+                  >
+                    <Play className="h-4 w-4 fill-current" />
+                    Play here
+                  </button>
+                  <Link
+                    href={`/videos/${featuredVideo.id}`}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-full border border-brand-100 bg-white px-4 py-2 text-sm font-semibold text-brand-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-50"
+                  >
+                    Open detail
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
               </div>
             </article>
           ) : null}
@@ -229,8 +363,9 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                 className="group rounded-[26px] border border-brand-100 bg-white p-3 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-md"
               >
                 <div className="flex gap-3">
-                  <Link
-                    href={`/videos/${video.id}`}
+                  <button
+                    type="button"
+                    onClick={() => setActiveVideo(video)}
                     className="relative h-24 w-36 shrink-0 overflow-hidden rounded-[20px] bg-brand-100 text-left"
                   >
                     <img
@@ -243,7 +378,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                       <Play className="h-3 w-3 fill-current" />
                       {video.duration}
                     </div>
-                  </Link>
+                  </button>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em]">
                       <span className={cn("rounded-full border px-2 py-1", categoryStyles[video.category])}>
@@ -251,11 +386,15 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                       </span>
                       <span className="text-stone-500">{video.source}</span>
                     </div>
-                    <Link href={`/videos/${video.id}`} className="block">
-                      <h3 className="mt-2 line-clamp-2 text-base font-black tracking-tight text-ink">
+                    <button
+                      type="button"
+                      onClick={() => setActiveVideo(video)}
+                      className="block text-left"
+                    >
+                      <h3 className="mt-2 line-clamp-2 text-base font-black tracking-tight text-ink transition group-hover:text-brand-900">
                         {video.title}
                       </h3>
-                    </Link>
+                    </button>
                     <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{video.summary}</p>
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-stone-500">
                       <span>{video.publishLabel ?? "Watch now"}</span>
@@ -270,6 +409,14 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                           {video.teamTag}
                         </Link>
                       ) : null}
+                      <button
+                        type="button"
+                        onClick={() => setActiveVideo(video)}
+                        className="inline-flex min-h-9 items-center gap-1 rounded-full bg-brand-50 px-3 py-1.5 font-semibold text-brand-800 transition hover:bg-brand-100"
+                      >
+                        <Play className="h-3 w-3 fill-current" />
+                        Play here
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -278,6 +425,8 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
           </div>
         </div>
       )}
+
+      <VideoPlayerModal video={activeVideo} onClose={() => setActiveVideo(null)} />
     </section>
   );
 }
