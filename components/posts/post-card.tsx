@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { AlertTriangle, Bookmark, Flag, Heart, MessageCircle, Radio, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, Bookmark, Flag, Heart, MessageCircle, MoreHorizontal, Radio, Trash2 } from "lucide-react";
 import { useAppData } from "@/hooks/use-app-data";
 import { formatDate, parseHashtags } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
@@ -21,8 +21,10 @@ const teamChipStyles = {
 
 export function PostCard({ post }: { post: Post }) {
   const { currentUser, likePost, addPostComment, deleteOwnPost, savedPostIds, toggleSaved } = useAppData();
+  const actionMenuRef = useRef<HTMLDivElement | null>(null);
   const [showComments, setShowComments] = useState(false);
   const [showReportForm, setShowReportForm] = useState(false);
+  const [showActionMenu, setShowActionMenu] = useState(false);
   const [reportReason, setReportReason] = useState<PostReportReason>("spam");
   const [reportDetails, setReportDetails] = useState("");
   const [isReporting, setIsReporting] = useState(false);
@@ -33,6 +35,7 @@ export function PostCard({ post }: { post: Post }) {
 
   const isLiked = currentUser ? post.likedBy.includes(currentUser.id) : false;
   const isSaved = currentUser ? savedPostIds.includes(post.id) : false;
+  const isOwner = post.userId === currentUser?.id;
   const hashtags = post.hashtags?.length ? post.hashtags : parseHashtags(post.text);
   const reportReasons: { value: PostReportReason; label: string }[] = [
     { value: "spam", label: "Spam" },
@@ -41,9 +44,39 @@ export function PostCard({ post }: { post: Post }) {
     { value: "other", label: "Other" }
   ];
 
+  useEffect(() => {
+    if (!showActionMenu) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
+        setShowActionMenu(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowActionMenu(false);
+      }
+    };
+
+    window.addEventListener("mousedown", handlePointerDown);
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("mousedown", handlePointerDown);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [showActionMenu]);
+
   return (
     <article
       id={`post-${post.id}`}
+      data-post-id={post.id}
+      data-post-user-id={post.userId}
+      data-current-user-id={currentUser?.id ?? ""}
+      data-is-owner={isOwner ? "true" : "false"}
       className="group border-b border-brand-100/80 bg-white/98 px-3 py-4 transition duration-200 hover:bg-brand-50/10 sm:rounded-[28px] sm:border sm:border-brand-100/80 sm:px-5 sm:py-5 sm:shadow-soft sm:hover:-translate-y-0.5 sm:hover:border-brand-200/90 sm:hover:shadow-md"
     >
       <div className="flex items-start gap-3">
@@ -65,30 +98,88 @@ export function PostCard({ post }: { post: Post }) {
           </Link>
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            {post.isSystem ? (
-              <p className="truncate font-semibold text-ink">@{post.username}</p>
-            ) : (
-              <Link
-                href={`/profile/${post.userId}`}
-                className="truncate font-semibold text-ink transition hover:text-brand-800"
-              >
-                @{post.username}
-              </Link>
-            )}
-            {post.teamTag ? (
-              <>
-                <span className="text-xs text-stone-300">&bull;</span>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm">
+              {post.isSystem ? (
+                <p className="truncate font-semibold text-ink">@{post.username}</p>
+              ) : (
                 <Link
-                  href={`/football/${getTeamSlug(post.teamTag)}`}
-                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-sm transition ${teamChipStyles[post.teamTag]}`}
+                  href={`/profile/${post.userId}`}
+                  className="truncate font-semibold text-ink transition hover:text-brand-800"
                 >
-                  {post.teamTag}
+                  @{post.username}
                 </Link>
-              </>
+              )}
+              {post.teamTag ? (
+                <>
+                  <span className="text-xs text-stone-300">&bull;</span>
+                  <Link
+                    href={`/football/${getTeamSlug(post.teamTag)}`}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-sm transition ${teamChipStyles[post.teamTag]}`}
+                  >
+                    {post.teamTag}
+                  </Link>
+                </>
+              ) : null}
+              <span className="text-xs text-stone-400">&bull;</span>
+              <p className="shrink-0 text-xs font-medium text-stone-500">{formatDate(post.createdAt)}</p>
+            </div>
+
+            {currentUser ? (
+              <div ref={actionMenuRef} className="relative shrink-0">
+                <button
+                  type="button"
+                  aria-label="Post actions"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full text-stone-500 transition hover:bg-brand-50 hover:text-brand-800 active:scale-[0.98]"
+                  onClick={() => {
+                    setErrorMessage("");
+                    setReportSuccess("");
+                    setShowActionMenu((value) => !value);
+                  }}
+                >
+                  <MoreHorizontal className="h-4.5 w-4.5" />
+                </button>
+
+                {showActionMenu ? (
+                  <div className="absolute right-0 top-11 z-30 min-w-[13rem] overflow-hidden rounded-[20px] border border-brand-100 bg-white p-2 shadow-xl">
+                    {isOwner ? (
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left text-sm font-medium text-red-700 transition hover:bg-red-50"
+                        onClick={() => {
+                          setShowActionMenu(false);
+                          setShowReportForm(false);
+                          setShowDeleteConfirm(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span>Delete post</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left text-sm font-medium text-stone-700 transition hover:bg-orange-50 hover:text-orange-700"
+                        onClick={() => {
+                          setShowActionMenu(false);
+                          setReportSuccess("");
+                          setErrorMessage("");
+                          setShowReportForm(true);
+                        }}
+                      >
+                        <Flag className="h-4 w-4" />
+                        <span>Report post</span>
+                      </button>
+                    )}
+
+                    {process.env.NODE_ENV !== "production" ? (
+                      <div className="mt-1 rounded-[14px] bg-stone-50 px-3 py-2 text-[11px] leading-5 text-stone-500">
+                        owner debug: currentUser.id={currentUser?.id ?? "none"} / post.userId={post.userId} / isOwner={String(isOwner)}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
             ) : null}
-            <span className="text-xs text-stone-400">&bull;</span>
-            <p className="shrink-0 text-xs font-medium text-stone-500">{formatDate(post.createdAt)}</p>
           </div>
 
           {post.isSystem ? (
@@ -191,39 +282,6 @@ export function PostCard({ post }: { post: Post }) {
               />
               <span>{isSaved ? "Saved" : "Save"}</span>
             </Button>
-            {post.userId === currentUser?.id ? (
-              <Button
-                variant="ghost"
-                className={`min-h-10 gap-2 rounded-full px-3.5 py-2 text-xs transition active:scale-[0.98] ${
-                  showDeleteConfirm
-                    ? "bg-red-50 text-red-700 hover:bg-red-100"
-                    : "text-stone-500 hover:bg-red-50 hover:text-red-700"
-                }`}
-                disabled={isDeleting}
-                onClick={() => {
-                  setErrorMessage("");
-                  setReportSuccess("");
-                  setShowDeleteConfirm((value) => !value);
-                }}
-              >
-                <Trash2 className="h-[18px] w-[18px]" />
-                <span>{isDeleting ? "Deleting..." : showDeleteConfirm ? "Confirm delete" : "Delete"}</span>
-              </Button>
-            ) : null}
-            {post.userId !== currentUser?.id ? (
-              <Button
-                variant="ghost"
-                className="min-h-10 gap-2 rounded-full px-3.5 py-2 text-xs text-stone-500 transition hover:bg-orange-50 hover:text-orange-700 active:scale-[0.98]"
-                onClick={() => {
-                  setReportSuccess("");
-                  setErrorMessage("");
-                  setShowReportForm((value) => !value);
-                }}
-              >
-                <Flag className="h-[18px] w-[18px]" />
-                <span>Report</span>
-              </Button>
-            ) : null}
           </div>
 
           {showDeleteConfirm ? (
@@ -235,10 +293,10 @@ export function PostCard({ post }: { post: Post }) {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-red-900">
-                      Are you sure you want to delete this post?
+                      Delete this post? This action cannot be undone.
                     </p>
                     <p className="mt-1 text-sm leading-6 text-red-800/80">
-                      This will remove the post from the timeline and clean up its comments.
+                      This will remove the post from the current feed and delete its related comments.
                     </p>
                   </div>
                 </div>
@@ -260,6 +318,7 @@ export function PostCard({ post }: { post: Post }) {
                       try {
                         setIsDeleting(true);
                         setErrorMessage("");
+                        setShowActionMenu(false);
                         await deleteOwnPost(post.id);
                       } catch (error) {
                         setErrorMessage(

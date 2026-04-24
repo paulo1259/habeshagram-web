@@ -18,7 +18,7 @@ export function FeedList({ posts, isLoading }: { posts: Post[]; isLoading: boole
   }
 
   return (
-    <div className="overflow-hidden border-y border-brand-100/80 bg-white/94 sm:space-y-3 sm:border-0 sm:bg-transparent">
+    <div className="overflow-visible border-y border-brand-100/80 bg-white/94 sm:space-y-3 sm:border-0 sm:bg-transparent">
       {posts.map((post) => (
         <PostCard key={post.id} post={post} />
       ))}
