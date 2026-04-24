@@ -6,7 +6,6 @@ import { getFirestore } from "firebase-admin/firestore";
 
 let cachedApp: App | null = null;
 let cachedServiceAccount: ServiceAccount | null = null;
-let hasLoggedAdminInit = false;
 
 function getServiceAccount(): ServiceAccount {
   if (cachedServiceAccount) {
@@ -70,12 +69,6 @@ export function getFirebaseAdminApp() {
       credential: cert(serviceAccount),
       ...(projectId ? { projectId } : {})
     });
-
-  if (!hasLoggedAdminInit) {
-    const diagnostics = getFirebaseAdminDiagnostics();
-    console.info("[firebase-admin:init]", diagnostics);
-    hasLoggedAdminInit = true;
-  }
 
   return cachedApp;
 }

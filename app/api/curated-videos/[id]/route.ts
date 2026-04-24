@@ -11,13 +11,7 @@ export async function GET(
   _request: Request,
   { params }: { params: { id: string } }
 ) {
-  const adminDiagnostics = getFirebaseAdminDiagnostics();
-
   try {
-    console.info("[api/curated-videos/:id] using admin db", {
-      ...adminDiagnostics,
-      id: params.id
-    });
     const snapshot = await getFirebaseAdminDb()
       .collection(CURATED_VIDEOS_COLLECTION)
       .doc(params.id)
@@ -46,7 +40,7 @@ export async function GET(
     });
   } catch (error) {
     console.error("[api/curated-videos/:id] admin read failed", {
-      ...adminDiagnostics,
+      ...getFirebaseAdminDiagnostics(),
       id: params.id,
       error: error instanceof Error ? error.message : "Unknown error"
     });

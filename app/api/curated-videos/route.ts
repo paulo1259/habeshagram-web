@@ -29,10 +29,10 @@ function buildDiagnostics(items: CuratedVideoItem[], totalDocs: number, rejected
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const debug = url.searchParams.get("debug") === "1";
-  const adminDiagnostics = getFirebaseAdminDiagnostics();
+  const includeDebug = debug && process.env.NODE_ENV !== "production";
+  const adminDiagnostics = includeDebug ? getFirebaseAdminDiagnostics() : null;
 
   try {
-    console.info("[api/curated-videos] using admin db", adminDiagnostics);
     const snapshot = await getFirebaseAdminDb().collection(CURATED_VIDEOS_COLLECTION).get();
     const rejectedDocs: CuratedVideoDiagnostics["rejectedDocs"] = [];
 
@@ -48,12 +48,12 @@ export async function GET(request: Request) {
       items,
       source: diagnostics.source,
       message: items.length ? undefined : "No curated videos have been published yet.",
-      ...(debug ? { diagnostics, adminDiagnostics } : {})
+      ...(includeDebug ? { diagnostics, adminDiagnostics } : {})
     });
   } catch (error) {
     const diagnostics = buildDiagnostics([], 0, [], error instanceof Error ? error.message : "Unable to read curated videos.");
     console.error("[api/curated-videos] admin read failed", {
-      ...adminDiagnostics,
+      ...(adminDiagnostics ?? getFirebaseAdminDiagnostics()),
       error: diagnostics.error
     });
 
@@ -62,7 +62,7 @@ export async function GET(request: Request) {
         items: [],
         source: "error",
         message: "Unable to load curated videos right now.",
-        ...(debug ? { diagnostics, adminDiagnostics } : {})
+        ...(includeDebug ? { diagnostics, adminDiagnostics } : {})
       },
       { status: 200 }
     );

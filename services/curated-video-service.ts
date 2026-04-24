@@ -1,22 +1,10 @@
 import { getTimestampValue, selectHomepageVideoHighlights } from "@/lib/curated-video-utils";
 import { CuratedVideoItem, FootballTeam } from "@/types";
 
-type CuratedVideoDiagnostics = {
-  source: "firestore" | "empty" | "error";
-  collection: string;
-  totalDocs: number;
-  mappedDocs: number;
-  rejectedDocs: Array<{ id: string; title?: string; reasons: string[] }>;
-  items: CuratedVideoItem[];
-  returnedItems: Array<{ id: string; title: string; featured: boolean; createdAt: string; teamTag?: FootballTeam }>;
-  error?: string;
-};
-
 type CuratedVideosResponse = {
   items: CuratedVideoItem[];
   source: "firestore" | "empty" | "error";
   message?: string;
-  diagnostics?: CuratedVideoDiagnostics;
 };
 
 async function requestCuratedVideos(path: string) {
@@ -31,27 +19,6 @@ async function requestCuratedVideos(path: string) {
   }
 
   return payload;
-}
-
-export async function getCuratedVideoDebugSnapshot() {
-  const payload = await requestCuratedVideos("/api/curated-videos?debug=1");
-  return (
-    payload.diagnostics ?? {
-      source: payload.source,
-      collection: "curatedVideos",
-      totalDocs: payload.items.length,
-      mappedDocs: payload.items.length,
-      rejectedDocs: [],
-      items: payload.items,
-      returnedItems: payload.items.map((item) => ({
-        id: item.id,
-        title: item.title,
-        featured: Boolean(item.featured),
-        createdAt: item.createdAt,
-        teamTag: item.teamTag
-      }))
-    }
-  );
 }
 
 export async function getCuratedVideos(): Promise<CuratedVideoItem[]> {

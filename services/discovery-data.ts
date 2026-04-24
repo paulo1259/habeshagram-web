@@ -42,6 +42,20 @@ export const radioStations: RadioStation[] = [
     featured: false,
     status: "live",
     tags: ["EBC", "Talk", "Live"]
+  },
+  {
+    id: "wengel-fm",
+    name: "Wengel FM",
+    frequency: "Online",
+    city: "Addis Ababa, Ethiopia",
+    description: "Religious radio with Amharic and English programming from Addis Ababa.",
+    provider: "Zeno.fm",
+    playbackMode: "widget",
+    embedUrl: "https://zeno.fm/player/wengelfm",
+    streamUrl: "",
+    featured: false,
+    status: "live",
+    tags: ["Religious", "Ethiopia", "Amharic", "English"]
   }
 ];
 
