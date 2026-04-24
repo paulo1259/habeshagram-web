@@ -73,10 +73,6 @@ export function PostCard({ post }: { post: Post }) {
   return (
     <article
       id={`post-${post.id}`}
-      data-post-id={post.id}
-      data-post-user-id={post.userId}
-      data-current-user-id={currentUser?.id ?? ""}
-      data-is-owner={isOwner ? "true" : "false"}
       className="group border-b border-brand-100/80 bg-white/98 px-3 py-4 transition duration-200 hover:bg-brand-50/10 sm:rounded-[28px] sm:border sm:border-brand-100/80 sm:px-5 sm:py-5 sm:shadow-soft sm:hover:-translate-y-0.5 sm:hover:border-brand-200/90 sm:hover:shadow-md"
     >
       <div className="flex items-start gap-3">
@@ -170,12 +166,6 @@ export function PostCard({ post }: { post: Post }) {
                         <span>Report post</span>
                       </button>
                     )}
-
-                    {process.env.NODE_ENV !== "production" ? (
-                      <div className="mt-1 rounded-[14px] bg-stone-50 px-3 py-2 text-[11px] leading-5 text-stone-500">
-                        owner debug: currentUser.id={currentUser?.id ?? "none"} / post.userId={post.userId} / isOwner={String(isOwner)}
-                      </div>
-                    ) : null}
                   </div>
                 ) : null}
               </div>
