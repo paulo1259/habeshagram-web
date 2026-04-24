@@ -83,10 +83,9 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
-FOOTBALL_DATA_API_KEY=
-FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY=
-FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST=free-api-live-football-data.p.rapidapi.com
-FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL=https://free-api-live-football-data.p.rapidapi.com
+SPORTMONKS_API_TOKEN=
+SPORTMONKS_BASE_URL=https://api.sportmonks.com/v3/football
+SPORTMONKS_PREMIER_LEAGUE_ID=8
 BREAKING_NEWS_RSS_URL=
 FIREBASE_SERVICE_ACCOUNT_KEY_BASE64=
 ADMIN_EMAIL_ALLOWLIST=
@@ -95,10 +94,9 @@ ADMIN_UID_ALLOWLIST=
 
 If these are blank, the app still starts, but authentication remains unavailable until you add real values and restart the dev server.
 
-`FOOTBALL_DATA_API_KEY` is server-only for the Premier League standings widget. Keep it in `.env.local` and in Vercel project environment variables, but do not prefix it with `NEXT_PUBLIC_`.
-`FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY` is server-only for the live match center. Keep it in `.env.local` and in Vercel project environment variables, but do not prefix it with `NEXT_PUBLIC_`.
-`FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST` is server-only and can usually stay at `free-api-live-football-data.p.rapidapi.com`.
-`FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL` is server-only and defaults to `https://free-api-live-football-data.p.rapidapi.com`.
+`SPORTMONKS_API_TOKEN` is server-only for live scores, fixtures, standings, and match events. Keep it in `.env.local` and in Vercel project environment variables, but do not prefix it with `NEXT_PUBLIC_`.
+`SPORTMONKS_BASE_URL` is server-only and usually stays at `https://api.sportmonks.com/v3/football`.
+`SPORTMONKS_PREMIER_LEAGUE_ID` is server-only and defaults to `8` for the Premier League.
 `BREAKING_NEWS_RSS_URL` is also server-only and optional. If you leave it blank, HabeshaGram defaults to the BBC Sport football RSS feed.
 `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` is admin-only for one-time content seeding. It should never be exposed to the browser or added to Vercel public env vars.
 `ADMIN_EMAIL_ALLOWLIST` and `ADMIN_UID_ALLOWLIST` are server-only allowlists for the internal admin workspace.
@@ -108,10 +106,9 @@ If these are blank, the app still starts, but authentication remains unavailable
 For local development, add this exact line to `.env.local`:
 
 ```env
-FOOTBALL_DATA_API_KEY=YOUR_FOOTBALL_DATA_TOKEN
-FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY=YOUR_RAPIDAPI_KEY
-FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST=free-api-live-football-data.p.rapidapi.com
-FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL=https://free-api-live-football-data.p.rapidapi.com
+SPORTMONKS_API_TOKEN=YOUR_SPORTMONKS_TOKEN
+SPORTMONKS_BASE_URL=https://api.sportmonks.com/v3/football
+SPORTMONKS_PREMIER_LEAGUE_ID=8
 ```
 
 ### One-time Firestore content seed
@@ -205,25 +202,23 @@ For Vercel:
 
 1. Open your project in Vercel
 2. Go to `Project Settings > Environment Variables`
-3. Add `FOOTBALL_DATA_API_KEY`
-4. Paste your football-data.org token as the value
-5. Add `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY`
-6. Paste your RapidAPI key as the value
-7. Add `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST`
-8. Set it to `free-api-live-football-data.p.rapidapi.com`
-9. Add `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL`
-10. Set it to `https://free-api-live-football-data.p.rapidapi.com`
-11. Add `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` if you want the internal admin workspace to function on Vercel
-12. Add `ADMIN_EMAIL_ALLOWLIST` and/or `ADMIN_UID_ALLOWLIST` for your approved admins
-13. Save them for the environments you want, usually:
+3. Add `SPORTMONKS_API_TOKEN`
+4. Paste your Sportmonks API token as the value
+5. Add `SPORTMONKS_BASE_URL`
+6. Set it to `https://api.sportmonks.com/v3/football`
+7. Add `SPORTMONKS_PREMIER_LEAGUE_ID`
+8. Set it to `8` unless you intentionally want a different league
+9. Add `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` if you want the internal admin workspace to function on Vercel
+10. Add `ADMIN_EMAIL_ALLOWLIST` and/or `ADMIN_UID_ALLOWLIST` for your approved admins
+11. Save them for the environments you want, usually:
    - `Production`
    - `Preview`
    - `Development`
-14. Redeploy after saving the variables so the server routes can read the new tokens
+12. Redeploy after saving the variables so the server routes can read the new tokens
 
 Important:
 
-- do not rename it to `NEXT_PUBLIC_FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY`
+- do not rename it to `NEXT_PUBLIC_SPORTMONKS_API_TOKEN`
 - do not place the token in client components
 - the browser should only call `/api/football/live` and `/api/football/standings`, never the upstream providers directly
 
@@ -307,27 +302,26 @@ Your Storage rules should allow authenticated users to write only inside their o
 
 ### Live Football Data
 
-HabeshaGram's football stack now uses split providers through internal Next.js route handlers:
+HabeshaGram's football stack now uses Sportmonks 3.0 behind internal Next.js route handlers:
 
-- server route: `app/api/football/live/route.ts`
+- live route: `app/api/football/live/route.ts`
 - standings route: `app/api/football/standings/route.ts`
-- live match env vars:
-  - `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY`
-  - `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST`
-  - `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL`
-- standings env var:
-  - `FOOTBALL_DATA_API_KEY`
+- server-only env vars:
+  - `SPORTMONKS_API_TOKEN`
+  - `SPORTMONKS_BASE_URL`
+  - `SPORTMONKS_PREMIER_LEAGUE_ID`
 - live coverage endpoints:
-  - `/football-current-live`
-  - `/football-scheduled-events`
-  - `/football-matches`
-- standings endpoint:
-  - `https://api.football-data.org/v4/competitions/PL/standings`
+  - `GET /livescores/latest`
+  - `GET /fixtures/between/{from}/{to}`
+- standings endpoints:
+  - `GET /standings/live/leagues/{leagueId}`
+  - fallback `GET /leagues/{leagueId}?include=currentSeason`
+  - fallback `GET /standings/seasons/{seasonId}`
 - current provider focus: Premier League fixtures and tracked-club table coverage involving Manchester United, Arsenal, Chelsea, and Manchester City
 
-The app keeps both provider keys on the server, polls the local live route from the browser every 15 seconds on the live page, and falls back to the last successful real response or a clean empty response if either upstream service is unavailable.
+The browser still polls only the local `/api/football/live` route every 15 seconds on the live page and reads `/api/football/standings` for the table. Sportmonks stays server-side only, and the app falls back to the last successful real payload or a clean empty response if the provider is unavailable.
 
-If `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY` is missing or blank, `app/api/football/live/route.ts` returns a friendly empty response instead of crashing the live page. If `FOOTBALL_DATA_API_KEY` is missing or blank, `app/api/football/standings/route.ts` returns an empty standings response with a clear message instead of rendering fake table data.
+If `SPORTMONKS_API_TOKEN` is missing or blank, both football routes return friendly empty responses instead of crashing the live page or rendering fake table data.
 
 ### Breaking Football News
 
