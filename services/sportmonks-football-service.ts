@@ -515,11 +515,27 @@ export async function fetchSportmonksLiveCoverage(): Promise<SportmonksLiveCover
   const leagueId = getSportmonksPremierLeagueId();
   const include = "scores;participants;events;state;periods;venue";
   const filters = `fixtureLeagues:${leagueId}`;
-  const latestPayload = await fetchSportmonksJson<SportmonksFixture>("/livescores/latest", {
-    include,
-    filters
-  });
-  const livescores = extractSportmonksArray(latestPayload);
+  let livescores: SportmonksFixture[] = [];
+
+  try {
+    const livePayload = await fetchSportmonksJson<SportmonksFixture>("/livescores", {
+      include,
+      filters
+    });
+    livescores = extractSportmonksArray(livePayload);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+
+    if (!message.includes("/livescores")) {
+      throw error;
+    }
+
+    const inplayPayload = await fetchSportmonksJson<SportmonksFixture>("/livescores/inplay", {
+      include,
+      filters
+    });
+    livescores = extractSportmonksArray(inplayPayload);
+  }
 
   const fixtures = await fetchSportmonksPaginated<SportmonksFixture>(
     `/fixtures/between/${formatDateOffset(-1)}/${formatDateOffset(1)}`,
