@@ -87,6 +87,10 @@ FOOTBALL_DATA_API_KEY=
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY=
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST=free-api-live-football-data.p.rapidapi.com
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL=https://free-api-live-football-data.p.rapidapi.com
+API_BASKETBALL_RAPIDAPI_KEY=
+API_BASKETBALL_RAPIDAPI_HOST=api-basketball.p.rapidapi.com
+API_BASKETBALL_BASE_URL=https://api-basketball.p.rapidapi.com
+API_BASKETBALL_DEFAULT_LEAGUE_ID=
 BREAKING_NEWS_RSS_URL=
 FIREBASE_SERVICE_ACCOUNT_KEY_BASE64=
 ADMIN_EMAIL_ALLOWLIST=
@@ -99,6 +103,10 @@ If these are blank, the app still starts, but authentication remains unavailable
 `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY` is server-only for the live match center. Keep it in `.env.local` and in Vercel project environment variables, but do not prefix it with `NEXT_PUBLIC_`.
 `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST` is server-only and can usually stay at `free-api-live-football-data.p.rapidapi.com`.
 `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL` is server-only and defaults to `https://free-api-live-football-data.p.rapidapi.com`.
+`API_BASKETBALL_RAPIDAPI_KEY` is server-only for the basketball routes. Keep it in `.env.local` and in Vercel project environment variables, but do not prefix it with `NEXT_PUBLIC_`.
+`API_BASKETBALL_RAPIDAPI_HOST` is server-only and can usually stay at `api-basketball.p.rapidapi.com`.
+`API_BASKETBALL_BASE_URL` is server-only and defaults to `https://api-basketball.p.rapidapi.com`.
+`API_BASKETBALL_DEFAULT_LEAGUE_ID` is optional and lets `/api/basketball/live` and `/api/basketball/standings` default to one league, such as NBA, when the request does not include a `league` query param.
 `BREAKING_NEWS_RSS_URL` is also server-only and optional. If you leave it blank, HabeshaGram defaults to the BBC Sport football RSS feed.
 `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` is admin-only for one-time content seeding. It should never be exposed to the browser or added to Vercel public env vars.
 `ADMIN_EMAIL_ALLOWLIST` and `ADMIN_UID_ALLOWLIST` are server-only allowlists for the internal admin workspace.
@@ -112,6 +120,10 @@ FOOTBALL_DATA_API_KEY=YOUR_FOOTBALL_DATA_TOKEN
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY=YOUR_RAPIDAPI_KEY
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST=free-api-live-football-data.p.rapidapi.com
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL=https://free-api-live-football-data.p.rapidapi.com
+API_BASKETBALL_RAPIDAPI_KEY=YOUR_RAPIDAPI_KEY
+API_BASKETBALL_RAPIDAPI_HOST=api-basketball.p.rapidapi.com
+API_BASKETBALL_BASE_URL=https://api-basketball.p.rapidapi.com
+API_BASKETBALL_DEFAULT_LEAGUE_ID=12
 ```
 
 ### One-time Firestore content seed

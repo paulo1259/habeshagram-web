@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bookmark, House, LogOut, Mic2, PenSquare, Radio, UserCircle2 } from "lucide-react";
+import { Bookmark, Dribbble, House, LogOut, Mic2, PenSquare, Radio, UserCircle2 } from "lucide-react";
 import { useAppData } from "@/hooks/use-app-data";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 const items = [
   { href: "/", label: "Home", icon: House },
   { href: "/radio", label: "Radio", icon: Mic2 },
+  { href: "/basketball", label: "Basketball", icon: Dribbble },
   { href: "/create", label: "Create Post", icon: PenSquare },
   { href: "/match/live", label: "Live Match Center", icon: Radio },
   { href: "/saved", label: "Saved", icon: Bookmark },
