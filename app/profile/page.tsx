@@ -1,7 +1,8 @@
 "use client";
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Camera, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Camera, LogOut, X } from "lucide-react";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { AppShell } from "@/components/layout/app-shell";
 import { ProfileGrid } from "@/components/posts/profile-grid";
@@ -13,7 +14,8 @@ import { getUserDocument, subscribeToUserDocument } from "@/services/user-servic
 import { Post } from "@/types";
 
 export default function ProfilePage() {
-  const { currentUser, deletedPostIds, getProfilePosts, isReady, updateProfile } = useAppData();
+  const { currentUser, deletedPostIds, getProfilePosts, isReady, logout, updateProfile } = useAppData();
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [profileImageURL, setProfileImageURL] = useState("");
@@ -26,6 +28,8 @@ export default function ProfilePage() {
   const [profilePreview, setProfilePreview] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isConfirmingSignOut, setIsConfirmingSignOut] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -121,6 +125,20 @@ export default function ProfilePage() {
     setBio(currentUser?.bio || "");
     setIsEditing(false);
     setErrorMessage("");
+  }
+
+  async function handleConfirmSignOut() {
+    try {
+      setIsSigningOut(true);
+      setErrorMessage("");
+      await logout();
+      router.push("/login");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Unable to sign out right now.");
+    } finally {
+      setIsSigningOut(false);
+      setIsConfirmingSignOut(false);
+    }
   }
 
   async function handleSaveProfile() {
@@ -222,7 +240,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 sm:justify-end">
                   {isEditing ? (
                     <>
                       <Button type="button" variant="ghost" onClick={handleCancelEdit} disabled={isSaving}>
@@ -233,11 +251,15 @@ export default function ProfilePage() {
                       </Button>
                     </>
                   ) : (
-                    <Button type="button" onClick={() => {
-                      setIsEditing(true);
-                      setSuccessMessage("");
-                      setErrorMessage("");
-                    }}>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setIsEditing(true);
+                        setIsConfirmingSignOut(false);
+                        setSuccessMessage("");
+                        setErrorMessage("");
+                      }}
+                    >
                       Edit profile
                     </Button>
                   )}
@@ -246,6 +268,59 @@ export default function ProfilePage() {
 
               {successMessage ? <p className="mt-4 text-sm text-green-700">{successMessage}</p> : null}
               {errorMessage ? <p className="mt-4 text-sm text-red-600">{errorMessage}</p> : null}
+
+              {!isEditing ? (
+                <div className="mt-5 rounded-[24px] border border-brand-100/90 bg-gradient-to-br from-brand-50/70 via-white to-orange-50/60 p-4 shadow-sm">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">Account actions</p>
+                      <p className="mt-1 text-sm text-stone-600">
+                        Sign out safely from this device when you are done.
+                      </p>
+                    </div>
+
+                    {!isConfirmingSignOut ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full justify-center gap-2 sm:w-auto"
+                        onClick={() => {
+                          setIsConfirmingSignOut(true);
+                          setSuccessMessage("");
+                          setErrorMessage("");
+                        }}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sign out
+                      </Button>
+                    ) : (
+                      <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
+                        <p className="text-sm text-stone-700">Sign out of HabeshaGram on this device?</p>
+                        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="w-full sm:w-auto"
+                            onClick={() => setIsConfirmingSignOut(false)}
+                            disabled={isSigningOut}
+                          >
+                            Stay signed in
+                          </Button>
+                          <Button
+                            type="button"
+                            className="w-full gap-2 sm:w-auto"
+                            onClick={handleConfirmSignOut}
+                            disabled={isSigningOut}
+                          >
+                            <LogOut className="h-4 w-4" />
+                            {isSigningOut ? "Signing out..." : "Confirm sign out"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : null}
             </section>
 
             <ProfileGrid posts={visiblePosts} />

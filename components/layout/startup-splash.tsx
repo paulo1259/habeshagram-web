@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const SESSION_KEY = "habeshagram-splash-seen";
-const FADE_IN_MS = 280;
+const FADE_IN_MS = 300;
 const HOLD_MS = 760;
-const FADE_OUT_MS = 360;
+const FADE_OUT_MS = 250;
 const TOTAL_MS = FADE_IN_MS + HOLD_MS + FADE_OUT_MS;
 const REDUCED_MOTION_TOTAL_MS = 120;
 
@@ -83,6 +83,19 @@ export function StartupSplash({ children }: { children: ReactNode }) {
     return "opacity-0 scale-[0.965]";
   }, [phase, reducedMotion]);
 
+  const splashCardStyle = useMemo(() => {
+    if (reducedMotion) {
+      return undefined;
+    }
+
+    const duration = phase === "exit" ? FADE_OUT_MS : FADE_IN_MS;
+
+    return {
+      transitionDuration: `${duration}ms, ${duration}ms`,
+      transitionTimingFunction: "ease, cubic-bezier(0.22, 1, 0.36, 1)"
+    };
+  }, [phase, reducedMotion]);
+
   return (
     <>
       <div className={cn("transition-opacity duration-500", contentReady ? "opacity-100" : "opacity-0")}>{children}</div>
@@ -100,6 +113,7 @@ export function StartupSplash({ children }: { children: ReactNode }) {
               "startup-splash-mark flex items-center gap-3 rounded-[28px] border border-white/12 bg-[#fffaf3] px-5 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:gap-4 sm:px-6 sm:py-5",
               splashCardClassName
             )}
+            style={splashCardStyle}
           >
             <span className="inline-flex h-12 w-12 items-center justify-center rounded-[22px] bg-gradient-to-br from-brand-500 to-orange-400 text-base font-black text-white shadow-soft sm:h-14 sm:w-14 sm:text-lg">
               H
