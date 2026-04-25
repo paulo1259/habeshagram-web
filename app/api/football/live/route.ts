@@ -127,14 +127,19 @@ function getBucket(match: FootballProviderMatch): ProviderBucket {
 
 async function tryFetchEndpointCandidates(
   candidates: Array<{ path: string; params?: Record<string, string> }>,
-  bucket: ProviderBucket
+  bucket?: ProviderBucket
 ) {
   for (const candidate of candidates) {
     try {
       const payload = await fetchProviderJson(candidate.path, candidate.params);
       const matches = extractMatchesFromPayload(payload)
         .filter(includesTrackedTeam)
-        .map((match) => ({ ...match, status: match.status ?? (bucket === "live" ? "LIVE" : bucket === "finished" ? "FT" : "UPCOMING") }));
+        .map((match) => ({
+          ...match,
+          status:
+            match.status ??
+            (bucket === "live" ? "LIVE" : bucket === "finished" ? "FT" : bucket === "today" ? "NS" : undefined)
+        }));
 
       if (matches.length) {
         return matches;
@@ -147,48 +152,85 @@ async function tryFetchEndpointCandidates(
   return [];
 }
 
-async function fetchCoverageMatches() {
-  const today = formatDateOffset(0);
-  const yesterday = formatDateOffset(-1);
-
-  const liveCandidates: Array<{ path: string; params?: Record<string, string> }> = [
-    { path: "/football-current-live" },
-    { path: "/football-current-live", params: { date: today } }
-  ];
-
-  const todayCandidates: Array<{ path: string; params?: Record<string, string> }> = [
-    { path: "/football-scheduled-events" },
-    { path: "/football-scheduled-events", params: { date: today } }
-  ];
-
-  const finishedCandidates: Array<{ path: string; params?: Record<string, string> }> = [
-    { path: "/football-matches", params: { date: today, status: "finished" } },
-    { path: "/football-matches", params: { date: yesterday, status: "finished" } },
-    { path: "/football-matches", params: { dateFrom: yesterday, dateTo: today } }
-  ];
-
-  const [liveMatches, todayMatches, finishedMatches] = await Promise.all([
-    tryFetchEndpointCandidates(liveCandidates, "live"),
-    tryFetchEndpointCandidates(todayCandidates, "today"),
-    tryFetchEndpointCandidates(finishedCandidates, "finished")
-  ]);
-
+function dedupeMatches(groups: FootballProviderMatch[][]) {
   const deduped = new Map<string, FootballProviderMatch>();
 
-  [liveMatches, todayMatches, finishedMatches].forEach((group) => {
+  groups.forEach((group) => {
     group.forEach((match) => {
-      const key = String(match.match_id ?? match.id ?? `${match.home_team}-${match.away_team}-${match.start_time ?? match.date}`);
+      const key = String(
+        match.match_id ?? match.id ?? `${match.home_team}-${match.away_team}-${match.start_time ?? match.date}`
+      );
+
       if (!deduped.has(key)) {
         deduped.set(key, match);
       }
     });
   });
 
+  return [...deduped.values()];
+}
+
+function splitMatchesByBucket(matches: FootballProviderMatch[]) {
+  return {
+    live: matches.filter((match) => getBucket(match) === "live"),
+    today: matches.filter((match) => getBucket(match) === "today"),
+    finished: matches.filter((match) => getBucket(match) === "finished")
+  };
+}
+
+function selectCoverageMatches(allMatches: ReturnType<typeof prioritizeLiveMatches>) {
+  const live = allMatches.filter((match) => match.status === "LIVE" || match.status === "HT");
+  const upcoming = allMatches.filter((match) => match.status === "UPCOMING");
+  const finished = allMatches.filter((match) => match.status === "FT");
+
+  const selected = [...live.slice(0, 4), ...upcoming.slice(0, 4), ...finished.slice(0, 4)];
+  const deduped = new Map(selected.map((match) => [match.id, match]));
+
+  if (deduped.size < 12) {
+    allMatches.forEach((match) => {
+      if (deduped.size >= 12 || deduped.has(match.id)) {
+        return;
+      }
+
+      deduped.set(match.id, match);
+    });
+  }
+
+  return allMatches.filter((match) => deduped.has(match.id));
+}
+
+async function fetchCoverageMatches() {
+  const today = formatDateOffset(0);
+  const yesterday = formatDateOffset(-1);
+  const tomorrow = formatDateOffset(1);
+
+  const liveCandidates: Array<{ path: string; params?: Record<string, string> }> = [
+    { path: "/football-current-live" },
+    { path: "/football-current-live", params: { date: today } }
+  ];
+
+  const fixtureCandidates: Array<{ path: string; params?: Record<string, string> }> = [
+    { path: "/football-matches", params: { dateFrom: yesterday, dateTo: tomorrow } },
+    { path: "/football-matches", params: { date: yesterday } },
+    { path: "/football-matches", params: { date: today } },
+    { path: "/football-matches", params: { date: tomorrow } },
+    { path: "/football-scheduled-events", params: { date: today } },
+    { path: "/football-scheduled-events", params: { date: tomorrow } }
+  ];
+
+  const [liveMatches, fixtureMatches] = await Promise.all([
+    tryFetchEndpointCandidates(liveCandidates, "live"),
+    tryFetchEndpointCandidates(fixtureCandidates)
+  ]);
+
+  const merged = dedupeMatches([liveMatches, fixtureMatches]);
+  const split = splitMatchesByBucket(merged);
+
   return {
     liveMatches,
-    todayMatches,
-    finishedMatches,
-    merged: [...deduped.values()]
+    todayMatches: split.today,
+    finishedMatches: split.finished,
+    merged
   };
 }
 
@@ -208,10 +250,12 @@ export async function GET() {
 
   try {
     const { merged, liveMatches, todayMatches, finishedMatches } = await fetchCoverageMatches();
-    const mapped = prioritizeLiveMatches(
+    const mapped = selectCoverageMatches(
+      prioritizeLiveMatches(
       merged
         .map((match) => mapProviderMatchToLiveMatch(match))
         .filter((match): match is NonNullable<typeof match> => Boolean(match))
+      )
     );
 
     const payload: LiveMatchFeed = {
