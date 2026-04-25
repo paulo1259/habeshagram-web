@@ -234,6 +234,10 @@ export function RadioPage() {
     () => radioStations.find((station) => station.featured) ?? radioStations[0],
     []
   );
+  const remainingStations = useMemo(
+    () => radioStations.filter((station) => station.id !== featuredStation?.id),
+    [featuredStation]
+  );
   const [activeStationId, setActiveStationId] = useState<string>(featuredStation?.id ?? "");
 
   return (
@@ -265,7 +269,7 @@ export function RadioPage() {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">
                     Featured
                   </p>
-                  <p className="mt-2 text-base font-bold">{featuredStation?.name ?? "Live radio"}</p>
+                  <p className="mt-2 text-base font-bold">Ready inside Radio</p>
                 </div>
               </div>
             </div>
@@ -299,6 +303,22 @@ export function RadioPage() {
           </div>
         </section>
 
+        {featuredStation ? (
+          <section className="space-y-3">
+            <SectionHeader
+              eyebrow="Featured Station"
+              title={`${featuredStation.name} is part of the main Radio lineup`}
+              description="The featured live station stays inside the Radio section so it feels connected to the rest of the experience."
+            />
+
+            <RadioStationCard
+              station={featuredStation}
+              active={activeStationId === featuredStation.id}
+              onActivate={(nextStation) => setActiveStationId(nextStation.id)}
+            />
+          </section>
+        ) : null}
+
         <section className="space-y-3">
           <SectionHeader
             eyebrow="All Stations"
@@ -307,7 +327,7 @@ export function RadioPage() {
           />
 
           <div className="grid gap-4">
-            {radioStations.map((station) => (
+            {remainingStations.map((station) => (
               <RadioStationCard
                 key={station.id}
                 station={station}

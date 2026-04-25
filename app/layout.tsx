@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AppDataProvider } from "@/hooks/use-app-data";
+import { AppStartupShell } from "@/components/layout/app-startup-shell";
 
 export const metadata: Metadata = {
   title: "HabeshaGram",
@@ -14,7 +15,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body className="min-h-screen bg-surface text-ink antialiased">
         <AuthProvider>
-          <AppDataProvider>{children}</AppDataProvider>
+          <AppDataProvider>
+            <AppStartupShell>{children}</AppStartupShell>
+          </AppDataProvider>
         </AuthProvider>
       </body>
     </html>

@@ -24,16 +24,14 @@ export function RadioTeaser({ compact = false }: { compact?: boolean }) {
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">
             Radio
           </p>
-          <h3 className="mt-1 text-lg font-black tracking-tight text-ink">
-            {featuredStation.name}
-          </h3>
+          <h3 className="mt-1 text-lg font-black tracking-tight text-ink">Live stations, one place</h3>
           <p className="mt-1 text-sm text-stone-500">
-            {featuredStation.frequency} / {featuredStation.city}
+            Featured now: {featuredStation.name}
           </p>
         </div>
         <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold text-brand-800">
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
-          Featured
+          Radio
         </div>
       </div>
 
