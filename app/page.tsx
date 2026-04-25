@@ -12,7 +12,6 @@ import { FootballBuzz } from "@/components/discovery/football-buzz";
 import { LocalNewsSection } from "@/components/discovery/local-news-section";
 import { MatchdayCenter } from "@/components/discovery/matchday-center";
 import { PremierLeagueStandings } from "@/components/discovery/premier-league-standings";
-import { RadioShowcase } from "@/components/discovery/radio-showcase";
 import { TrendingTopics } from "@/components/discovery/trending-topics";
 import { VideoHighlights } from "@/components/discovery/video-highlights";
 import { WhoToFollow } from "@/components/discovery/who-to-follow";
@@ -23,6 +22,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useAppData } from "@/hooks/use-app-data";
 import { useLiveMatchPulse } from "@/hooks/use-live-match-pulse";
 import { isFirebaseConfigured } from "@/lib/firebase";
+import { RadioTeaser } from "@/components/radio/radio-teaser";
 import { getFollowingIds } from "@/services/follow-service";
 import { formatFixtureTime, getFeaturedMatch } from "@/services/matchday-service";
 import { getPostsByUsers } from "@/services/post-service";
@@ -225,7 +225,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <RadioShowcase quickPlayer />
+        <RadioTeaser />
         <VideoHighlights />
         <BreakingNow />
         <MatchdayCenter liveMatches={liveMatches} />

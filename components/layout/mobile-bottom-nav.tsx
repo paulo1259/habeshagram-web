@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bookmark, House, PenSquare, UserCircle2 } from "lucide-react";
+import { Bookmark, House, Mic2, PenSquare, UserCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/", label: "Home", icon: House },
+  { href: "/radio", label: "Radio", icon: Mic2 },
   { href: "/create", label: "Post", icon: PenSquare },
   { href: "/saved", label: "Saved", icon: Bookmark },
   { href: "/profile", label: "Profile", icon: UserCircle2 }
