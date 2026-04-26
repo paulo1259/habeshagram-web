@@ -39,28 +39,14 @@ export function BreakingNow({
 
     const loadBreakingItems = async () => {
       try {
-        const query = team ? `?team=${encodeURIComponent(team)}` : "";
-        const response = await fetch(`/api/news/breaking${query}`, {
-          method: "GET",
-          cache: "no-store"
-        });
-
-        if (!response.ok) {
-          throw new Error(`Breaking feed request failed with ${response.status}.`);
-        }
-
-        const payload = (await response.json()) as {
-          items?: BreakingItem[];
-          message?: string;
-        };
+        const nextItems = await getBreakingItems(team);
 
         if (isMounted) {
-          setItems(payload.items ?? []);
-          setMessage(payload.message ?? "");
+          setItems(nextItems);
+          setMessage("");
         }
       } catch {
         if (isMounted) {
-          setItems(await getBreakingItems(team));
           setMessage("Live breaking news is temporarily unavailable.");
         }
       } finally {

@@ -15,14 +15,19 @@ export function SectionHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className={cn("flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between", className)}>
+    <div
+      className={cn(
+        "flex flex-col gap-3 border-b border-brand-100/70 pb-3 sm:flex-row sm:items-end sm:justify-between sm:pb-4",
+        className
+      )}
+    >
       <div className="max-w-2xl">
         {eyebrow ? (
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand-700">
+          <p className="meta-label text-brand-700">
             {eyebrow}
           </p>
         ) : null}
-        <h2 className="mt-1 text-xl font-black tracking-tight text-ink sm:text-[1.4rem]">
+        <h2 className="section-title mt-1">
           {title}
         </h2>
         {description ? (

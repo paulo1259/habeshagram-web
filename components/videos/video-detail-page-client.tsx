@@ -7,6 +7,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { FeedList } from "@/components/posts/feed-list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
+import { ShareActions } from "@/components/ui/share-actions";
 import { getTeamSlug } from "@/services/football-hub-data";
 import {
   getCuratedVideoById,
@@ -146,7 +147,7 @@ export function VideoDetailPageClient({ videoId }: { videoId: string }) {
             </div>
           </div>
 
-          <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
+            <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
             <div className="overflow-hidden rounded-[28px] border border-brand-100 bg-stone-950 shadow-soft">
               <div className="aspect-video w-full bg-black">
                 <iframe
@@ -190,6 +191,12 @@ export function VideoDetailPageClient({ videoId }: { videoId: string }) {
                 ))}
               </div>
             ) : null}
+
+            <ShareActions
+              path={`/videos/${video.id}`}
+              title={video.title}
+              text={video.summary}
+            />
           </div>
         </section>
 
@@ -230,6 +237,8 @@ export function VideoDetailPageClient({ videoId }: { videoId: string }) {
                         <img
                           src={item.thumbnailURL}
                           alt={item.title}
+                          loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 to-transparent" />

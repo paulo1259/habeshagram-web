@@ -131,6 +131,28 @@ function getMatchHeatSignal(match: LiveMatch, reactionCount: number) {
   return undefined;
 }
 
+function buildReactionCountMap(
+  posts: Array<{ teamTag?: FootballTeam; likeCount: number; commentCount: number }>
+) {
+  return posts.reduce<Record<FootballTeam, number>>(
+    (accumulator, post) => {
+      if (!post.teamTag) {
+        return accumulator;
+      }
+
+      accumulator[post.teamTag] = (accumulator[post.teamTag] ?? 0) + 1;
+
+      return accumulator;
+    },
+    {
+      "Manchester United": 0,
+      Arsenal: 0,
+      Chelsea: 0,
+      "Manchester City": 0
+    }
+  );
+}
+
 function buildMatchAlerts(
   matches: LiveMatch[],
   previousState: StoredMatchStateMap,
@@ -234,11 +256,21 @@ export function useLiveMatchPulse({
   const previousStateRef = useRef<StoredMatchStateMap>({});
   const seenAlertKeysRef = useRef<Set<string>>(new Set());
   const hasPrimedRef = useRef(false);
+  const reactionCountsRef = useRef<Record<FootballTeam, number>>({
+    "Manchester United": 0,
+    Arsenal: 0,
+    Chelsea: 0,
+    "Manchester City": 0
+  });
 
   useEffect(() => {
     previousStateRef.current = readStoredMatchState();
     seenAlertKeysRef.current = readSeenKeys();
   }, []);
+
+  useEffect(() => {
+    reactionCountsRef.current = buildReactionCountMap(posts);
+  }, [posts]);
 
   useEffect(() => {
     if (!goalAlerts.length) {
@@ -283,14 +315,9 @@ export function useLiveMatchPulse({
         hasPrimedRef.current = true;
 
         const enrichedMatches = payload.matches.map((match) => {
-          const reactionCount = posts.filter((post) => {
-            if (!post.teamTag) {
-              return false;
-            }
-
-            const teams = [match.homeTeam, match.awayTeam];
-            return teams.includes(post.teamTag);
-          }).length;
+          const reactionCount =
+            (reactionCountsRef.current[match.homeTeam] ?? 0) +
+            (reactionCountsRef.current[match.awayTeam] ?? 0);
 
           return {
             ...match,
@@ -319,7 +346,7 @@ export function useLiveMatchPulse({
       isMounted = false;
       window.clearInterval(interval);
     };
-  }, [pollMs, posts]);
+  }, [pollMs]);
 
   return {
     matches,

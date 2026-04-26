@@ -7,6 +7,7 @@ import { useAppData } from "@/hooks/use-app-data";
 import { formatDate, parseHashtags } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ShareActions } from "@/components/ui/share-actions";
 import { CommentSection } from "@/components/posts/comment-section";
 import { getTeamSlug } from "@/services/football-hub-data";
 import { reportPost } from "@/services/report-service";
@@ -73,7 +74,7 @@ export function PostCard({ post }: { post: Post }) {
   return (
     <article
       id={`post-${post.id}`}
-      className="group border-b border-brand-100/80 bg-white/98 px-3 py-4 transition duration-200 hover:bg-brand-50/10 sm:rounded-[28px] sm:border sm:border-brand-100/80 sm:px-5 sm:py-5 sm:shadow-soft sm:hover:-translate-y-0.5 sm:hover:border-brand-200/90 sm:hover:shadow-md"
+      className="group border-b border-brand-100/80 bg-white/98 px-3 py-4 transition duration-200 hover:bg-brand-50/10 sm:rounded-[28px] sm:border sm:border-brand-100/80 sm:px-5 sm:py-5 sm:shadow-soft sm:hover:-translate-y-0.5 sm:hover:border-brand-200/90 sm:hover:shadow-[0_20px_34px_rgba(84,54,23,0.1)]"
     >
       <div className="flex items-start gap-3">
         {post.isSystem ? (
@@ -121,55 +122,59 @@ export function PostCard({ post }: { post: Post }) {
               <p className="shrink-0 text-xs font-medium text-stone-500">{formatDate(post.createdAt)}</p>
             </div>
 
-            {currentUser ? (
-              <div ref={actionMenuRef} className="relative shrink-0">
-                <button
-                  type="button"
-                  aria-label="Post actions"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full text-stone-500 transition hover:bg-brand-50 hover:text-brand-800 active:scale-[0.98]"
-                  onClick={() => {
-                    setErrorMessage("");
-                    setReportSuccess("");
-                    setShowActionMenu((value) => !value);
-                  }}
-                >
-                  <MoreHorizontal className="h-4.5 w-4.5" />
-                </button>
+            <div ref={actionMenuRef} className="relative shrink-0">
+              <button
+                type="button"
+                aria-label="Post actions"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-stone-500 transition hover:bg-brand-50 hover:text-brand-800 active:scale-[0.98]"
+                onClick={() => {
+                  setErrorMessage("");
+                  setReportSuccess("");
+                  setShowActionMenu((value) => !value);
+                }}
+              >
+                <MoreHorizontal className="h-4.5 w-4.5" />
+              </button>
 
-                {showActionMenu ? (
-                  <div className="absolute right-0 top-11 z-30 min-w-[13rem] overflow-hidden rounded-[20px] border border-brand-100 bg-white p-2 shadow-xl">
-                    {isOwner ? (
-                      <button
-                        type="button"
-                        className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left text-sm font-medium text-red-700 transition hover:bg-red-50"
-                        onClick={() => {
-                          setShowActionMenu(false);
-                          setShowReportForm(false);
-                          setShowDeleteConfirm(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span>Delete post</span>
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left text-sm font-medium text-stone-700 transition hover:bg-orange-50 hover:text-orange-700"
-                        onClick={() => {
-                          setShowActionMenu(false);
-                          setReportSuccess("");
-                          setErrorMessage("");
-                          setShowReportForm(true);
-                        }}
-                      >
-                        <Flag className="h-4 w-4" />
-                        <span>Report post</span>
-                      </button>
-                    )}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
+              {showActionMenu ? (
+                <div className="absolute right-0 top-11 z-30 min-w-[13rem] overflow-hidden rounded-[20px] border border-brand-100 bg-white p-2 shadow-xl">
+                  <ShareActions
+                    path={`/posts/${post.id}`}
+                    title={`@${post.username} on HabeshaGram`}
+                    text={post.text}
+                    layout="menu"
+                  />
+                  {isOwner ? (
+                    <button
+                      type="button"
+                      className="mt-1 flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left text-sm font-medium text-red-700 transition hover:bg-red-50"
+                      onClick={() => {
+                        setShowActionMenu(false);
+                        setShowReportForm(false);
+                        setShowDeleteConfirm(true);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span>Delete post</span>
+                    </button>
+                  ) : currentUser ? (
+                    <button
+                      type="button"
+                      className="mt-1 flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left text-sm font-medium text-stone-700 transition hover:bg-orange-50 hover:text-orange-700"
+                      onClick={() => {
+                        setShowActionMenu(false);
+                        setReportSuccess("");
+                        setErrorMessage("");
+                        setShowReportForm(true);
+                      }}
+                    >
+                      <Flag className="h-4 w-4" />
+                      <span>Report post</span>
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
           </div>
 
           {post.isSystem ? (

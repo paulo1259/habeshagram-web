@@ -142,8 +142,8 @@ function RadioStationCard({
   return (
     <article
       className={cn(
-        "overflow-hidden rounded-[30px] border bg-white/96 p-4 shadow-soft transition duration-200 sm:p-5",
-        active ? "border-brand-300 ring-2 ring-brand-200/70" : "border-brand-100 hover:-translate-y-0.5 hover:shadow-md"
+        "surface-panel overflow-hidden p-4 transition duration-200 sm:p-5",
+        active ? "border-brand-300 ring-2 ring-brand-200/70" : "surface-card-hover border-brand-100"
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -151,7 +151,7 @@ function RadioStationCard({
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">
             {station.frequency}
           </p>
-          <h2 className="mt-1 text-xl font-black tracking-tight text-ink">{station.name}</h2>
+          <h2 className="section-title mt-1 text-xl">{station.name}</h2>
           <p className="mt-1 text-sm text-stone-500">
             {station.city} / {station.provider}
           </p>
@@ -242,15 +242,15 @@ export function RadioPage() {
 
   return (
     <AppShell>
-      <div className="space-y-5">
-        <section className="overflow-hidden rounded-[32px] border border-brand-100/80 bg-white/96 shadow-soft">
+      <div className="page-stack">
+        <section className="page-hero bg-white/96">
           <div className="bg-gradient-to-br from-brand-600 via-orange-400 to-brand-300 px-4 py-5 text-white sm:px-6 sm:py-6">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
               Radio
             </p>
             <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-2xl">
-                <h1 className="text-[2rem] font-black tracking-tight sm:text-[2.7rem]">
+                <h1 className="page-title">
                   Radio
                 </h1>
                 <p className="mt-3 text-sm leading-6 text-white/90 sm:text-[15px]">
@@ -304,7 +304,7 @@ export function RadioPage() {
         </section>
 
         {featuredStation ? (
-          <section className="space-y-3">
+          <section className="section-stack">
             <SectionHeader
               eyebrow="Featured Station"
               title={`${featuredStation.name} is part of the main Radio lineup`}
@@ -319,7 +319,7 @@ export function RadioPage() {
           </section>
         ) : null}
 
-        <section className="space-y-3">
+        <section className="section-stack">
           <SectionHeader
             eyebrow="All Stations"
             title="Choose a station and play it right there"

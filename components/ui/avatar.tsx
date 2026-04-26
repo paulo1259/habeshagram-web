@@ -10,7 +10,15 @@ export function Avatar({
   className?: string;
 }) {
   if (imageURL) {
-    return <img src={imageURL} alt={username} className={cn("h-11 w-11 rounded-full object-cover", className)} />;
+    return (
+      <img
+        src={imageURL}
+        alt={username}
+        loading="lazy"
+        decoding="async"
+        className={cn("h-11 w-11 rounded-full object-cover", className)}
+      />
+    );
   }
 
   return (

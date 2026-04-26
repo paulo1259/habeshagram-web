@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Flame, ImagePlus, PenSquare, Sparkles } from "lucide-react";
 import { BreakingNow } from "@/components/discovery/breaking-now";
 import { CommunityHighlights } from "@/components/discovery/community-highlights";
@@ -9,19 +9,26 @@ import { CommunitySpotlight } from "@/components/discovery/community-spotlight";
 import { DailyDebates } from "@/components/discovery/daily-debates";
 import { EventHighlights } from "@/components/discovery/event-highlights";
 import { FootballBuzz } from "@/components/discovery/football-buzz";
+import { FootballTeaser } from "@/components/football/football-teaser";
 import { LocalNewsSection } from "@/components/discovery/local-news-section";
-import { MatchdayCenter } from "@/components/discovery/matchday-center";
-import { PremierLeagueStandings } from "@/components/discovery/premier-league-standings";
 import { TrendingTopics } from "@/components/discovery/trending-topics";
 import { VideoHighlights } from "@/components/discovery/video-highlights";
 import { WhoToFollow } from "@/components/discovery/who-to-follow";
 import { AppShell } from "@/components/layout/app-shell";
 import { GoalAlertStack } from "@/components/match/goal-alert-stack";
 import { FeedList } from "@/components/posts/feed-list";
+import { WorldNewsTeaser } from "@/components/world-news/world-news-teaser";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useAppData } from "@/hooks/use-app-data";
 import { useLiveMatchPulse } from "@/hooks/use-live-match-pulse";
 import { isFirebaseConfigured } from "@/lib/firebase";
+import {
+  getHomepageSectionScores,
+  getPersonalizationProfile,
+  getPreferredTeam,
+  hasEnoughPersonalizationData,
+  rankPersonalizedFeedPosts
+} from "@/lib/personalization";
 import { RadioTeaser } from "@/components/radio/radio-teaser";
 import { getFollowingIds } from "@/services/follow-service";
 import { formatFixtureTime, getFeaturedMatch } from "@/services/matchday-service";
@@ -60,20 +67,48 @@ function getFeaturedMatchClock(fixture: MatchdayFixture | null, liveMatches: Liv
 }
 
 export default function HomePage() {
-  const { currentUser, deletedPostIds, posts, isLoading, errorMessage } = useAppData();
+  const { currentUser, deletedPostIds, posts, isLoading, errorMessage, savedPostIds } = useAppData();
   const { matches: liveMatches, goalAlerts } = useLiveMatchPulse({ posts });
   const [feedMode, setFeedMode] = useState<"for-you" | "following">("for-you");
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [followingPosts, setFollowingPosts] = useState<Post[]>([]);
   const [isFollowingLoading, setIsFollowingLoading] = useState(false);
   const [followingError, setFollowingError] = useState("");
   const [hasLoadedFollowing, setHasLoadedFollowing] = useState(false);
 
   useEffect(() => {
+    setFollowingIds([]);
     setFollowingPosts([]);
     setFollowingError("");
     setHasLoadedFollowing(false);
     setFeedMode("for-you");
   }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (!currentUser) {
+      setFollowingIds([]);
+      return;
+    }
+
+    let isMounted = true;
+
+    void (async () => {
+      try {
+        const nextFollowingIds = await getFollowingIds(currentUser.id);
+        if (isMounted) {
+          setFollowingIds(nextFollowingIds);
+        }
+      } catch {
+        if (isMounted) {
+          setFollowingIds([]);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser]);
 
   useEffect(() => {
     if (feedMode !== "following" || !currentUser || hasLoadedFollowing) {
@@ -86,10 +121,11 @@ export default function HomePage() {
       try {
         setIsFollowingLoading(true);
         setFollowingError("");
-        const followingIds = await getFollowingIds(currentUser.id);
-        const nextPosts = await getPostsByUsers(followingIds);
+        const nextFollowingIds = followingIds.length ? followingIds : await getFollowingIds(currentUser.id);
+        const nextPosts = await getPostsByUsers(nextFollowingIds);
 
         if (isMounted) {
+          setFollowingIds(nextFollowingIds);
           setFollowingPosts(nextPosts);
           setHasLoadedFollowing(true);
         }
@@ -109,14 +145,91 @@ export default function HomePage() {
     return () => {
       isMounted = false;
     };
-  }, [currentUser, feedMode, hasLoadedFollowing]);
+  }, [currentUser, feedMode, followingIds, hasLoadedFollowing]);
 
   const activePosts = feedMode === "following" ? followingPosts : posts;
-  const visibleActivePosts = activePosts.filter((post) => !deletedPostIds.includes(post.id));
+  const visibleBasePosts = activePosts.filter((post) => !deletedPostIds.includes(post.id));
   const activeLoading = feedMode === "following" ? isFollowingLoading : isLoading;
   const activeError = feedMode === "following" ? followingError : errorMessage;
   const featuredMatch = getFeaturedMatch(liveMatches);
   const featuredMatchClock = getFeaturedMatchClock(featuredMatch, liveMatches);
+  const personalizationProfile = useMemo(
+    () => getPersonalizationProfile(),
+    [currentUser?.id, followingIds, posts, savedPostIds]
+  );
+  const likedPosts = useMemo(
+    () => (currentUser ? posts.filter((post) => post.likedBy.includes(currentUser.id)) : []),
+    [currentUser, posts]
+  );
+  const savedPosts = useMemo(
+    () => posts.filter((post) => savedPostIds.includes(post.id)),
+    [posts, savedPostIds]
+  );
+  const canPersonalize = currentUser
+    ? hasEnoughPersonalizationData({
+        profile: personalizationProfile,
+        likedPosts,
+        savedPosts,
+        followingIds
+      })
+    : false;
+  const preferredTeam = canPersonalize ? getPreferredTeam(personalizationProfile) : undefined;
+  const sectionScores = canPersonalize ? getHomepageSectionScores(personalizationProfile) : null;
+  const visibleActivePosts =
+    feedMode === "for-you" && canPersonalize
+      ? rankPersonalizedFeedPosts({
+          posts: visibleBasePosts,
+          currentUserId: currentUser?.id,
+          followingIds,
+          likedPosts,
+          savedPosts,
+          profile: personalizationProfile
+        })
+      : visibleBasePosts;
+  const homepageSectionOrder = useMemo(() => {
+    const sections = [
+      {
+        key: "football" as const,
+        baseOrder: 0,
+        render: () => <FootballTeaser liveMatches={liveMatches} />
+      },
+      {
+        key: "videos" as const,
+        baseOrder: 1,
+        render: () => <VideoHighlights team={preferredTeam} />
+      },
+      {
+        key: "radio" as const,
+        baseOrder: 2,
+        render: () => <RadioTeaser />
+      },
+      {
+        key: "world-news" as const,
+        baseOrder: 3,
+        render: () => <WorldNewsTeaser />
+      },
+      {
+        key: "debates" as const,
+        baseOrder: 4,
+        render: () => <DailyDebates team={preferredTeam} />
+      }
+    ];
+
+    if (!sectionScores) {
+      return sections;
+    }
+
+    return [...sections].sort((left, right) => {
+      const leftScore = (sectionScores[left.key] ?? 0) + (preferredTeam && (left.key === "football" || left.key === "videos" || left.key === "debates") ? 1.2 : 0);
+      const rightScore = (sectionScores[right.key] ?? 0) + (preferredTeam && (right.key === "football" || right.key === "videos" || right.key === "debates") ? 1.2 : 0);
+
+      if (rightScore !== leftScore) {
+        return rightScore - leftScore;
+      }
+
+      return left.baseOrder - right.baseOrder;
+    });
+  }, [liveMatches, preferredTeam, sectionScores]);
 
   return (
     <AppShell>
@@ -225,13 +338,9 @@ export default function HomePage() {
           </div>
         </section>
 
-        <RadioTeaser />
-        <VideoHighlights />
-        <BreakingNow />
-        <MatchdayCenter liveMatches={liveMatches} />
-        <div className="xl:hidden">
-          <PremierLeagueStandings />
-        </div>
+        {homepageSectionOrder.map((section) => (
+          <div key={section.key}>{section.render()}</div>
+        ))}
 
         {activeError ? (
           <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{activeError}</div>
@@ -295,8 +404,6 @@ export default function HomePage() {
           )}
         </section>
 
-        <FootballBuzz />
-        <DailyDebates />
         <LocalNewsSection />
         <div className="grid gap-4 xl:hidden">
           <TrendingTopics />

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Bell, Bookmark, Mic2, PenSquare, Search } from "lucide-react";
+import { Bell, Bookmark, Globe2, Mic2, PenSquare, Search } from "lucide-react";
 import { useAppData } from "@/hooks/use-app-data";
 
 export function TopBar() {
@@ -64,6 +64,12 @@ export function TopBar() {
             className="inline-flex rounded-full border border-brand-100/80 bg-white/90 p-2.5 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200"
           >
             <Mic2 className="h-4 w-4 text-stone-600" />
+          </Link>
+          <Link
+            href="/world-news"
+            className="inline-flex rounded-full border border-brand-100/80 bg-white/90 p-2.5 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200"
+          >
+            <Globe2 className="h-4 w-4 text-stone-600" />
           </Link>
           <Link
             href="/notifications"

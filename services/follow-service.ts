@@ -186,7 +186,7 @@ export async function toggleFollowUser(input: {
           recipientUserId: input.followingId,
           type: "follow",
           actor: input.actor,
-          message: "started following you"
+          message: "followed you."
         });
       }
 
@@ -245,7 +245,7 @@ export async function toggleFollowUser(input: {
       recipientUserId: input.followingId,
       type: "follow",
       actor: input.actor,
-      message: "started following you"
+      message: "followed you."
     });
   }
 

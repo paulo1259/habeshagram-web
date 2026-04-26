@@ -306,23 +306,43 @@ export function getInitialLiveMatches(): LiveMatch[] {
 }
 
 let liveMatchesCache: LiveMatch[] = [];
+let lastSuccessfulPayload: LiveMatchFeed | null = null;
+let inflightRequest: Promise<LiveMatchFeed> | null = null;
+let lastFetchStartedAt = 0;
+const LIVE_MATCH_CACHE_WINDOW_MS = 12000;
 
 export async function fetchLiveMatches(): Promise<LiveMatchFeed> {
+  const now = Date.now();
+
+  if (inflightRequest) {
+    return inflightRequest;
+  }
+
+  if (lastSuccessfulPayload && now - lastFetchStartedAt < LIVE_MATCH_CACHE_WINDOW_MS) {
+    return lastSuccessfulPayload;
+  }
+
   try {
-    const response = await fetch("/api/football/live", {
-      method: "GET",
-      cache: "no-store"
-    });
+    lastFetchStartedAt = now;
+    inflightRequest = (async () => {
+      const response = await fetch("/api/football/live", {
+        method: "GET",
+        cache: "no-store"
+      });
 
-    if (!response.ok) {
-      throw new Error(`Unable to fetch live matches (${response.status}).`);
-    }
+      if (!response.ok) {
+        throw new Error(`Unable to fetch live matches (${response.status}).`);
+      }
 
-    const payload = (await response.json()) as LiveMatchFeed;
-    if (payload.matches?.length) {
-      liveMatchesCache = payload.matches;
-    }
-    return payload;
+      const payload = (await response.json()) as LiveMatchFeed;
+      if (payload.matches?.length) {
+        liveMatchesCache = payload.matches;
+      }
+      lastSuccessfulPayload = payload;
+      return payload;
+    })();
+
+    return await inflightRequest;
   } catch (error) {
     return {
       matches: liveMatchesCache,
@@ -338,5 +358,7 @@ export async function fetchLiveMatches(): Promise<LiveMatchFeed> {
             ? `Live football data is temporarily unavailable. ${error.message}`
             : "Live football data is temporarily unavailable."
     };
+  } finally {
+    inflightRequest = null;
   }
 }

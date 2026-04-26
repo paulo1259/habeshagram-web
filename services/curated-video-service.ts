@@ -7,6 +7,13 @@ type CuratedVideosResponse = {
   message?: string;
 };
 
+const CURATED_VIDEO_CACHE_MS = 60_000;
+
+let videosCache: CuratedVideoItem[] | null = null;
+let videosCacheAt = 0;
+let videosRequest: Promise<CuratedVideoItem[]> | null = null;
+const videoByIdCache = new Map<string, CuratedVideoItem | null>();
+
 async function requestCuratedVideos(path: string) {
   const response = await fetch(path, {
     cache: "no-store"
@@ -22,8 +29,26 @@ async function requestCuratedVideos(path: string) {
 }
 
 export async function getCuratedVideos(): Promise<CuratedVideoItem[]> {
-  const payload = await requestCuratedVideos("/api/curated-videos");
-  return payload.items;
+  if (videosCache && Date.now() - videosCacheAt < CURATED_VIDEO_CACHE_MS) {
+    return videosCache;
+  }
+
+  if (videosRequest) {
+    return videosRequest;
+  }
+
+  videosRequest = requestCuratedVideos("/api/curated-videos")
+    .then((payload) => {
+      videosCache = payload.items;
+      videosCacheAt = Date.now();
+      payload.items.forEach((item) => videoByIdCache.set(item.id, item));
+      return payload.items;
+    })
+    .finally(() => {
+      videosRequest = null;
+    });
+
+  return videosRequest;
 }
 
 export async function getCuratedVideosByTeam(team: FootballTeam) {
@@ -32,9 +57,19 @@ export async function getCuratedVideosByTeam(team: FootballTeam) {
 }
 
 export async function getCuratedVideoById(id: string): Promise<CuratedVideoItem | null> {
+  if (videoByIdCache.has(id)) {
+    return videoByIdCache.get(id) ?? null;
+  }
+
+  if (videosCache && Date.now() - videosCacheAt < CURATED_VIDEO_CACHE_MS) {
+    return videosCache.find((item) => item.id === id) ?? null;
+  }
+
   try {
     const payload = await requestCuratedVideos(`/api/curated-videos/${id}`);
-    return payload.items[0] ?? null;
+    const item = payload.items[0] ?? null;
+    videoByIdCache.set(id, item);
+    return item;
   } catch {
     return null;
   }

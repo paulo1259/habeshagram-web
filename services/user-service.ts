@@ -46,7 +46,8 @@ export async function getUserDocument(userId: string): Promise<User | null> {
     bio: data.bio || "",
     createdAt: data.createdAt || new Date().toISOString(),
     followerCount: typeof data.followerCount === "number" ? data.followerCount : 0,
-    followingCount: typeof data.followingCount === "number" ? data.followingCount : 0
+    followingCount: typeof data.followingCount === "number" ? data.followingCount : 0,
+    pinnedPostId: typeof data.pinnedPostId === "string" ? data.pinnedPostId : undefined
   };
 }
 
@@ -71,7 +72,8 @@ export async function getAllUsers(): Promise<User[]> {
       bio: data.bio || "",
       createdAt: data.createdAt || new Date().toISOString(),
       followerCount: typeof data.followerCount === "number" ? data.followerCount : 0,
-      followingCount: typeof data.followingCount === "number" ? data.followingCount : 0
+      followingCount: typeof data.followingCount === "number" ? data.followingCount : 0,
+      pinnedPostId: typeof data.pinnedPostId === "string" ? data.pinnedPostId : undefined
     };
   });
 }
@@ -109,7 +111,8 @@ export function subscribeToUserDocument(
         bio: data.bio || "",
         createdAt: data.createdAt || new Date().toISOString(),
         followerCount: typeof data.followerCount === "number" ? data.followerCount : 0,
-        followingCount: typeof data.followingCount === "number" ? data.followingCount : 0
+        followingCount: typeof data.followingCount === "number" ? data.followingCount : 0,
+        pinnedPostId: typeof data.pinnedPostId === "string" ? data.pinnedPostId : undefined
       });
     },
     (error) => {
@@ -144,4 +147,17 @@ export async function updateUserDocument(user: User): Promise<User> {
 
   upsertStoredUser(user);
   return user;
+}
+
+export async function updatePinnedPostId(userId: string, pinnedPostId?: string): Promise<void> {
+  const currentUser = await getUserDocument(userId);
+
+  if (!currentUser) {
+    throw new Error("This profile is no longer available.");
+  }
+
+  await updateUserDocument({
+    ...currentUser,
+    pinnedPostId
+  });
 }

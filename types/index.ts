@@ -7,6 +7,7 @@ export type User = {
   createdAt: string;
   followerCount: number;
   followingCount: number;
+  pinnedPostId?: string;
 };
 
 export type Post = {
@@ -91,6 +92,21 @@ export type LocalNewsItem = {
   publishLabel?: string;
   teamTag?: FootballTeam;
   hashtags?: string[];
+};
+
+export type WorldNewsSectionKey = "top" | "us" | "ethiopia" | "immigration";
+
+export type WorldNewsItem = {
+  id: string;
+  headline: string;
+  source: string;
+  summary: string;
+  category: "Top stories" | "United States" | "Ethiopia" | "Immigration";
+  imageURL: string;
+  link: string;
+  publishedAt: string;
+  publishLabel: string;
+  section: WorldNewsSectionKey;
 };
 
 export type FollowRelation = {

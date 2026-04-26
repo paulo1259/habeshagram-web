@@ -13,8 +13,8 @@ export function NewsCard({
 }) {
   return (
     <article
-      className={`overflow-hidden border border-brand-100/80 bg-white/98 shadow-soft transition ${
-        compact ? "rounded-[24px]" : "rounded-[28px] hover:-translate-y-0.5 hover:shadow-lg"
+      className={`surface-card overflow-hidden transition ${
+        compact ? "rounded-[24px]" : "surface-card-hover rounded-[28px]"
       }`}
     >
       {item.imageURL ? (
@@ -33,14 +33,14 @@ export function NewsCard({
           </span>
         </div>
       )}
-      <div className={compact ? "p-4" : "p-5"}>
+        <div className={compact ? "p-4" : "p-5"}>
         <div className="flex items-center justify-between gap-3">
-          <span className="rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-800">
+          <span className="rounded-full bg-brand-50 px-3 py-1 meta-label text-brand-800">
             {item.category}
           </span>
-          <p className="text-xs font-medium text-stone-500">{item.source}</p>
+          <p className="meta-text font-medium">{item.source}</p>
         </div>
-        <h3 className="mt-3 text-[1.05rem] font-bold leading-6 tracking-tight text-ink">
+        <h3 className="card-title mt-3 text-[1.05rem]">
           {item.headline}
         </h3>
         <p className="mt-2 text-sm leading-6 text-stone-600">{item.summary}</p>

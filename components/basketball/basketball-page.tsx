@@ -50,7 +50,7 @@ function MatchBucket({
   isLoading: boolean;
 }) {
   return (
-    <section className="rounded-[30px] border border-brand-100/80 bg-white/96 p-4 shadow-soft sm:p-5">
+    <section className="surface-panel p-4 sm:p-5">
       <SectionHeader eyebrow="Basketball" title={title} description={description} />
 
       {isLoading ? (
@@ -66,10 +66,7 @@ function MatchBucket({
       ) : matches.length ? (
         <div className="mt-4 space-y-3">
           {matches.map((match) => (
-            <article
-              key={match.id}
-              className="rounded-[24px] border border-brand-100/80 bg-gradient-to-r from-white via-white to-brand-50/45 px-4 py-4 shadow-sm"
-            >
+            <article key={match.id} className="surface-card px-4 py-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2">
                   <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${statusAccent(match.status)}`}>
@@ -111,7 +108,7 @@ function BasketballStandingsCard({
   const visibleRows = rows.slice(0, 10);
 
   return (
-    <section className="rounded-[30px] border border-brand-100/80 bg-white/96 p-4 shadow-soft sm:p-5">
+    <section className="surface-panel p-4 sm:p-5">
       <SectionHeader
         eyebrow="Table Watch"
         title="Basketball standings"
@@ -226,13 +223,13 @@ export function BasketballPage() {
 
   return (
     <AppShell>
-      <div className="space-y-5">
-        <section className="overflow-hidden border-b border-brand-100/80 bg-white/96 sm:rounded-[32px] sm:border sm:shadow-soft">
+      <div className="page-stack">
+        <section className="page-hero border-b border-brand-100/80 bg-white/96 sm:border">
           <div className="bg-gradient-to-br from-orange-500 via-brand-500 to-rose-500 px-4 py-5 text-white sm:px-6 sm:py-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-2xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">Basketball</p>
-                <h1 className="mt-1 text-[2rem] font-black tracking-tight sm:text-[2.6rem]">Live hoops, same HabeshaGram feel</h1>
+                <h1 className="page-title mt-1">Live hoops, same HabeshaGram feel</h1>
                 <p className="mt-3 text-sm leading-6 text-white/90 sm:text-[15px]">
                   A dedicated basketball zone powered by the new internal routes, with live scoreboards, upcoming tip-offs, recent finals, and a compact table watch.
                 </p>
@@ -295,7 +292,7 @@ export function BasketballPage() {
           <div className="space-y-4">
             <BasketballStandingsCard rows={rows} isLoading={standingsLoading} message={standingsMessage} />
 
-            <section className="rounded-[30px] border border-brand-100/80 bg-white/96 p-4 shadow-soft sm:p-5">
+            <section className="surface-panel p-4 sm:p-5">
               <SectionHeader
                 eyebrow="What this section does"
                 title="Basketball without a new UI system"

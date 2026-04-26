@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { MessageSquareText, Sparkles } from "lucide-react";
+import { recordDebateEngagement } from "@/lib/personalization";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
+import { ShareActions } from "@/components/ui/share-actions";
 import { getDailyDebates } from "@/services/news-service";
 import { DailyDebatePrompt, FootballTeam } from "@/types";
 
@@ -100,6 +102,13 @@ export function DailyDebates({
                   <div className="mt-4 flex flex-wrap items-center gap-2">
                     <Link
                       href={href}
+                      onClick={() =>
+                        recordDebateEngagement({
+                          teamTag: item.teamTag,
+                          hashtag: item.hashtag,
+                          weight: 3
+                        })
+                      }
                       className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-brand-600"
                     >
                       <MessageSquareText className="h-3.5 w-3.5" />
@@ -108,12 +117,27 @@ export function DailyDebates({
                     {item.hashtag ? (
                       <Link
                         href={`/topic/${item.hashtag.toLowerCase()}`}
+                        onClick={() =>
+                          recordDebateEngagement({
+                            teamTag: item.teamTag,
+                            hashtag: item.hashtag,
+                            weight: 2
+                          })
+                        }
                         className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-brand-800 ring-1 ring-brand-100 transition hover:bg-brand-50"
                       >
                         <Sparkles className="h-3.5 w-3.5" />
                         #{item.hashtag}
                       </Link>
                     ) : null}
+                  </div>
+                  <div className="mt-3">
+                    <ShareActions
+                      path={`/debates/${item.id}`}
+                      title="HabeshaGram debate"
+                      text={item.prompt}
+                      compact
+                    />
                   </div>
                 </article>
               );

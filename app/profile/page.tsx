@@ -2,15 +2,16 @@
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, LogOut, X } from "lucide-react";
+import { Camera, LogOut, Pin, Sparkles, Users2, X } from "lucide-react";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { AppShell } from "@/components/layout/app-shell";
+import { ProfileGridSkeleton } from "@/components/profile/profile-grid-skeleton";
 import { ProfileGrid } from "@/components/posts/profile-grid";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useAppData } from "@/hooks/use-app-data";
-import { getUserDocument, subscribeToUserDocument } from "@/services/user-service";
+import { getUserDocument, subscribeToUserDocument, updatePinnedPostId } from "@/services/user-service";
 import { Post } from "@/types";
 
 export default function ProfilePage() {
@@ -18,10 +19,12 @@ export default function ProfilePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [isPostsLoading, setIsPostsLoading] = useState(true);
   const [profileImageURL, setProfileImageURL] = useState("");
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [createdAt, setCreatedAt] = useState("");
+  const [pinnedPostId, setPinnedPostId] = useState<string | undefined>(undefined);
   const [isEditing, setIsEditing] = useState(false);
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
@@ -36,15 +39,18 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!currentUser) {
       setPosts([]);
+      setIsPostsLoading(false);
       return;
     }
 
     let isMounted = true;
 
     void (async () => {
+      setIsPostsLoading(true);
       const nextPosts = await getProfilePosts(currentUser.id);
       if (isMounted) {
         setPosts(nextPosts);
+        setIsPostsLoading(false);
       }
     })();
 
@@ -54,6 +60,7 @@ export default function ProfilePage() {
       setFollowerCount(resolvedProfile.followerCount);
       setFollowingCount(resolvedProfile.followingCount);
       setCreatedAt(resolvedProfile.createdAt);
+      setPinnedPostId(resolvedProfile.pinnedPostId);
     });
 
     return () => {
@@ -89,6 +96,18 @@ export default function ProfilePage() {
     () => posts.filter((post) => !deletedPostIds.includes(post.id)),
     [deletedPostIds, posts]
   );
+  const contributorLabel = useMemo(() => {
+    if (visiblePosts.length >= 12) {
+      return "Active community voice";
+    }
+
+    if (visiblePosts.length >= 4) {
+      return "Community regular";
+    }
+
+    return "Habesha community member";
+  }, [visiblePosts.length]);
+  const bioText = currentUser?.bio?.trim() ? currentUser.bio : "Add a short bio so people can quickly understand your voice in the community.";
 
   function clearSelectedImage() {
     if (selectedImage && profilePreview.startsWith("blob:")) {
@@ -157,6 +176,7 @@ export default function ProfilePage() {
         setFollowerCount(nextProfile.followerCount);
         setFollowingCount(nextProfile.followingCount);
         setCreatedAt(nextProfile.createdAt);
+        setPinnedPostId(nextProfile.pinnedPostId);
       }
       setIsEditing(false);
       setSelectedImage(null);
@@ -171,12 +191,28 @@ export default function ProfilePage() {
     }
   }
 
+  async function handlePinnedPostChange(nextPinnedPostId?: string) {
+    if (!currentUser) {
+      return;
+    }
+
+    try {
+      setErrorMessage("");
+      setSuccessMessage("");
+      await updatePinnedPostId(currentUser.id, nextPinnedPostId);
+      setPinnedPostId(nextPinnedPostId);
+      setSuccessMessage(nextPinnedPostId ? "Pinned post updated." : "Pinned post removed.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Unable to update pinned post.");
+    }
+  }
+
   return (
     <AppShell>
       <AuthGuard>
         {!isReady ? null : currentUser ? (
-          <div className="space-y-4">
-            <section className="rounded-3xl border border-brand-100 bg-white/95 p-4 shadow-soft sm:p-5">
+          <div className="page-stack">
+            <section className="surface-panel p-4 sm:p-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-start gap-4">
                   <div className="relative">
@@ -198,7 +234,7 @@ export default function ProfilePage() {
                       </label>
                     ) : null}
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     {isEditing ? (
                       <div className="space-y-3">
                         <input
@@ -226,16 +262,46 @@ export default function ProfilePage() {
                       </div>
                     ) : (
                       <>
-                        <h1 className="text-2xl font-black tracking-tight text-ink">@{currentUser.username}</h1>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-brand-50 px-3 py-1 meta-label text-brand-800">
+                            Your profile
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-semibold text-stone-600 shadow-sm">
+                            <Sparkles className="h-3.5 w-3.5 text-brand-700" />
+                            {contributorLabel}
+                          </span>
+                          {pinnedPostId ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
+                              <Pin className="h-3.5 w-3.5" />
+                              Pinned post live
+                            </span>
+                          ) : null}
+                        </div>
+                        <h1 className="page-title mt-3 text-[2rem]">@{currentUser.username}</h1>
                         <p className="mt-1 text-sm text-stone-600">{currentUser.email}</p>
-                        <p className="mt-3 text-sm leading-6 text-stone-700">{currentUser.bio}</p>
+                        <div className="surface-card mt-4 bg-gradient-to-r from-brand-50/70 via-white to-orange-50/50 p-4 shadow-sm">
+                          <p className="meta-label text-stone-500">Bio</p>
+                          <p className="mt-2 text-sm leading-6 text-stone-700">{bioText}</p>
+                        </div>
                       </>
                     )}
-                    <div className="mt-3 flex flex-wrap gap-3 text-sm">
-                      <p className="font-medium text-brand-800">{visiblePosts.length} posts</p>
-                      <p className="text-stone-500">{followerCount} followers</p>
-                      <p className="text-stone-500">{followingCount} following</p>
-                      {joinedLabel ? <p className="text-stone-500">Joined {joinedLabel}</p> : null}
+                    <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="surface-card bg-brand-50/65 px-4 py-3">
+                        <p className="meta-label text-brand-700">Posts</p>
+                        <p className="mt-2 text-lg font-black text-ink">{visiblePosts.length}</p>
+                      </div>
+                      <div className="surface-card px-4 py-3">
+                        <p className="meta-label text-stone-500">Followers</p>
+                        <p className="mt-2 text-lg font-black text-ink">{followerCount}</p>
+                      </div>
+                      <div className="surface-card px-4 py-3">
+                        <p className="meta-label text-stone-500">Following</p>
+                        <p className="mt-2 text-lg font-black text-ink">{followingCount}</p>
+                      </div>
+                      <div className="surface-card px-4 py-3">
+                        <p className="meta-label text-stone-500">Joined</p>
+                        <p className="mt-2 text-sm font-bold text-ink">{joinedLabel || "Recently"}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -270,7 +336,7 @@ export default function ProfilePage() {
               {errorMessage ? <p className="mt-4 text-sm text-red-600">{errorMessage}</p> : null}
 
               {!isEditing ? (
-                <div className="mt-5 rounded-[24px] border border-brand-100/90 bg-gradient-to-br from-brand-50/70 via-white to-orange-50/60 p-4 shadow-sm">
+                <div className="surface-card mt-5 bg-gradient-to-br from-brand-50/70 via-white to-orange-50/60 p-4 shadow-sm">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">Account actions</p>
@@ -323,7 +389,32 @@ export default function ProfilePage() {
               ) : null}
             </section>
 
-            <ProfileGrid posts={visiblePosts} />
+            {!isEditing ? (
+              <section className="surface-card bg-brand-50/35 px-4 py-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-brand-800 shadow-sm">
+                    <Users2 className="h-4.5 w-4.5" />
+                  </div>
+                  <div>
+                    <p className="meta-label text-brand-700">Profile vibe</p>
+                    <p className="mt-2 text-sm leading-6 text-stone-600">
+                      Your profile now supports one pinned post, stronger identity cues, and a cleaner way for people to scan your latest activity.
+                    </p>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
+            {isPostsLoading ? (
+              <ProfileGridSkeleton />
+            ) : (
+              <ProfileGrid
+                posts={visiblePosts}
+                pinnedPostId={pinnedPostId}
+                canManagePinned
+                onPinToggle={handlePinnedPostChange}
+              />
+            )}
           </div>
         ) : (
           <EmptyState

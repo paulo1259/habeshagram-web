@@ -6,6 +6,7 @@ import { ArrowLeft, Hash, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { FeedList } from "@/components/posts/feed-list";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ShareActions } from "@/components/ui/share-actions";
 import { SectionHeader } from "@/components/ui/section-header";
 import { useAppData } from "@/hooks/use-app-data";
 import { normalizeHashtag } from "@/lib/utils";
@@ -102,8 +103,17 @@ export function TopicPageClient({ initialTag }: { initialTag: string }) {
                   </div>
                 </div>
               </div>
-              <div className="max-w-sm rounded-[24px] bg-white/12 px-4 py-3 text-sm leading-6 text-white/90 backdrop-blur">
-                Hashtags help football talk, community updates, and city vibes stay discoverable in one clean social feed.
+              <div className="space-y-3">
+                <div className="max-w-sm rounded-[24px] bg-white/12 px-4 py-3 text-sm leading-6 text-white/90 backdrop-blur">
+                  Hashtags help football talk, community updates, and city vibes stay discoverable in one clean social feed.
+                </div>
+                <div className="rounded-[24px] bg-white/12 p-3 backdrop-blur">
+                  <ShareActions
+                    path={`/topic/${normalizedTag}`}
+                    title={`#${normalizedTag} on HabeshaGram`}
+                    text={`Join the #${normalizedTag} conversation on HabeshaGram.`}
+                  />
+                </div>
               </div>
             </div>
           </div>

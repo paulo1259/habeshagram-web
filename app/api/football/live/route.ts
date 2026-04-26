@@ -5,6 +5,7 @@ import {
   mapProviderMatchToLiveMatch,
   prioritizeLiveMatches
 } from "@/services/live-match-service";
+import { FootballTeam } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +23,33 @@ const TRACKED_TEAM_KEYWORDS = [
   "manchester city",
   "man city"
 ];
+const FOOTBALL_DATA_BASE_URL = "https://api.football-data.org/v4";
+const TRACKED_TEAM_ALIASES: Record<FootballTeam, string[]> = {
+  "Manchester United": ["manchester united", "man united", "man utd"],
+  Arsenal: ["arsenal"],
+  Chelsea: ["chelsea"],
+  "Manchester City": ["manchester city", "man city"]
+};
 
 type ProviderBucket = "live" | "today" | "finished";
+type FootballDataTeam = {
+  name?: string | null;
+  shortName?: string | null;
+  tla?: string | null;
+};
+
+type FootballDataMatch = {
+  id?: number | null;
+  utcDate?: string | null;
+  status?: string | null;
+  minute?: number | null;
+  venue?: string | null;
+  homeTeam?: FootballDataTeam | null;
+  awayTeam?: FootballDataTeam | null;
+  score?: {
+    fullTime?: { home?: number | null; away?: number | null } | null;
+  } | null;
+};
 
 let lastSuccessfulPayload: LiveMatchFeed | null = null;
 
@@ -47,6 +73,19 @@ function buildProviderHeaders() {
   };
 }
 
+function buildFootballDataHeaders() {
+  const apiKey = process.env.FOOTBALL_DATA_API_KEY?.trim();
+
+  if (!apiKey) {
+    throw new Error("FOOTBALL_DATA_API_KEY is missing on the server.");
+  }
+
+  return {
+    "X-Auth-Token": apiKey,
+    Accept: "application/json"
+  };
+}
+
 async function fetchProviderJson(path: string, searchParams?: Record<string, string>) {
   const url = new URL(path, RAPID_API_BASE_URL.endsWith("/") ? RAPID_API_BASE_URL : `${RAPID_API_BASE_URL}/`);
   Object.entries(searchParams ?? {}).forEach(([key, value]) => {
@@ -63,6 +102,25 @@ async function fetchProviderJson(path: string, searchParams?: Record<string, str
   }
 
   return response.json();
+}
+
+async function fetchFootballDataMatches(searchParams?: Record<string, string>) {
+  const url = new URL("/competitions/PL/matches", `${FOOTBALL_DATA_BASE_URL}/`);
+  Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+    url.searchParams.set(key, value);
+  });
+
+  const response = await fetch(url.toString(), {
+    headers: buildFootballDataHeaders(),
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error(`football-data.org returned ${response.status} for ${url.pathname}.`);
+  }
+
+  const payload = (await response.json()) as { matches?: FootballDataMatch[] };
+  return Array.isArray(payload.matches) ? payload.matches : [];
 }
 
 function extractMatchesFromPayload(payload: unknown): FootballProviderMatch[] {
@@ -105,6 +163,18 @@ function normalizeStatus(value?: string | null) {
   return (value ?? "").toLowerCase().trim();
 }
 
+function matchesTrackedClub(name?: string | null) {
+  const normalized = normalizeStatus(name);
+
+  if (!normalized) {
+    return false;
+  }
+
+  return Object.values(TRACKED_TEAM_ALIASES).some((aliases) =>
+    aliases.some((alias) => normalized.includes(alias) || alias.includes(normalized))
+  );
+}
+
 function getBucket(match: FootballProviderMatch): ProviderBucket {
   const status = normalizeStatus(match.status);
 
@@ -123,6 +193,68 @@ function getBucket(match: FootballProviderMatch): ProviderBucket {
   }
 
   return "today";
+}
+
+function mapFootballDataMatchToProviderMatch(match: FootballDataMatch): FootballProviderMatch | null {
+  const homeName = match.homeTeam?.name?.trim() || match.homeTeam?.shortName?.trim();
+  const awayName = match.awayTeam?.name?.trim() || match.awayTeam?.shortName?.trim();
+
+  if (!homeName || !awayName) {
+    return null;
+  }
+
+  return {
+    match_id: match.id ?? `${homeName}-${awayName}-${match.utcDate ?? "fixture"}`,
+    id: match.id ?? undefined,
+    league: "Premier League",
+    leagueName: "Premier League",
+    status: match.status ?? "TIMED",
+    minute: match.minute ?? undefined,
+    start_time: match.utcDate ?? undefined,
+    kickoff_at: match.utcDate ?? undefined,
+    date: match.utcDate ?? undefined,
+    timestamp: match.utcDate ?? undefined,
+    venue: match.venue ?? undefined,
+    home_team: homeName,
+    away_team: awayName,
+    homeTeam: homeName,
+    awayTeam: awayName,
+    homeScore: match.score?.fullTime?.home ?? 0,
+    awayScore: match.score?.fullTime?.away ?? 0
+  };
+}
+
+function buildMatchKey(match: Pick<FootballProviderMatch, "match_id" | "id" | "home_team" | "away_team" | "start_time" | "date">) {
+  return String(match.match_id ?? match.id ?? `${match.home_team}-${match.away_team}-${match.start_time ?? match.date}`);
+}
+
+function mergeProviderMatches(primary: FootballProviderMatch[], liveEnrichments: FootballProviderMatch[]) {
+  const enrichedByKey = new Map(liveEnrichments.map((match) => [buildMatchKey(match), match]));
+
+  return primary.map((match) => {
+    const enrichment = enrichedByKey.get(buildMatchKey(match));
+
+    if (!enrichment) {
+      return match;
+    }
+
+    return {
+      ...match,
+      ...enrichment,
+      home_team: match.home_team,
+      away_team: match.away_team,
+      homeTeam: match.homeTeam,
+      awayTeam: match.awayTeam,
+      start_time: match.start_time ?? enrichment.start_time,
+      kickoff_at: match.kickoff_at ?? enrichment.kickoff_at,
+      date: match.date ?? enrichment.date,
+      timestamp: match.timestamp ?? enrichment.timestamp,
+      venue: enrichment.venue ?? match.venue,
+      status: enrichment.status ?? match.status,
+      homeScore: enrichment.homeScore ?? match.homeScore,
+      awayScore: enrichment.awayScore ?? match.awayScore
+    };
+  });
 }
 
 async function tryFetchEndpointCandidates(
@@ -218,12 +350,17 @@ async function fetchCoverageMatches() {
     { path: "/football-scheduled-events", params: { date: tomorrow } }
   ];
 
-  const [liveMatches, fixtureMatches] = await Promise.all([
+  const [liveMatches, footballDataMatches] = await Promise.all([
     tryFetchEndpointCandidates(liveCandidates, "live"),
-    tryFetchEndpointCandidates(fixtureCandidates)
+    fetchFootballDataMatches({ dateFrom: yesterday, dateTo: tomorrow })
   ]);
 
-  const merged = dedupeMatches([liveMatches, fixtureMatches]);
+  const mappedFootballDataMatches = footballDataMatches
+    .filter((match) => matchesTrackedClub(match.homeTeam?.name) || matchesTrackedClub(match.awayTeam?.name))
+    .map((match) => mapFootballDataMatchToProviderMatch(match))
+    .filter((match): match is FootballProviderMatch => Boolean(match));
+
+  const merged = dedupeMatches([mergeProviderMatches(mappedFootballDataMatches, liveMatches)]);
   const split = splitMatchesByBucket(merged);
 
   return {
@@ -264,8 +401,8 @@ export async function GET() {
       stale: false,
       fetchedAt: new Date().toISOString(),
       message: mapped.length
-        ? `Coverage: ${liveMatches.length} live, ${todayMatches.length} today, ${finishedMatches.length} recent finals.`
-        : "No live or nearby tracked-club matches are available right now."
+        ? `football-data.org coverage: ${liveMatches.length} live enrichments, ${todayMatches.length} upcoming fixtures, ${finishedMatches.length} recent finals.`
+        : "No tracked-club football fixtures or recent finals are available right now."
     };
 
     lastSuccessfulPayload = payload;

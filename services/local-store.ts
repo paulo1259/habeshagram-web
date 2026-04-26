@@ -26,7 +26,8 @@ export function readState(): AppState {
             bio: user.bio || "",
             createdAt: user.createdAt || new Date().toISOString(),
             followerCount: typeof user.followerCount === "number" ? user.followerCount : 0,
-            followingCount: typeof user.followingCount === "number" ? user.followingCount : 0
+            followingCount: typeof user.followingCount === "number" ? user.followingCount : 0,
+            pinnedPostId: typeof user.pinnedPostId === "string" ? user.pinnedPostId : undefined
           }))
         : initialState.users,
       posts: Array.isArray(parsed.posts) ? parsed.posts : initialState.posts,

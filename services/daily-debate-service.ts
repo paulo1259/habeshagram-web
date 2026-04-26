@@ -1,4 +1,4 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { firebaseDb, isFirebaseConfigured } from "@/lib/firebase";
 import { DailyDebatePrompt, FootballTeam } from "@/types";
 
@@ -84,6 +84,27 @@ export async function getDailyDebatePrompts(team?: FootballTeam): Promise<DailyD
     return rotateDailyDebates(items, team);
   } catch {
     return [];
+  }
+}
+
+export async function getDailyDebatePromptById(id: string): Promise<DailyDebatePrompt | null> {
+  if (!id || !isFirebaseConfigured || !firebaseDb) {
+    return null;
+  }
+
+  try {
+    const snapshot = await withFirestoreTimeout(
+      getDoc(doc(firebaseDb, DAILY_DEBATES_COLLECTION, id)),
+      "Timed out while loading this debate."
+    );
+
+    if (!snapshot.exists()) {
+      return null;
+    }
+
+    return mapDebate(snapshot.data() as Partial<DailyDebatePrompt>, snapshot.id);
+  } catch {
+    return null;
   }
 }
 

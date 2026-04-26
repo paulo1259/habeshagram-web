@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { Activity, ArrowRight, Radio, Shield, Trophy } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
-import { MatchdayCenter } from "@/components/discovery/matchday-center";
 import { BreakingNow } from "@/components/discovery/breaking-now";
 import { PremierLeagueStandings } from "@/components/discovery/premier-league-standings";
 import { SectionHeader } from "@/components/ui/section-header";
+import { ShareActions } from "@/components/ui/share-actions";
 import { useAppData } from "@/hooks/use-app-data";
 import { useLiveMatchPulse } from "@/hooks/use-live-match-pulse";
 import { getMatchdayGroups } from "@/services/matchday-service";
+import { footballTeams, getTeamSlug } from "@/services/football-hub-data";
+import { FootballTeam, LiveMatch } from "@/types";
 
 function FootballBoard({
   title,
@@ -21,14 +23,14 @@ function FootballBoard({
   fixtures: ReturnType<typeof getMatchdayGroups>["live"];
 }) {
   return (
-    <section className="rounded-[24px] border border-brand-100/80 bg-brand-50/30 px-4 py-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{title}</p>
+    <section className="surface-card px-4 py-4">
+      <p className="meta-label text-stone-500">{title}</p>
       <div className="mt-3 space-y-3">
         {fixtures.length ? (
           fixtures.map((fixture) => (
             <article
               key={fixture.id}
-              className="rounded-[20px] border border-brand-100/80 bg-white/92 px-4 py-3"
+              className="surface-card px-4 py-3"
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">
@@ -67,6 +69,48 @@ function FootballBoard({
   );
 }
 
+function getClubFocusMatch(team: FootballTeam, matches: LiveMatch[]) {
+  return matches.find((match) => match.homeTeam === team || match.awayTeam === team) ?? null;
+}
+
+function getOpponent(match: LiveMatch, team: FootballTeam) {
+  return match.homeTeam === team ? match.awayTeam : match.homeTeam;
+}
+
+function getClubFocusCopy(team: FootballTeam, match: LiveMatch | null) {
+  if (!match) {
+    return {
+      badge: "Quiet now",
+      headline: `No fixture surfaced yet for ${team}`,
+      detail: "Coverage will appear here as soon as the tracked-club window has a match."
+    };
+  }
+
+  const opponent = getOpponent(match, team);
+
+  if (match.status === "LIVE" || match.status === "HT") {
+    return {
+      badge: match.status,
+      headline: `${team} ${match.homeTeam === team ? match.homeScore : match.awayScore}-${match.homeTeam === team ? match.awayScore : match.homeScore} ${opponent}`,
+      detail: `${match.matchClock} | ${match.venue}`
+    };
+  }
+
+  if (match.status === "FT") {
+    return {
+      badge: "FT",
+      headline: `${team} ${match.homeTeam === team ? match.homeScore : match.awayScore}-${match.homeTeam === team ? match.awayScore : match.homeScore} ${opponent}`,
+      detail: `Most recent final score | ${match.venue}`
+    };
+  }
+
+  return {
+    badge: "Next up",
+    headline: `${team} vs ${opponent}`,
+    detail: `${match.matchClock} | ${match.venue}`
+  };
+}
+
 export function FootballPage() {
   const { posts } = useAppData();
   const { matches, message } = useLiveMatchPulse({ posts });
@@ -74,17 +118,15 @@ export function FootballPage() {
 
   return (
     <AppShell>
-      <div className="space-y-5">
-        <section className="overflow-hidden border-b border-brand-100/80 bg-white/96 sm:rounded-[32px] sm:border sm:shadow-soft">
+      <div className="page-stack">
+        <section className="page-hero border-b border-brand-100/80 bg-white/96 sm:border">
           <div className="bg-gradient-to-br from-red-600 via-orange-400 to-brand-500 px-4 py-5 text-white sm:px-6 sm:py-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-2xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">Football</p>
-                <h1 className="mt-1 text-[2rem] font-black tracking-tight sm:text-[2.6rem]">
-                  Club pulse, live scores, and the table in one place
-                </h1>
+                <h1 className="page-title mt-1">Football</h1>
                 <p className="mt-3 text-sm leading-6 text-white/90 sm:text-[15px]">
-                  A dedicated football section for tracked clubs, with live action, upcoming fixtures, recent final scores, the Premier League table, and breaking headlines.
+                  Tracked-club match coverage, recent finals, the Premier League table, and breaking headlines in one dedicated HabeshaGram destination.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white/95">
@@ -111,6 +153,13 @@ export function FootballPage() {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">Destination</p>
                   <p className="mt-2 text-xl font-black">Football</p>
                 </div>
+                <div className="col-span-2 rounded-[24px] bg-white/12 p-3 backdrop-blur">
+                  <ShareActions
+                    path="/football"
+                    title="Football on HabeshaGram"
+                    text="Follow live matches, upcoming fixtures, recent finals, and breaking football news on HabeshaGram."
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -122,7 +171,37 @@ export function FootballPage() {
           </div>
         ) : null}
 
-        <section className="rounded-[30px] border border-brand-100/80 bg-white/96 p-4 shadow-soft sm:p-5">
+        <section className="surface-panel p-4 sm:p-5">
+          <SectionHeader
+            eyebrow="Tracked Clubs"
+            title="Arsenal, Man Utd, Chelsea, and Man City at a glance"
+            description="Each club gets a prominent current card showing either the next fixture, a live score, or the most recent final result."
+          />
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {footballTeams.map((team) => {
+              const match = getClubFocusMatch(team, matches);
+              const card = getClubFocusCopy(team, match);
+
+              return (
+                <Link
+                  key={team}
+                  href={`/football/${getTeamSlug(team)}`}
+                  className="rounded-[24px] border border-brand-100/80 bg-gradient-to-br from-white via-white to-brand-50/35 px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-800">
+                    {card.badge}
+                  </span>
+                  <p className="mt-3 text-lg font-black tracking-tight text-ink">{team}</p>
+                  <p className="mt-2 text-sm font-bold leading-6 text-ink">{card.headline}</p>
+                  <p className="mt-2 text-sm leading-6 text-stone-600">{card.detail}</p>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="surface-panel p-4 sm:p-5">
           <SectionHeader
             eyebrow="Football Boards"
             title="Live now, upcoming, and recent finals"
@@ -145,11 +224,9 @@ export function FootballPage() {
           </div>
         </section>
 
-        <MatchdayCenter liveMatches={matches} />
-
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
-          <BreakingNow />
           <PremierLeagueStandings />
+          <BreakingNow />
         </div>
       </div>
     </AppShell>

@@ -193,7 +193,7 @@ export async function addComment(input: {
           type: "comment",
           actor: user,
           targetPostId: input.postId,
-          message: "commented on your post"
+          message: "commented on your post."
         });
       }
 
@@ -224,7 +224,7 @@ export async function addComment(input: {
       type: "comment",
       actor: user,
       targetPostId: input.postId,
-      message: "commented on your post"
+      message: "commented on your post."
     });
   }
 

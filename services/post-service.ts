@@ -23,6 +23,7 @@ import {
 } from "@/lib/utils";
 import { readState, writeState } from "@/services/local-store";
 import { createNotification } from "@/services/notification-service";
+import { getBreakingItems } from "@/services/news-service";
 import { uploadPostImage } from "@/services/storage-service";
 import { BreakingItem, CreatePostInput, FootballTeam, Post, User } from "@/types";
 import { footballTeams } from "@/services/football-hub-data";
@@ -239,6 +240,43 @@ export function subscribeToPosts(
 export async function getPostsByUser(userId: string): Promise<Post[]> {
   const posts = await getPosts();
   return posts.filter((post) => post.userId === userId);
+}
+
+export async function getPostById(postId: string): Promise<Post | null> {
+  if (!postId) {
+    return null;
+  }
+
+  if (isFirebaseConfigured && firebaseDb) {
+    try {
+      const snapshot = await withFirestoreTimeout(
+        getDoc(doc(firebaseDb, "posts", postId)),
+        "Timed out while loading this post."
+      );
+
+      if (!snapshot.exists()) {
+        return null;
+      }
+
+      return mapFirestorePost(snapshot.id, snapshot.data() as Partial<Post>);
+    } catch (error) {
+      throw new Error(mapPostError(error));
+    }
+  }
+
+  const state = readState();
+  const localPost = state.posts.find((post) => post.id === postId);
+
+  if (localPost) {
+    return localPost;
+  }
+
+  try {
+    const breakingItems = await getBreakingItems();
+    return breakingItems.map(mapBreakingItemToDiscussionPost).find((post) => post.id === postId) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getPostsByTeam(team: FootballTeam): Promise<Post[]> {
@@ -463,7 +501,7 @@ export async function toggleLike(postId: string, actor: User): Promise<Post | nu
           type: "like",
           actor,
           targetPostId: result.id,
-          message: "liked your post"
+          message: "liked your post."
         });
       }
 
@@ -497,7 +535,7 @@ export async function toggleLike(postId: string, actor: User): Promise<Post | nu
       type: "like",
       actor,
       targetPostId: updatedPost.id,
-      message: "liked your post"
+      message: "liked your post."
     });
   }
   return updatedPost;

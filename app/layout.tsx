@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
+import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AppDataProvider } from "@/hooks/use-app-data";
 import { AppStartupShell } from "@/components/layout/app-startup-shell";
@@ -16,7 +17,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="min-h-screen bg-surface text-ink antialiased">
         <AuthProvider>
           <AppDataProvider>
-            <AppStartupShell>{children}</AppStartupShell>
+            <AnalyticsProvider>
+              <AppStartupShell>{children}</AppStartupShell>
+            </AnalyticsProvider>
           </AppDataProvider>
         </AuthProvider>
       </body>

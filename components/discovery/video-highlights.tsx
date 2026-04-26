@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ExternalLink, Film, Play, X } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
+import { recordVideoEngagement } from "@/lib/personalization";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
+import { ShareActions } from "@/components/ui/share-actions";
 import { cn } from "@/lib/utils";
 import {
   getCuratedVideos,
@@ -115,6 +118,22 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
   const featuredVideo = compact ? null : homepageSelection.hero;
   const supportingVideos = compact ? visibleVideos : homepageSelection.supporting;
 
+  function handlePlayVideo(video: CuratedVideoItem, surface: string) {
+    setActiveVideoId(video.id);
+    trackEvent("play_video", {
+      video_id: video.id,
+      title: video.title,
+      category: video.category,
+      team_tag: video.teamTag ?? null,
+      surface
+    });
+    recordVideoEngagement({
+      teamTag: video.teamTag,
+      hashtags: video.hashtags,
+      weight: 3
+    });
+  }
+
   return (
     <section
       className={cn(
@@ -182,13 +201,15 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
               ) : (
                 <button
                   type="button"
-                  onClick={() => setActiveVideoId(video.id)}
+                  onClick={() => handlePlayVideo(video, compact ? "video_highlights_compact" : "video_highlights")}
                   className="group flex w-full items-start gap-3 p-3 text-left transition active:scale-[0.99]"
                 >
                   <div className="relative h-20 w-28 overflow-hidden rounded-[18px] bg-brand-100">
                     <img
                       src={video.thumbnailURL}
                       alt={video.title}
+                      loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
@@ -228,12 +249,13 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                 ) : (
                   <button
                     type="button"
-                    onClick={() => setActiveVideoId(featuredVideo.id)}
+                    onClick={() => handlePlayVideo(featuredVideo, "video_highlights_hero")}
                     className="group block h-full w-full text-left"
                   >
                     <img
                       src={featuredVideo.thumbnailURL}
                       alt={featuredVideo.title}
+                      decoding="async"
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
@@ -313,7 +335,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                   ) : (
                     <button
                       type="button"
-                      onClick={() => setActiveVideoId(featuredVideo.id)}
+                      onClick={() => handlePlayVideo(featuredVideo, "video_highlights_hero")}
                       className="inline-flex min-h-10 items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600 active:scale-[0.98]"
                     >
                       <Play className="h-4 w-4 fill-current" />
@@ -328,6 +350,11 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                     <ExternalLink className="h-3.5 w-3.5" />
                   </Link>
                 </div>
+                <ShareActions
+                  path={`/videos/${featuredVideo.id}`}
+                  title={featuredVideo.title}
+                  text={featuredVideo.summary}
+                />
               </div>
             </article>
           ) : null}
@@ -348,12 +375,14 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                   <div className="flex gap-3">
                     <button
                       type="button"
-                      onClick={() => setActiveVideoId(video.id)}
+                      onClick={() => handlePlayVideo(video, compact ? "video_highlights_compact" : "video_highlights_supporting")}
                       className="relative h-24 w-36 shrink-0 overflow-hidden rounded-[20px] bg-brand-100 text-left"
                     >
                       <img
                         src={video.thumbnailURL}
                         alt={video.title}
+                        loading="lazy"
+                        decoding="async"
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 to-transparent" />
@@ -371,7 +400,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                       </div>
                       <button
                         type="button"
-                        onClick={() => setActiveVideoId(video.id)}
+                        onClick={() => handlePlayVideo(video, compact ? "video_highlights_compact" : "video_highlights_supporting")}
                         className="block text-left"
                       >
                         <h3 className="mt-2 line-clamp-2 text-base font-black tracking-tight text-ink transition group-hover:text-brand-900">
@@ -394,12 +423,20 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                         ) : null}
                         <button
                           type="button"
-                          onClick={() => setActiveVideoId(video.id)}
+                          onClick={() => handlePlayVideo(video, compact ? "video_highlights_compact" : "video_highlights_supporting")}
                           className="inline-flex min-h-9 items-center gap-1 rounded-full bg-brand-50 px-3 py-1.5 font-semibold text-brand-800 transition hover:bg-brand-100"
                         >
                           <Play className="h-3 w-3 fill-current" />
                           Play here
                         </button>
+                      </div>
+                      <div className="mt-3">
+                        <ShareActions
+                          path={`/videos/${video.id}`}
+                          title={video.title}
+                          text={video.summary}
+                          compact
+                        />
                       </div>
                     </div>
                   </div>

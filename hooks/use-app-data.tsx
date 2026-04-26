@@ -9,6 +9,8 @@ import {
   useState,
   type ReactNode
 } from "react";
+import { trackEvent } from "@/lib/analytics";
+import { recordPostEngagement } from "@/lib/personalization";
 import { addComment } from "@/services/comment-service";
 import {
   getUnreadNotificationCount,
@@ -196,6 +198,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
 
       const post = await createPost(input, currentUser);
+      trackEvent("post_created", {
+        post_id: post.id,
+        has_image: Boolean(post.imageURL),
+        team_tag: post.teamTag ?? null
+      });
+      recordPostEngagement(post, { weight: 2 });
       setDeletedPostIds((currentIds) => currentIds.filter((id) => id !== post.id));
       setPosts((currentPosts) => [post, ...currentPosts.filter((item) => item.id !== post.id)]);
       void refreshPosts();
@@ -212,6 +220,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
       const updatedPost = await toggleLike(postId, currentUser);
       if (updatedPost) {
+        recordPostEngagement(updatedPost, { weight: 2 });
         setPosts((currentPosts) =>
           currentPosts.map((post) => (post.id === updatedPost.id ? updatedPost : post))
         );
@@ -220,7 +229,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       void refreshPosts();
       return updatedPost;
     },
-    [currentUser, refreshPosts, refreshUnreadNotificationCount]
+    [currentUser, posts, refreshPosts, refreshUnreadNotificationCount]
   );
 
   const addPostComment = useCallback(
@@ -230,6 +239,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
 
       const comment = await addComment({ postId, text }, currentUser);
+      const targetPost = posts.find((post) => post.id === postId);
+      if (targetPost) {
+        recordPostEngagement(targetPost, { weight: 3 });
+      }
       setPosts((currentPosts) =>
         currentPosts.map((post) =>
           post.id === postId ? { ...post, commentCount: post.commentCount + 1 } : post
@@ -251,6 +264,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
 
       await deletePost(postId, currentUser);
+      trackEvent("post_deleted", {
+        post_id: postId
+      });
       setDeletedPostIds((currentIds) => (currentIds.includes(postId) ? currentIds : [postId, ...currentIds]));
       setPosts((currentPosts) => currentPosts.filter((post) => post.id !== postId));
       setSystemPosts((currentPosts) => currentPosts.filter((post) => post.id !== postId));
@@ -279,13 +295,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         postId
       });
 
+      const targetPost = posts.find((post) => post.id === postId);
+      if (isSaved && targetPost) {
+        recordPostEngagement(targetPost, { weight: 3 });
+      }
+
       setSavedPostIds((currentIds) =>
         isSaved ? [postId, ...currentIds.filter((id) => id !== postId)] : currentIds.filter((id) => id !== postId)
       );
 
       return isSaved;
     },
-    [currentUser]
+    [currentUser, posts]
   );
 
   const value = useMemo(

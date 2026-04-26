@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Headphones, Pause, Play, Radio, Volume2 } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
+import { recordSectionUsage } from "@/lib/personalization";
 import { radioStations } from "@/services/discovery-data";
 import { RadioStation } from "@/types";
 import { cn } from "@/lib/utils";
@@ -198,6 +200,12 @@ export function RadioShowcase({
     setIsExpanded(true);
     setAutoplayToken((value) => value + 1);
     shouldRevealPlayerRef.current = true;
+    trackEvent("radio_play", {
+      station_id: station.id,
+      station_name: station.name,
+      playback_mode: station.playbackMode
+    });
+    recordSectionUsage("radio", 3);
     setPlayerNotice(
       station.playbackMode === "stream"
         ? `Opening ${station.name}. If playback is blocked, tap play to start.`
