@@ -112,7 +112,7 @@ function BasketballStandingsCard({
       <SectionHeader
         eyebrow="Table Watch"
         title="Basketball standings"
-        description="A compact table view from the configured API-Basketball league so the section stays familiar and easy to scan."
+        description="A compact table view from the configured basketball data source so the section stays familiar and easy to scan."
       />
 
       {message ? (
@@ -174,6 +174,7 @@ function BasketballStandingsCard({
       ) : (
         <div className="mt-4">
           <EmptyState title="No basketball standings yet" description="The standings route is live, but it does not have rows from the configured league right now." />
+          
         </div>
       )}
     </section>
@@ -305,7 +306,7 @@ export function BasketballPage() {
                     <p className="text-xs font-semibold uppercase tracking-[0.14em]">Server only</p>
                   </div>
                   <p className="mt-2 text-sm leading-6 text-stone-700">
-                    The browser only talks to internal HabeshaGram routes. The RapidAPI key stays on the server.
+                    The browser only talks to internal HabeshaGram routes. The basketball API key stays on the server.
                   </p>
                 </div>
                 <Link

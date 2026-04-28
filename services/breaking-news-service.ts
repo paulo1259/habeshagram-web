@@ -116,26 +116,68 @@ function rankBreakingItem(item: BreakingItem) {
   return freshnessScore + teamScore + badgeScore;
 }
 
-export function getBreakingNewsFeedUrl() {
-  return process.env.BREAKING_NEWS_RSS_URL || DEFAULT_BREAKING_NEWS_RSS_URL;
+function normalizeFeedUrlList(raw: string | undefined) {
+  return (raw ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
 }
 
-export async function fetchBreakingNewsFromRss(feedUrl = getBreakingNewsFeedUrl()) {
-  // TODO: Swap this single RSS provider for a multi-source server aggregator if
-  // editorial needs broader club coverage or richer summaries later.
-  const response = await fetch(feedUrl, {
-    headers: {
-      Accept: "application/rss+xml, application/xml, text/xml;q=0.9"
-    },
-    cache: "no-store"
-  });
+export function getBreakingNewsFeedUrls() {
+  const multi = normalizeFeedUrlList(process.env.BREAKING_NEWS_RSS_URLS);
 
-  if (!response.ok) {
-    throw new Error(`Breaking news provider returned ${response.status}.`);
+  if (multi.length) {
+    return multi;
   }
 
-  const xml = await response.text();
-  return parseRssItems(xml)
+  const single = process.env.BREAKING_NEWS_RSS_URL?.trim();
+  return single ? [single] : [DEFAULT_BREAKING_NEWS_RSS_URL];
+}
+
+export function getBreakingNewsFeedUrl() {
+  return getBreakingNewsFeedUrls().join(", ");
+}
+
+export async function fetchBreakingNewsFromRss(feedUrls = getBreakingNewsFeedUrls()) {
+  const settledFeeds = await Promise.allSettled(
+    feedUrls.map(async (feedUrl) => {
+      const response = await fetch(feedUrl, {
+        headers: {
+          Accept: "application/rss+xml, application/xml, text/xml;q=0.9"
+        },
+        cache: "no-store"
+      });
+
+      if (!response.ok) {
+        throw new Error(`Breaking news provider returned ${response.status} for ${feedUrl}.`);
+      }
+
+      const xml = await response.text();
+      return parseRssItems(xml);
+    })
+  );
+
+  const successfulFeeds = settledFeeds
+    .filter((result): result is PromiseFulfilledResult<ParsedRssItem[]> => result.status === "fulfilled")
+    .flatMap((result) => result.value);
+
+  if (!successfulFeeds.length) {
+    const firstFailure = settledFeeds.find((result): result is PromiseRejectedResult => result.status === "rejected");
+    throw firstFailure?.reason instanceof Error
+      ? firstFailure.reason
+      : new Error("All breaking news feeds failed.");
+  }
+
+  const deduped = Array.from(
+    new Map(
+      successfulFeeds.map((item) => [
+        createDeterministicId("rss_raw_breaking", `${item.title}-${item.link || item.pubDate}`),
+        item
+      ])
+    ).values()
+  );
+
+  return deduped
     .map(mapRssItemToBreakingItem)
     .filter((item): item is BreakingItem => Boolean(item))
     .sort((left, right) => rankBreakingItem(right) - rankBreakingItem(left))

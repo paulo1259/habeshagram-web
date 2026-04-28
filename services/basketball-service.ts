@@ -40,76 +40,56 @@ export type BasketballStandingsFeed = {
   message?: string;
 };
 
+export type BalldontlieTeam = {
+  id?: number | null;
+  city?: string | null;
+  name?: string | null;
+  full_name?: string | null;
+  abbreviation?: string | null;
+  conference?: string | null;
+  division?: string | null;
+};
+
 export type ApiBasketballGame = {
   id?: number | string | null;
   date?: string | null;
+  season?: number | null;
+  status?: string | null;
+  period?: number | null;
   time?: string | null;
-  timestamp?: number | null;
   datetime?: string | null;
-  clock?: string | null;
-  country?: { name?: string | null } | null;
-  league?: { id?: number | string | null; name?: string | null; season?: string | number | null } | null;
-  status?: { long?: string | null; short?: string | null; timer?: string | number | null } | null;
-  teams?: {
-    home?: { name?: string | null } | null;
-    away?: { name?: string | null } | null;
-  } | null;
-  home?: { name?: string | null; score?: number | string | null } | null;
-  away?: { name?: string | null; score?: number | string | null } | null;
-  game?: {
-    status?: string | null;
-    clock?: string | null;
-    arena?: string | null;
-  } | null;
-  scores?: {
-    home?: { total?: number | string | null } | null;
-    away?: { total?: number | string | null } | null;
-  } | null;
-  arena?: { name?: string | null; city?: string | null; country?: string | null } | null;
+  postseason?: boolean | null;
+  home_team_score?: number | null;
+  visitor_team_score?: number | null;
+  home_team?: BalldontlieTeam | null;
+  visitor_team?: BalldontlieTeam | null;
 };
 
 export type ApiBasketballStanding = {
-  position?: number | null;
-  group?: { name?: string | null } | null;
-  team?: { name?: string | null } | null;
-  games?: {
-    played?: number | null;
-    win?: { total?: number | null } | null;
-    lose?: { total?: number | null } | null;
-  } | null;
-  points?: number | { for?: number | null; against?: number | null } | null;
+  team?: BalldontlieTeam | null;
+  conference?: string | null;
+  conference_rank?: number | null;
+  division?: string | null;
+  division_rank?: number | null;
+  wins?: number | null;
+  losses?: number | null;
+  season?: number | null;
 };
 
 export type ApiBasketballPayload<T> = {
-  response?: T[];
-  games?: T[];
-  scoreboard?: T[];
-  result?: T[];
-  errors?: unknown;
+  data?: T[];
+  meta?: {
+    next_cursor?: number | null;
+    per_page?: number | null;
+  } | null;
 };
 
 export function extractApiBasketballResponse<T>(payload: ApiBasketballPayload<T> | null | undefined) {
-  if (!payload) {
+  if (!payload || !Array.isArray(payload.data)) {
     return [];
   }
 
-  if (Array.isArray(payload.response)) {
-    return payload.response;
-  }
-
-  if (Array.isArray(payload.games)) {
-    return payload.games;
-  }
-
-  if (Array.isArray(payload.scoreboard)) {
-    return payload.scoreboard;
-  }
-
-  if (Array.isArray(payload.result)) {
-    return payload.result;
-  }
-
-  return [];
+  return payload.data;
 }
 
 function parseNumber(value: unknown) {
@@ -126,22 +106,24 @@ function parseNumber(value: unknown) {
 }
 
 function mapBasketballStatus(game: ApiBasketballGame): LiveMatchStatus {
-  const short = (game.status?.short ?? game.game?.status ?? "").toString().trim().toUpperCase();
-  const long = (game.status?.long ?? game.game?.status ?? "").toString().trim().toLowerCase();
+  const status = (game.status ?? "").trim();
+  const normalized = status.toLowerCase();
 
   if (
-    ["Q1", "Q2", "Q3", "Q4", "OT", "LIVE"].includes(short) ||
-    long.includes("live") ||
-    long.includes("progress")
+    normalized.includes("qtr") ||
+    normalized.includes("quarter") ||
+    normalized.includes("ot") ||
+    normalized.includes("live") ||
+    /^\d/.test(status)
   ) {
     return "LIVE";
   }
 
-  if (["HT", "HALFTIME"].includes(short) || long.includes("half")) {
+  if (normalized.includes("half")) {
     return "HT";
   }
 
-  if (["FT", "AOT", "ENDED", "FINISHED"].includes(short) || long.includes("finished") || long.includes("final")) {
+  if (normalized.includes("final")) {
     return "FT";
   }
 
@@ -160,15 +142,10 @@ function formatKickoffLabel(kickoffAt?: string | null) {
 }
 
 function formatMatchClock(status: LiveMatchStatus, game: ApiBasketballGame, kickoffAt?: string | null) {
-  const timer = game.status?.timer ?? game.clock ?? game.game?.clock;
-  const short = (game.status?.short ?? game.game?.status ?? "").toString().trim().toUpperCase();
+  const rawStatus = (game.status ?? "").trim();
 
   if (status === "LIVE") {
-    if (timer != null && `${timer}`.trim()) {
-      return `${timer}`;
-    }
-
-    return short || "LIVE";
+    return rawStatus || "LIVE";
   }
 
   if (status === "HT") {
@@ -219,53 +196,48 @@ export function prioritizeBasketballMatches(matches: BasketballLiveMatch[]) {
 }
 
 export function mapApiBasketballGameToLiveMatch(game: ApiBasketballGame): BasketballLiveMatch | null {
-  const homeTeam = game.teams?.home?.name?.trim() || game.home?.name?.trim();
-  const awayTeam = game.teams?.away?.name?.trim() || game.away?.name?.trim();
+  const homeTeam = game.home_team?.full_name?.trim() || game.home_team?.name?.trim();
+  const awayTeam = game.visitor_team?.full_name?.trim() || game.visitor_team?.name?.trim();
 
   if (!homeTeam || !awayTeam) {
     return null;
   }
 
-  const kickoffAt =
-    game.datetime?.trim() ||
-    game.date?.trim() ||
-    (typeof game.timestamp === "number" ? new Date(game.timestamp * 1000).toISOString() : undefined);
+  const kickoffAt = game.datetime?.trim() || game.date?.trim() || undefined;
   const status = mapBasketballStatus(game);
-  const arenaBits = [game.arena?.name ?? game.game?.arena, game.arena?.city, game.arena?.country].filter(Boolean);
 
   return {
     id: String(game.id ?? `${homeTeam}-${awayTeam}-${kickoffAt ?? "game"}`),
-    league: game.league?.name?.trim() || "Basketball",
-    country: game.country?.name?.trim() || undefined,
+    league: game.postseason ? "NBA Playoffs" : "NBA",
+    country: "USA",
     homeTeam,
     awayTeam,
-    homeScore: parseNumber(game.scores?.home?.total ?? game.home?.score),
-    awayScore: parseNumber(game.scores?.away?.total ?? game.away?.score),
+    homeScore: parseNumber(game.home_team_score),
+    awayScore: parseNumber(game.visitor_team_score),
     status,
     matchClock: formatMatchClock(status, game, kickoffAt),
-    venue: arenaBits.length ? arenaBits.join(", ") : "Basketball arena",
+    venue: "NBA arena",
     kickoffAt,
     timeline: []
   };
 }
 
 export function mapApiBasketballStandingToRow(row: ApiBasketballStanding): LeagueStandingRow | null {
-  const team = row.team?.name?.trim();
-  const position = parseNumber(row.position);
+  const team = row.team?.full_name?.trim() || row.team?.name?.trim();
+  const position = parseNumber(row.conference_rank ?? row.division_rank);
 
   if (!team || !position) {
     return null;
   }
 
-  const pointsFor = typeof row.points === "object" && row.points ? parseNumber(row.points.for) : 0;
-  const pointsAgainst = typeof row.points === "object" && row.points ? parseNumber(row.points.against) : 0;
-  const wins = parseNumber(row.games?.win?.total);
+  const wins = parseNumber(row.wins);
+  const losses = parseNumber(row.losses);
 
   return {
     position,
     team,
-    played: parseNumber(row.games?.played),
-    points: typeof row.points === "number" ? parseNumber(row.points) : wins,
-    goalDifference: pointsFor - pointsAgainst
+    played: wins + losses,
+    points: wins,
+    goalDifference: wins - losses
   };
 }

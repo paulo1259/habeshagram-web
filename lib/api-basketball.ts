@@ -1,40 +1,36 @@
-const DEFAULT_API_BASKETBALL_BASE_URL = "https://api-basketball.p.rapidapi.com";
+const DEFAULT_BALLDONTLIE_BASE_URL = "https://api.balldontlie.io/v1";
 
 function normalizeBaseUrl(value?: string | null) {
   const trimmed = value?.trim();
-  return trimmed ? trimmed.replace(/\/+$/, "") : DEFAULT_API_BASKETBALL_BASE_URL;
-}
-
-function resolveHost(baseUrl: string, explicitHost?: string | null) {
-  const host = explicitHost?.trim();
-  if (host) {
-    return host;
-  }
-
-  return new URL(baseUrl).host;
+  return trimmed ? trimmed.replace(/\/+$/, "") : DEFAULT_BALLDONTLIE_BASE_URL;
 }
 
 export function getApiBasketballConfig() {
-  const apiKey = process.env.API_BASKETBALL_RAPIDAPI_KEY?.trim() || process.env.RAPIDAPI_KEY?.trim();
-  const baseUrl = normalizeBaseUrl(process.env.API_BASKETBALL_BASE_URL);
-  const host = resolveHost(baseUrl, process.env.API_BASKETBALL_RAPIDAPI_HOST);
+  const apiKey = process.env.BALLDONTLIE_API_KEY?.trim() || "";
+  const baseUrl = normalizeBaseUrl(process.env.BALLDONTLIE_BASE_URL);
 
   return {
     apiKey,
-    baseUrl,
-    host,
-    defaultLeagueId: process.env.API_BASKETBALL_DEFAULT_LEAGUE_ID?.trim() || ""
+    baseUrl
   };
+}
+
+export function getDefaultBasketballSeason(date = new Date()) {
+  const month = date.getUTCMonth() + 1;
+  const year = date.getUTCFullYear();
+
+  // NBA seasons are identified by the starting calendar year.
+  return month >= 9 ? year : year - 1;
 }
 
 export async function fetchApiBasketballJson<T>(
   path: string,
   searchParams?: Record<string, string | number | boolean | undefined>
 ) {
-  const { apiKey, baseUrl, host } = getApiBasketballConfig();
+  const { apiKey, baseUrl } = getApiBasketballConfig();
 
   if (!apiKey) {
-    throw new Error("API_BASKETBALL_RAPIDAPI_KEY is missing on the server.");
+    throw new Error("BALLDONTLIE_API_KEY is missing on the server.");
   }
 
   const url = new URL(path, `${baseUrl}/`);
@@ -50,15 +46,14 @@ export async function fetchApiBasketballJson<T>(
   const response = await fetch(url.toString(), {
     method: "GET",
     headers: {
-      "X-RapidAPI-Key": apiKey,
-      "X-RapidAPI-Host": host,
+      Authorization: apiKey,
       Accept: "application/json"
     },
     cache: "no-store"
   });
 
   if (!response.ok) {
-    throw new Error(`API-Basketball returned ${response.status} for ${url.pathname}.`);
+    throw new Error(`BALLDONTLIE returned ${response.status} for ${url.pathname}.`);
   }
 
   return (await response.json()) as T;

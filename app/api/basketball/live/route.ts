@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchApiBasketballJson, getApiBasketballConfig } from "@/lib/api-basketball";
+import { fetchApiBasketballJson, getApiBasketballConfig, getDefaultBasketballSeason } from "@/lib/api-basketball";
 import {
   ApiBasketballGame,
   ApiBasketballPayload,
@@ -17,13 +17,17 @@ function getTodayDateString() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function shiftDateString(baseDate: string, dayOffset: number) {
+  const next = new Date(`${baseDate}T12:00:00.000Z`);
+  next.setUTCDate(next.getUTCDate() + dayOffset);
+  return next.toISOString().slice(0, 10);
+}
+
 export async function GET(request: NextRequest) {
-  const { apiKey, defaultLeagueId } = getApiBasketballConfig();
+  const { apiKey } = getApiBasketballConfig();
   const searchParams = request.nextUrl.searchParams;
-  const league = searchParams.get("league")?.trim() || defaultLeagueId;
-  const season = searchParams.get("season")?.trim() || new Date().getFullYear().toString();
+  const season = Number.parseInt(searchParams.get("season")?.trim() || `${getDefaultBasketballSeason()}`, 10);
   const date = searchParams.get("date")?.trim() || getTodayDateString();
-  const timezone = searchParams.get("timezone")?.trim() || "America/Los_Angeles";
 
   if (!apiKey) {
     return NextResponse.json({
@@ -36,29 +40,24 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [scoreboardPayload, schedulePayload] = await Promise.all([
-      fetchApiBasketballJson<ApiBasketballPayload<ApiBasketballGame>>("/scoreboard", {
-        date,
-        season,
-        league,
-        timezone
-      }),
-      fetchApiBasketballJson<ApiBasketballPayload<ApiBasketballGame>>("/nbaschedule", {
-        date,
-        season,
-        league,
-        timezone
-      })
-    ]);
+    const payload = await fetchApiBasketballJson<ApiBasketballPayload<ApiBasketballGame>>("/games", {
+      start_date: shiftDateString(date, -1),
+      end_date: shiftDateString(date, 1),
+      seasons: season,
+      per_page: 100
+    });
 
-    const mergedGames = [
-      ...extractApiBasketballResponse(scoreboardPayload),
-      ...extractApiBasketballResponse(schedulePayload)
-    ];
+    const mergedGames = extractApiBasketballResponse(payload);
 
     const dedupedGames = Array.from(
       new Map(
-        mergedGames.map((game) => [String(game.id ?? `${game.teams?.home?.name ?? game.home?.name}-${game.teams?.away?.name ?? game.away?.name}-${game.date ?? game.datetime}`), game])
+        mergedGames.map((game) => [
+          String(
+            game.id ??
+              `${game.home_team?.full_name ?? game.home_team?.name}-${game.visitor_team?.full_name ?? game.visitor_team?.name}-${game.datetime ?? game.date ?? ""}`
+          ),
+          game
+        ])
       ).values()
     );
 
@@ -73,11 +72,7 @@ export async function GET(request: NextRequest) {
       source: "api",
       stale: false,
       fetchedAt: new Date().toISOString(),
-      message: mapped.length
-        ? undefined
-        : league
-          ? `No basketball games are available right now for league ${league}.`
-          : "No live or scheduled basketball games are available right now."
+      message: mapped.length ? undefined : "No live, upcoming, or recent basketball games are available right now."
     };
 
     lastSuccessfulPayload = nextPayload;
@@ -88,7 +83,7 @@ export async function GET(request: NextRequest) {
         ...lastSuccessfulPayload,
         source: "cache",
         stale: true,
-        message: "Using the last successful basketball live snapshot while API-Basketball recovers."
+        message: "Using the last successful basketball live snapshot while BALldontlie recovers."
       } satisfies BasketballLiveFeed);
     }
 

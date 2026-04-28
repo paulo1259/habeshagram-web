@@ -87,11 +87,10 @@ FOOTBALL_DATA_API_KEY=
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY=
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST=free-api-live-football-data.p.rapidapi.com
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL=https://free-api-live-football-data.p.rapidapi.com
-API_BASKETBALL_RAPIDAPI_KEY=
-API_BASKETBALL_RAPIDAPI_HOST=api-basketball.p.rapidapi.com
-API_BASKETBALL_BASE_URL=https://api-basketball.p.rapidapi.com
-API_BASKETBALL_DEFAULT_LEAGUE_ID=
+BALLDONTLIE_API_KEY=
+BALLDONTLIE_BASE_URL=https://api.balldontlie.io/v1
 BREAKING_NEWS_RSS_URL=
+BREAKING_NEWS_RSS_URLS=
 FIREBASE_SERVICE_ACCOUNT_KEY_BASE64=
 ADMIN_EMAIL_ALLOWLIST=
 ADMIN_UID_ALLOWLIST=
@@ -103,11 +102,10 @@ If these are blank, the app still starts, but authentication remains unavailable
 `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY` is server-only for the live match center. Keep it in `.env.local` and in Vercel project environment variables, but do not prefix it with `NEXT_PUBLIC_`.
 `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST` is server-only and can usually stay at `free-api-live-football-data.p.rapidapi.com`.
 `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL` is server-only and defaults to `https://free-api-live-football-data.p.rapidapi.com`.
-`API_BASKETBALL_RAPIDAPI_KEY` is server-only for the basketball routes. Keep it in `.env.local` and in Vercel project environment variables, but do not prefix it with `NEXT_PUBLIC_`.
-`API_BASKETBALL_RAPIDAPI_HOST` is server-only and can usually stay at `api-basketball.p.rapidapi.com`.
-`API_BASKETBALL_BASE_URL` is server-only and defaults to `https://api-basketball.p.rapidapi.com`.
-`API_BASKETBALL_DEFAULT_LEAGUE_ID` is optional and lets `/api/basketball/live` and `/api/basketball/standings` default to one league, such as NBA, when the request does not include a `league` query param.
-`BREAKING_NEWS_RSS_URL` is also server-only and optional. If you leave it blank, HabeshaGram defaults to the BBC Sport football RSS feed.
+`BALLDONTLIE_API_KEY` is server-only for the basketball routes. Keep it in `.env.local` and in Vercel project environment variables, but do not prefix it with `NEXT_PUBLIC_`.
+`BALLDONTLIE_BASE_URL` is server-only and defaults to `https://api.balldontlie.io/v1`.
+`BREAKING_NEWS_RSS_URL` is server-only and optional. If you leave it blank, HabeshaGram defaults to the BBC Sport football RSS feed.
+`BREAKING_NEWS_RSS_URLS` is also server-only and optional. Use it when you want HabeshaGram to ingest multiple comma-separated RSS feeds in parallel, for example `https://feed-a.xml,https://feed-b.xml`. If both `BREAKING_NEWS_RSS_URLS` and `BREAKING_NEWS_RSS_URL` are set, the multi-feed value takes priority.
 `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` is admin-only for one-time content seeding. It should never be exposed to the browser or added to Vercel public env vars.
 `ADMIN_EMAIL_ALLOWLIST` and `ADMIN_UID_ALLOWLIST` are server-only allowlists for the internal admin workspace.
 
@@ -120,10 +118,9 @@ FOOTBALL_DATA_API_KEY=YOUR_FOOTBALL_DATA_TOKEN
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY=YOUR_RAPIDAPI_KEY
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST=free-api-live-football-data.p.rapidapi.com
 FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL=https://free-api-live-football-data.p.rapidapi.com
-API_BASKETBALL_RAPIDAPI_KEY=YOUR_RAPIDAPI_KEY
-API_BASKETBALL_RAPIDAPI_HOST=api-basketball.p.rapidapi.com
-API_BASKETBALL_BASE_URL=https://api-basketball.p.rapidapi.com
-API_BASKETBALL_DEFAULT_LEAGUE_ID=12
+BALLDONTLIE_API_KEY=YOUR_BALLDONTLIE_KEY
+BALLDONTLIE_BASE_URL=https://api.balldontlie.io/v1
+BREAKING_NEWS_RSS_URLS=https://feeds.bbci.co.uk/sport/football/rss.xml,https://news.google.com/rss/search?q=Arsenal+OR+Chelsea+OR+Manchester+United+OR+Manchester+City+football&hl=en-US&gl=US&ceid=US:en
 ```
 
 ### One-time Firestore content seed
@@ -347,9 +344,11 @@ HabeshaGram's Breaking Now section can read live football stories through an int
 
 - server route: `app/api/news/breaking/route.ts`
 - default provider: BBC Sport football RSS
-- optional override env var: `BREAKING_NEWS_RSS_URL`
+- optional override env vars:
+  - `BREAKING_NEWS_RSS_URL`
+  - `BREAKING_NEWS_RSS_URLS`
 
-The route ingests RSS on the server, filters for Manchester United, Arsenal, Chelsea, and Manchester City relevance, caches the last successful payload in memory, and otherwise returns a clear empty/unavailable state instead of fake stories.
+The route ingests RSS on the server, filters for Manchester United, Arsenal, Chelsea, and Manchester City relevance, caches the last successful payload in memory, and otherwise returns a clear empty/unavailable state instead of fake stories. If you provide `BREAKING_NEWS_RSS_URLS`, it fetches those feeds in parallel and deduplicates overlapping stories before ranking them.
 
 ### Reporting / Moderation MVP
 
