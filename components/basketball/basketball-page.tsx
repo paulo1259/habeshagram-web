@@ -106,6 +106,7 @@ function BasketballStandingsCard({
   message: string;
 }) {
   const visibleRows = rows.slice(0, 10);
+  const isPlanLimited = message.toLowerCase().includes("does not include standings access");
 
   return (
     <section className="surface-panel p-4 sm:p-5">
@@ -142,6 +143,20 @@ function BasketballStandingsCard({
             ))}
           </div>
         </div>
+      ) : isPlanLimited ? (
+        <div className="mt-4 rounded-[24px] border border-brand-100/80 bg-white px-4 py-5">
+          <div className="flex items-start gap-3">
+            <div className="rounded-full bg-brand-50 p-2 text-brand-800">
+              <Trophy className="h-4 w-4" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-ink">Standings are available when your BALldontlie plan includes NBA table access.</p>
+              <p className="text-sm leading-6 text-stone-600">
+                Live games, upcoming tip-offs, and recent finals still work through the current basketball integration. If you stay on the free tier, this page now keeps standings intentionally hidden instead of showing a broken-looking empty table.
+              </p>
+            </div>
+          </div>
+        </div>
       ) : visibleRows.length ? (
         <div className="mt-4 overflow-hidden rounded-[24px] border border-brand-100/80">
           <div className="grid grid-cols-[2.25rem_minmax(0,1fr)_3rem_3rem_3rem] bg-brand-50/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">
@@ -174,7 +189,6 @@ function BasketballStandingsCard({
       ) : (
         <div className="mt-4">
           <EmptyState title="No basketball standings yet" description="The standings route is live, but it does not have rows from the configured league right now." />
-          
         </div>
       )}
     </section>

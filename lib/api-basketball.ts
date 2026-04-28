@@ -33,7 +33,8 @@ export async function fetchApiBasketballJson<T>(
     throw new Error("BALLDONTLIE_API_KEY is missing on the server.");
   }
 
-  const url = new URL(path, `${baseUrl}/`);
+  const normalizedPath = path.replace(/^\/+/, "");
+  const url = new URL(normalizedPath, `${baseUrl}/`);
 
   Object.entries(searchParams ?? {}).forEach(([key, value]) => {
     if (value === undefined || value === null || value === "") {
