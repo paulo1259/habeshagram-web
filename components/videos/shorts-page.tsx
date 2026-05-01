@@ -61,6 +61,55 @@ function buildShortsEmbedUrl(embedUrl: string, muted: boolean) {
   }
 }
 
+function ShortFeedMedia({
+  video,
+  isActive,
+  shouldPreloadNext,
+  isMuted
+}: {
+  video: CuratedShortItem;
+  isActive: boolean;
+  shouldPreloadNext: boolean;
+  isMuted: boolean;
+}) {
+  if (!(isActive || shouldPreloadNext)) {
+    return null;
+  }
+
+  if (video.playbackMode === "file") {
+    return (
+      <video
+        key={`${video.id}-${isMuted ? "muted" : "sound"}-${isActive ? "active" : "preload"}`}
+        src={video.videoUrl}
+        muted={isMuted}
+        autoPlay={isActive}
+        loop={isActive}
+        playsInline
+        preload={isActive ? "auto" : "metadata"}
+        controls={false}
+        className={cn(
+          "absolute inset-0 h-full w-full object-cover",
+          isActive ? "pointer-events-none opacity-100" : "pointer-events-none opacity-0"
+        )}
+      />
+    );
+  }
+
+  return (
+    <iframe
+      key={`${video.id}-${isMuted ? "muted" : "sound"}-${isActive ? "active" : "preload"}`}
+      src={buildShortsEmbedUrl(video.embedUrl, isMuted)}
+      title={video.title}
+      className={cn(
+        "absolute inset-0 h-full w-full",
+        isActive ? "pointer-events-none opacity-100" : "pointer-events-none opacity-0"
+      )}
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowFullScreen
+    />
+  );
+}
+
 function getDefaultReactionState(): ShortReactionState {
   return {
     liked: false,
@@ -316,7 +365,7 @@ export function ShortsPage() {
       setIsLoading(false);
     })();
 
-    recordSectionUsage("videos", 3);
+    recordSectionUsage("videos", 2);
 
     const storedMuted =
       typeof window !== "undefined" ? window.localStorage.getItem(SHORTS_MUTED_STORAGE_KEY) : null;
@@ -594,19 +643,12 @@ export function ShortsPage() {
                     >
                       <div className="surface-panel overflow-hidden rounded-[32px] p-2.5 sm:p-3">
                         <div className="relative min-h-[calc(100dvh-9.5rem)] overflow-hidden rounded-[28px] bg-black shadow-soft">
-                          {(isActive || shouldPreloadNext) ? (
-                            <iframe
-                              key={`${video.id}-${isMuted ? "muted" : "sound"}-${isActive ? "active" : "preload"}`}
-                              src={buildShortsEmbedUrl(video.embedUrl, isMuted)}
-                              title={video.title}
-                              className={cn(
-                                "absolute inset-0 h-full w-full",
-                                isActive ? "pointer-events-none opacity-100" : "pointer-events-none opacity-0"
-                              )}
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                              allowFullScreen
-                            />
-                          ) : null}
+                          <ShortFeedMedia
+                            video={video}
+                            isActive={isActive}
+                            shouldPreloadNext={shouldPreloadNext}
+                            isMuted={isMuted}
+                          />
 
                           {!isActive ? (
                             <button
@@ -744,7 +786,7 @@ export function ShortsPage() {
                         <div className="mt-3 flex flex-col gap-3 rounded-[24px] bg-gradient-to-r from-white to-brand-50/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                           <div className="min-w-0">
                             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-700">Share this clip</p>
-                            <p className="truncate text-sm text-stone-600">Send people straight to the full HabeshaGram video route.</p>
+                            <p className="truncate text-sm text-stone-600">Send people straight to the dedicated HabeshaGram short route.</p>
                           </div>
                           <ShareActions
                             path={`/shorts/${video.id}`}

@@ -27,6 +27,39 @@ function buildShortDetailEmbedUrl(embedUrl: string, muted: boolean) {
   }
 }
 
+function ShortDetailMedia({
+  short,
+  isMuted
+}: {
+  short: CuratedShortItem;
+  isMuted: boolean;
+}) {
+  if (short.playbackMode === "file") {
+    return (
+      <video
+        src={short.videoUrl}
+        muted={isMuted}
+        autoPlay
+        loop
+        playsInline
+        controls
+        preload="auto"
+        className="h-full w-full object-cover"
+      />
+    );
+  }
+
+  return (
+    <iframe
+      src={buildShortDetailEmbedUrl(short.embedUrl, isMuted)}
+      title={short.title}
+      className="h-full w-full"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowFullScreen
+    />
+  );
+}
+
 export function ShortDetailPageClient({ shortId }: { shortId: string }) {
   const [short, setShort] = useState<CuratedShortItem | null>(null);
   const [relatedShorts, setRelatedShorts] = useState<CuratedShortItem[]>([]);
@@ -133,13 +166,7 @@ export function ShortDetailPageClient({ shortId }: { shortId: string }) {
           <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
             <div className="overflow-hidden rounded-[28px] border border-brand-100 bg-stone-950 shadow-soft">
               <div className="mx-auto aspect-[9/16] w-full max-w-[28rem] bg-black">
-                <iframe
-                  src={buildShortDetailEmbedUrl(short.embedUrl, isMuted)}
-                  title={short.title}
-                  className="h-full w-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
+                <ShortDetailMedia short={short} isMuted={isMuted} />
               </div>
             </div>
 

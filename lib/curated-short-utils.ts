@@ -77,8 +77,8 @@ export function mapCuratedShortData(
     reasons.push("missing summary");
   }
 
-  if (!data.embedUrl) {
-    reasons.push("missing embedUrl");
+  if (!data.embedUrl && !data.videoUrl) {
+    reasons.push("missing playable short source");
   }
 
   const duration = typeof data.duration === "string" ? data.duration.trim() : "";
@@ -92,6 +92,13 @@ export function mapCuratedShortData(
   if (!vertical) {
     reasons.push("short is not marked vertical");
   }
+
+  const playbackMode =
+    data.playbackMode === "embed"
+      ? "embed"
+      : data.videoUrl
+        ? "file"
+        : "embed";
 
   if (reasons.length) {
     rejectedDocs?.push({
@@ -109,10 +116,14 @@ export function mapCuratedShortData(
     source: data.source as string,
     summary: data.summary as string,
     thumbnailURL: data.thumbnailURL || "",
-    videoUrl: (data.videoUrl || data.embedUrl) as string,
-    embedUrl: data.embedUrl as string,
+    videoUrl: (data.videoUrl || data.embedUrl || "") as string,
+    embedUrl: (data.embedUrl || "") as string,
     duration,
+    playbackMode,
     vertical,
+    storagePath: typeof data.storagePath === "string" ? data.storagePath : undefined,
+    thumbnailStoragePath:
+      typeof data.thumbnailStoragePath === "string" ? data.thumbnailStoragePath : undefined,
     teamTag: data.teamTag,
     hashtags: Array.isArray(data.hashtags) ? data.hashtags : [],
     createdAt: normalizeCreatedAt(data.createdAt),

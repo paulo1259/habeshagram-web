@@ -84,19 +84,20 @@ function readTeam(value: unknown) {
   return FOOTBALL_TEAMS.has(next) ? next : undefined;
 }
 
-function readHashtags(value: unknown) {
+function readHashtags(value: unknown, limit?: number) {
   if (Array.isArray(value)) {
-    return Array.from(
+    const items = Array.from(
       new Set(
         value
           .map((item) => normalizeHashtag(typeof item === "string" ? item : ""))
           .filter(Boolean)
       )
     );
+    return typeof limit === "number" ? items.slice(0, limit) : items;
   }
 
   if (typeof value === "string") {
-    return Array.from(
+    const items = Array.from(
       new Set(
         value
           .split(",")
@@ -104,6 +105,7 @@ function readHashtags(value: unknown) {
           .filter(Boolean)
       )
     );
+    return typeof limit === "number" ? items.slice(0, limit) : items;
   }
 
   return [];
@@ -193,13 +195,24 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
 
   if (kind === "shorts") {
     const title = readString(input.title);
-    const source = readString(input.source);
+    const source = readString(input.source) || "Admin upload";
     const summary = readString(input.summary);
     const embedUrl = readString(input.embedUrl);
+    const videoUrl = readString(input.videoUrl);
     const duration = readString(input.duration);
+    const playbackMode = readString(input.playbackMode) === "embed" ? "embed" : "file";
+    const vertical = typeof input.vertical === "boolean" ? input.vertical : true;
 
-    if (!title || !source || !summary || !embedUrl || !duration) {
-      throw new Error("Shorts require title, source, summary, embedUrl, and duration.");
+    if (!title || !source || !summary || !duration) {
+      throw new Error("Shorts require title, source, summary, and duration.");
+    }
+
+    if (!videoUrl && !embedUrl) {
+      throw new Error("Shorts require an uploaded video URL or a valid short-form embed URL.");
+    }
+
+    if (!vertical) {
+      throw new Error("Shorts must be confirmed as vertical-friendly before publishing.");
     }
 
     const sanitizedShort: Record<string, unknown> = {
@@ -208,18 +221,19 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
       category: ensureCategory(input.category, SHORT_CATEGORIES, "Matchday Clip"),
       source,
       summary,
-      embedUrl,
       duration,
-      vertical: typeof input.vertical === "boolean" ? input.vertical : true,
+      playbackMode,
+      vertical,
       createdAt: readString(input.createdAt) || now,
       featured: readBoolean(input.featured)
     };
 
     const thumbnailURL = readString(input.thumbnailURL);
-    const videoUrl = readString(input.videoUrl);
     const teamTag = readTeam(input.teamTag);
-    const hashtags = readHashtags(input.hashtags);
+    const hashtags = readHashtags(input.hashtags, 8);
     const publishLabel = readOptionalString(input.publishLabel);
+    const storagePath = readOptionalString(input.storagePath);
+    const thumbnailStoragePath = readOptionalString(input.thumbnailStoragePath);
 
     if (thumbnailURL) {
       sanitizedShort.thumbnailURL = thumbnailURL;
@@ -227,6 +241,10 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
 
     if (videoUrl) {
       sanitizedShort.videoUrl = videoUrl;
+    }
+
+    if (embedUrl) {
+      sanitizedShort.embedUrl = embedUrl;
     }
 
     if (teamTag) {
@@ -239,6 +257,14 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
 
     if (publishLabel) {
       sanitizedShort.publishLabel = publishLabel;
+    }
+
+    if (storagePath) {
+      sanitizedShort.storagePath = storagePath;
+    }
+
+    if (thumbnailStoragePath) {
+      sanitizedShort.thumbnailStoragePath = thumbnailStoragePath;
     }
 
     return sanitizedShort as AdminContentItemMap[K];

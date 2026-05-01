@@ -190,7 +190,10 @@ export type CuratedShortItem = {
   videoUrl: string;
   embedUrl: string;
   duration: string;
+  playbackMode: "file" | "embed";
   vertical: boolean;
+  storagePath?: string;
+  thumbnailStoragePath?: string;
   teamTag?: FootballTeam;
   hashtags?: string[];
   createdAt: string;
