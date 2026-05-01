@@ -44,6 +44,8 @@ const ALLOWED_SHORT_VIDEO_TYPES = new Set([
 const SHORT_MAX_DURATION_SECONDS = 60;
 const SHORT_WARNING_DURATION_SECONDS = 45;
 const SHORT_MAX_HASHTAGS = 8;
+const SOURCE_PROMPT_MESSAGE =
+  "Upload a short to get started, or use the advanced external source option if needed.";
 
 type ShortsFormState = {
   id: string;
@@ -221,6 +223,7 @@ export function AdminShortsManager() {
   const [uploadWarning, setUploadWarning] = useState<string | null>(null);
   const [detectedVideoMeta, setDetectedVideoMeta] = useState<ShortMediaMetadata | null>(null);
   const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
+  const [showAdvancedSource, setShowAdvancedSource] = useState(false);
 
   const submitLabel = useMemo(
     () => (editingId ? "Save short" : "Publish short"),
@@ -231,6 +234,8 @@ export function AdminShortsManager() {
     () => getManualDurationWarning(formState.duration),
     [formState.duration]
   );
+
+  const isSourcePromptMessage = error === SOURCE_PROMPT_MESSAGE;
 
   useEffect(() => {
     let isMounted = true;
@@ -282,6 +287,7 @@ export function AdminShortsManager() {
     setTagDraft("");
     setUploadWarning(null);
     setDetectedVideoMeta(null);
+    setShowAdvancedSource(false);
     if (localPreviewUrl) {
       URL.revokeObjectURL(localPreviewUrl);
       setLocalPreviewUrl(null);
@@ -418,7 +424,7 @@ export function AdminShortsManager() {
     }
 
     if (!formState.videoUrl.trim() && !formState.embedUrl.trim()) {
-      return "Upload a short video file or provide a valid short-form source URL.";
+      return SOURCE_PROMPT_MESSAGE;
     }
 
     if (!formState.duration.trim()) {
@@ -543,6 +549,7 @@ export function AdminShortsManager() {
     setTagDraft("");
     setDetectedVideoMeta(null);
     setUploadWarning(null);
+    setShowAdvancedSource(Boolean(item.embedUrl));
     if (localPreviewUrl) {
       URL.revokeObjectURL(localPreviewUrl);
       setLocalPreviewUrl(null);
@@ -561,7 +568,14 @@ export function AdminShortsManager() {
         />
 
         {error ? (
-          <div className="rounded-[24px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div
+            className={cn(
+              "rounded-[24px] px-4 py-3 text-sm",
+              isSourcePromptMessage
+                ? "border border-brand-100 bg-brand-50/70 text-stone-700"
+                : "border border-red-200 bg-red-50 text-red-700"
+            )}
+          >
             {error}
           </div>
         ) : null}
@@ -672,12 +686,12 @@ export function AdminShortsManager() {
         ) : null}
 
         <form className="mt-4 space-y-5" onSubmit={(event) => void handleSubmit(event)}>
-          <div className="rounded-[26px] border border-brand-100 bg-brand-50/35 p-4">
+          <div className="rounded-[26px] border border-brand-100 bg-gradient-to-br from-brand-50/55 via-white to-orange-50/45 p-4 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-ink">Upload a short video</p>
+                <p className="text-sm font-semibold text-ink">Upload your short video</p>
                 <p className="mt-1 text-sm text-stone-600">
-                  MP4, WebM, MOV, or M4V. The clip must be 60 seconds or less and vertical-friendly.
+                  Shorts should be vertical and under 60 seconds.
                 </p>
               </div>
               <Button
@@ -702,13 +716,30 @@ export function AdminShortsManager() {
               }}
             />
 
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading || isSaving}
+              className="mt-4 block w-full rounded-[24px] border border-dashed border-brand-200 bg-white/85 px-4 py-8 text-left transition hover:border-brand-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-700 shadow-sm">
+                  <Upload className="h-6 w-6" />
+                </div>
+                <p className="mt-4 text-base font-semibold text-ink">
+                  {isUploading ? "Uploading your short..." : "Drag and drop or click to upload"}
+                </p>
+                <p className="mt-2 max-w-md text-sm leading-6 text-stone-600">
+                  Upload-first is the default here. HabeshaGram will host the short, detect duration, and fill the playback details for you.
+                </p>
+              </div>
+            </button>
+
             <div className="mt-4 space-y-2 text-sm text-stone-600">
-              <p>
-                Primary workflow: upload a local short and let HabeshaGram auto-fill the hosted playback URL, duration, and thumbnail.
-              </p>
+              <p>Supported formats: MP4, WebM, MOV, and M4V.</p>
               {detectedVideoMeta ? (
                 <p className="rounded-[18px] bg-white px-3 py-2 text-xs font-medium text-stone-700">
-                  Detected {detectedVideoMeta.width}×{detectedVideoMeta.height} · {formatDuration(detectedVideoMeta.durationSeconds)}
+                  Detected {detectedVideoMeta.width}x{detectedVideoMeta.height} · {formatDuration(detectedVideoMeta.durationSeconds)}
                 </p>
               ) : null}
               {uploadWarning ? (
@@ -768,14 +799,18 @@ export function AdminShortsManager() {
                   onChange={(event) => updateField("duration", event.target.value)}
                 />
                 {durationWarning ? (
-                  <p className={cn(
-                    "text-xs",
-                    durationWarning.includes("60 seconds") ? "text-red-600" : "text-orange-600"
-                  )}>
+                  <p
+                    className={cn(
+                      "text-xs",
+                      durationWarning.includes("60 seconds") ? "text-red-600" : "text-orange-600"
+                    )}
+                  >
                     {durationWarning}
                   </p>
                 ) : (
-                  <p className="text-xs text-stone-500">Shorts over 60 seconds are blocked. Over 45 seconds will trigger a warning.</p>
+                  <p className="text-xs text-stone-500">
+                    Shorts over 60 seconds are blocked. Over 45 seconds will trigger a warning.
+                  </p>
                 )}
               </label>
             </div>
@@ -853,50 +888,71 @@ export function AdminShortsManager() {
             </div>
 
             <div className="space-y-3 rounded-[22px] border border-brand-100 bg-surface px-4 py-4">
-              <p className="text-sm font-semibold text-ink">Optional fallback source</p>
-              <p className="text-xs text-stone-500">
-                Use this only if you are not uploading a local short file. Uploaded files remain the easiest and preferred path.
-              </p>
-              <label className="block space-y-2">
-                <span className="text-sm font-semibold text-ink">External video URL</span>
-                <input
-                  type="text"
-                  value={formState.videoUrl}
-                  placeholder="https://..."
-                  className="min-h-11 w-full rounded-[22px] border border-brand-100 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
-                  onChange={(event) => {
-                    updateField("videoUrl", event.target.value);
-                    if (event.target.value.trim()) {
-                      updateField("playbackMode", "file");
-                    }
-                  }}
-                />
-              </label>
-              <label className="block space-y-2">
-                <span className="text-sm font-semibold text-ink">External embed URL</span>
-                <input
-                  type="text"
-                  value={formState.embedUrl}
-                  placeholder="https://www.youtube.com/embed/..."
-                  className="min-h-11 w-full rounded-[22px] border border-brand-100 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
-                  onChange={(event) => {
-                    updateField("embedUrl", event.target.value);
-                    if (event.target.value.trim()) {
-                      updateField("playbackMode", "embed");
-                    }
-                  }}
-                />
-              </label>
-              <label className="block space-y-2">
-                <span className="text-sm font-semibold text-ink">Source label</span>
-                <input
-                  type="text"
-                  value={formState.source}
-                  placeholder="Admin upload / creator / newsroom"
-                  className="min-h-11 w-full rounded-[22px] border border-brand-100 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
-                  onChange={(event) => updateField("source", event.target.value)}
-                />
-              </label>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-ink">Advanced source fallback</p>
+                  <p className="text-xs text-stone-500">
+                    Keep this secondary. Use it only when direct upload is not the right path.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="shrink-0"
+                  onClick={() => setShowAdvancedSource((current) => !current)}
+                >
+                  {showAdvancedSource ? "Hide" : "Use external URL"}
+                </Button>
+              </div>
+
+              {showAdvancedSource ? (
+                <div className="space-y-3">
+                  <label className="block space-y-2">
+                    <span className="text-sm font-semibold text-ink">External video URL</span>
+                    <input
+                      type="text"
+                      value={formState.videoUrl}
+                      placeholder="https://..."
+                      className="min-h-11 w-full rounded-[22px] border border-brand-100 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+                      onChange={(event) => {
+                        updateField("videoUrl", event.target.value);
+                        if (event.target.value.trim()) {
+                          updateField("playbackMode", "file");
+                        }
+                      }}
+                    />
+                  </label>
+                  <label className="block space-y-2">
+                    <span className="text-sm font-semibold text-ink">External embed URL</span>
+                    <input
+                      type="text"
+                      value={formState.embedUrl}
+                      placeholder="https://www.youtube.com/embed/..."
+                      className="min-h-11 w-full rounded-[22px] border border-brand-100 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+                      onChange={(event) => {
+                        updateField("embedUrl", event.target.value);
+                        if (event.target.value.trim()) {
+                          updateField("playbackMode", "embed");
+                        }
+                      }}
+                    />
+                  </label>
+                  <label className="block space-y-2">
+                    <span className="text-sm font-semibold text-ink">Source label</span>
+                    <input
+                      type="text"
+                      value={formState.source}
+                      placeholder="Admin upload / creator / newsroom"
+                      className="min-h-11 w-full rounded-[22px] border border-brand-100 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+                      onChange={(event) => updateField("source", event.target.value)}
+                    />
+                  </label>
+                </div>
+              ) : (
+                <div className="rounded-[18px] bg-white px-3 py-3 text-xs leading-5 text-stone-600">
+                  External URLs are still supported, but they stay tucked away so upload remains the obvious primary action.
+                </div>
+              )}
             </div>
 
             <label className="flex items-center justify-between gap-4 rounded-[22px] border border-brand-100 bg-surface px-4 py-3">
