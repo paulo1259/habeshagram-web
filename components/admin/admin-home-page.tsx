@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Film, Flag, Newspaper, Sparkles } from "lucide-react";
+import { Clapperboard, Film, Flag, Newspaper, Sparkles } from "lucide-react";
 import { AdminLayout } from "@/components/admin/admin-layout";
 
 const cards = [
@@ -11,6 +11,13 @@ const cards = [
     description:
       "Add, update, and remove the embedded video highlights powering the homepage and video detail pages.",
     icon: Film
+  },
+  {
+    href: "/admin/shorts",
+    title: "Curated Shorts",
+    description:
+      "Manage the vertical short-form feed separately so /shorts stays fast, mobile-first, and free of long-form video spillover.",
+    icon: Clapperboard
   },
   {
     href: "/admin/debates",

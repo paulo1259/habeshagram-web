@@ -22,9 +22,9 @@ import { useAppData } from "@/hooks/use-app-data";
 import { trackEvent } from "@/lib/analytics";
 import { recordSectionUsage, recordVideoEngagement } from "@/lib/personalization";
 import { cn, createId, formatRelativeTime } from "@/lib/utils";
-import { getCuratedVideos } from "@/services/curated-video-service";
+import { getCuratedShorts, sortShortsForFeed } from "@/services/curated-shorts-service";
 import { getTeamSlug } from "@/services/football-hub-data";
-import { CuratedVideoItem } from "@/types";
+import { CuratedShortItem } from "@/types";
 
 const SHORTS_MUTED_STORAGE_KEY = "habeshagram-shorts-muted";
 const SHORTS_REACTIONS_STORAGE_KEY = "habeshagram-shorts-reactions-v2";
@@ -47,42 +47,6 @@ type ShortReactionState = {
 };
 
 type ShortsReactionMap = Record<string, ShortReactionState>;
-
-function parseDurationToSeconds(value: string) {
-  const cleaned = value.trim();
-  if (!cleaned) {
-    return Number.POSITIVE_INFINITY;
-  }
-
-  const parts = cleaned.split(":").map((part) => Number.parseInt(part, 10));
-  if (parts.some((part) => Number.isNaN(part))) {
-    return Number.POSITIVE_INFINITY;
-  }
-
-  if (parts.length === 1) {
-    return parts[0];
-  }
-
-  if (parts.length === 2) {
-    return parts[0] * 60 + parts[1];
-  }
-
-  return parts[0] * 3600 + parts[1] * 60 + parts[2];
-}
-
-function isLikelyShort(video: CuratedVideoItem) {
-  const tags = (video.hashtags ?? []).map((tag) => tag.toLowerCase());
-  if (tags.some((tag) => ["short", "shorts", "reel", "clips", "clip"].includes(tag))) {
-    return true;
-  }
-
-  return parseDurationToSeconds(video.duration) <= 180;
-}
-
-function selectShortVideos(videos: CuratedVideoItem[]) {
-  const candidates = videos.filter(isLikelyShort);
-  return (candidates.length >= 3 ? candidates : videos).slice(0, 12);
-}
 
 function buildShortsEmbedUrl(embedUrl: string, muted: boolean) {
   try {
@@ -144,7 +108,7 @@ function ShortsActionRail({
   onDown,
   onOpenDrawer
 }: {
-  video: CuratedVideoItem;
+  video: CuratedShortItem;
   reactions: ShortReactionState;
   canGoUp: boolean;
   canGoDown: boolean;
@@ -199,7 +163,7 @@ function ShortsActionRail({
         </div>
       </button>
       <Link
-        href={`/videos/${video.id}`}
+        href={`/shorts/${video.id}`}
         className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/14 text-white shadow-lg backdrop-blur transition hover:bg-white/22"
       >
         <ExternalLink className="h-4 w-4" />
@@ -220,7 +184,7 @@ function ShortsDrawer({
   onSubmitComment,
   onReact
 }: {
-  video: CuratedVideoItem;
+  video: CuratedShortItem;
   reactions: ShortReactionState;
   draftComment: string;
   onChangeDraft: (value: string) => void;
@@ -327,7 +291,7 @@ function ShortsDrawer({
 
 export function ShortsPage() {
   const { currentUser } = useAppData();
-  const [videos, setVideos] = useState<CuratedVideoItem[]>([]);
+  const [videos, setVideos] = useState<CuratedShortItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
@@ -343,12 +307,12 @@ export function ShortsPage() {
 
     void (async () => {
       setIsLoading(true);
-      const items = await getCuratedVideos();
+      const items = await getCuratedShorts();
       if (!isMounted) {
         return;
       }
 
-      setVideos(selectShortVideos(items));
+      setVideos(sortShortsForFeed(items).slice(0, 18));
       setIsLoading(false);
     })();
 
@@ -371,6 +335,11 @@ export function ShortsPage() {
 
     window.localStorage.setItem(SHORTS_MUTED_STORAGE_KEY, String(isMuted));
   }, [isMuted]);
+
+  useEffect(() => {
+    setDrawerVideoId(null);
+    setDraftComment("");
+  }, [activeIndex]);
 
   useEffect(() => {
     if (!videos.length) {
@@ -444,7 +413,7 @@ export function ShortsPage() {
     });
   }
 
-  function triggerLike(video: CuratedVideoItem) {
+  function triggerLike(video: CuratedShortItem) {
     updateReactionState(video.id, (current) => ({
       ...current,
       liked: true,
@@ -456,13 +425,12 @@ export function ShortsPage() {
       setHeartBurstVideoId((current) => (current === video.id ? null : current));
     }, 900);
 
-    trackEvent("share_action", {
-      action: "short_like",
+    trackEvent("short_like", {
       video_id: video.id
     });
   }
 
-  function handleVideoTap(video: CuratedVideoItem, event: React.PointerEvent<HTMLButtonElement>) {
+  function handleVideoTap(video: CuratedShortItem, event: React.PointerEvent<HTMLButtonElement>) {
     const nextTap = {
       at: Date.now(),
       x: event.clientX,
@@ -481,10 +449,10 @@ export function ShortsPage() {
 
     if (diffMs <= SHORTS_DOUBLE_TAP_MS && distance <= SHORTS_DOUBLE_TAP_DISTANCE_PX) {
       triggerLike(video);
-      trackEvent("play_video", {
+      trackEvent("short_double_tap_like", {
         video_id: video.id,
         title: video.title,
-        surface: "shorts_double_tap_like"
+        surface: "shorts_feed"
       });
       lastTapRef.current = null;
     }
@@ -545,7 +513,7 @@ export function ShortsPage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">Shorts</p>
                 <h1 className="page-title mt-1 text-white">Swipeable clips, HabeshaGram style</h1>
                 <p className="mt-3 text-sm leading-6 text-white/82 sm:text-[15px]">
-                  Shorts v2 adds persistent sound state, faster next-clip loading, double-tap likes, and a clean reactions drawer while keeping the feed fast and focused.
+                  A dedicated admin-curated short-form lane with persistent sound state, smoother next-clip loading, double-tap likes, and an in-feed reactions drawer.
                 </p>
               </div>
 
@@ -576,7 +544,7 @@ export function ShortsPage() {
         ) : !videos.length ? (
           <EmptyState
             title="No shorts available yet"
-            description="Curated clips will appear here once the video collection has enough short-form videos to power the vertical feed."
+            description="Curated shorts will appear here once admins publish vertical-friendly short-form clips into the dedicated shorts collection."
           />
         ) : (
           <>
@@ -749,7 +717,7 @@ export function ShortsPage() {
                                     React
                                   </button>
                                   <Link
-                                    href={`/videos/${video.id}`}
+                                    href={`/shorts/${video.id}`}
                                     className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/16 bg-white/12 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/18"
                                   >
                                     Full page
@@ -779,7 +747,7 @@ export function ShortsPage() {
                             <p className="truncate text-sm text-stone-600">Send people straight to the full HabeshaGram video route.</p>
                           </div>
                           <ShareActions
-                            path={`/videos/${video.id}`}
+                            path={`/shorts/${video.id}`}
                             title={video.title}
                             text={video.summary}
                           />

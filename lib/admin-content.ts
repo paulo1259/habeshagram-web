@@ -4,6 +4,8 @@ import {
   slugify
 } from "@/lib/utils";
 import {
+  CuratedShortCategory,
+  CuratedShortItem,
   CuratedVideoCategory,
   CuratedVideoItem,
   DailyDebatePrompt,
@@ -12,16 +14,18 @@ import {
   LocalNewsItem
 } from "@/types";
 
-export type AdminContentKind = "videos" | "debates" | "editorial";
+export type AdminContentKind = "videos" | "shorts" | "debates" | "editorial";
 
 export type AdminContentItemMap = {
   videos: CuratedVideoItem;
+  shorts: CuratedShortItem;
   debates: DailyDebatePrompt;
   editorial: LocalNewsItem;
 };
 
 export const ADMIN_CONTENT_COLLECTIONS: Record<AdminContentKind, string> = {
   videos: "curatedVideos",
+  shorts: "curatedShorts",
   debates: "dailyDebates",
   editorial: "editorialHighlights"
 };
@@ -38,6 +42,13 @@ const VIDEO_CATEGORIES = new Set<CuratedVideoCategory>([
   "Fan Reactions",
   "Culture",
   "Music"
+]);
+
+const SHORT_CATEGORIES = new Set<CuratedShortCategory>([
+  "Matchday Clip",
+  "Fan Cam",
+  "Quick Take",
+  "Culture Burst"
 ]);
 
 const DEBATE_CATEGORIES = new Set<DailyDebatePrompt["category"]>([
@@ -109,7 +120,7 @@ function createStableId(prefix: string, seed: string, existingId?: string) {
 }
 
 export function isAdminContentKind(value: string): value is AdminContentKind {
-  return value === "videos" || value === "debates" || value === "editorial";
+  return value === "videos" || value === "shorts" || value === "debates" || value === "editorial";
 }
 
 export function sortAdminItems<T extends { createdAt?: string; featured?: boolean }>(items: T[]) {
@@ -178,6 +189,59 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
     }
 
     return sanitizedVideo as AdminContentItemMap[K];
+  }
+
+  if (kind === "shorts") {
+    const title = readString(input.title);
+    const source = readString(input.source);
+    const summary = readString(input.summary);
+    const embedUrl = readString(input.embedUrl);
+    const duration = readString(input.duration);
+
+    if (!title || !source || !summary || !embedUrl || !duration) {
+      throw new Error("Shorts require title, source, summary, embedUrl, and duration.");
+    }
+
+    const sanitizedShort: Record<string, unknown> = {
+      id: createStableId("short", title, readOptionalString(input.id)),
+      title,
+      category: ensureCategory(input.category, SHORT_CATEGORIES, "Matchday Clip"),
+      source,
+      summary,
+      embedUrl,
+      duration,
+      vertical: typeof input.vertical === "boolean" ? input.vertical : true,
+      createdAt: readString(input.createdAt) || now,
+      featured: readBoolean(input.featured)
+    };
+
+    const thumbnailURL = readString(input.thumbnailURL);
+    const videoUrl = readString(input.videoUrl);
+    const teamTag = readTeam(input.teamTag);
+    const hashtags = readHashtags(input.hashtags);
+    const publishLabel = readOptionalString(input.publishLabel);
+
+    if (thumbnailURL) {
+      sanitizedShort.thumbnailURL = thumbnailURL;
+    }
+
+    if (videoUrl) {
+      sanitizedShort.videoUrl = videoUrl;
+    }
+
+    if (teamTag) {
+      sanitizedShort.teamTag = teamTag;
+    }
+
+    if (hashtags.length) {
+      sanitizedShort.hashtags = hashtags;
+    }
+
+    if (publishLabel) {
+      sanitizedShort.publishLabel = publishLabel;
+    }
+
+    return sanitizedShort as AdminContentItemMap[K];
   }
 
   if (kind === "debates") {
@@ -267,6 +331,13 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
 
 export function createAdminDraftId(kind: AdminContentKind, seed: string) {
   const normalized = slugify(seed);
-  const prefix = kind === "videos" ? "video" : kind === "debates" ? "debate" : "highlight";
+  const prefix =
+    kind === "videos"
+      ? "video"
+      : kind === "shorts"
+        ? "short"
+        : kind === "debates"
+          ? "debate"
+          : "highlight";
   return `${prefix}_${normalized || "item"}`;
 }

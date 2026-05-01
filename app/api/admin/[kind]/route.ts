@@ -10,6 +10,22 @@ import { getFirebaseAdminDb } from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
 
+function getKindLabel(kind: string) {
+  if (kind === "videos") {
+    return "video";
+  }
+
+  if (kind === "shorts") {
+    return "short";
+  }
+
+  if (kind === "debates") {
+    return "debate";
+  }
+
+  return "editorial highlight";
+}
+
 export async function GET(
   request: Request,
   { params }: { params: { kind: string } }
@@ -61,7 +77,7 @@ export async function POST(
 
     return NextResponse.json({
       item: payload,
-      message: `Saved ${params.kind === "videos" ? "video" : params.kind === "debates" ? "debate" : "editorial highlight"} successfully.`
+      message: `Saved ${getKindLabel(params.kind)} successfully.`
     });
   } catch (error) {
     return createAdminErrorResponse(error);

@@ -174,6 +174,30 @@ export type CuratedVideoItem = {
   featured?: boolean;
 };
 
+export type CuratedShortCategory =
+  | "Matchday Clip"
+  | "Fan Cam"
+  | "Quick Take"
+  | "Culture Burst";
+
+export type CuratedShortItem = {
+  id: string;
+  title: string;
+  category: CuratedShortCategory;
+  source: string;
+  summary: string;
+  thumbnailURL: string;
+  videoUrl: string;
+  embedUrl: string;
+  duration: string;
+  vertical: boolean;
+  teamTag?: FootballTeam;
+  hashtags?: string[];
+  createdAt: string;
+  publishLabel?: string;
+  featured?: boolean;
+};
+
 export type LiveMatchStatus = "LIVE" | "HT" | "FT" | "UPCOMING";
 
 export type LiveMatchEvent = {
