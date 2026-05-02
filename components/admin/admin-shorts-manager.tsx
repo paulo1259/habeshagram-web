@@ -90,6 +90,11 @@ type FlowStatus = {
   detail: string;
 };
 
+type ValidationResult = {
+  title: string;
+  detail: string;
+};
+
 function createInitialFormState(): ShortsFormState {
   return {
     id: createId("short"),
@@ -601,34 +606,94 @@ export function AdminShortsManager() {
     }
   }
 
-  function validateForm() {
-    if (!formState.title.trim()) {
-      return "Please add a title.";
+  function validateForm(): ValidationResult | null {
+    const title = formState.title.trim();
+    const summary = formState.summary.trim();
+    const category = formState.category?.trim();
+    const hostedVideoUrl = formState.videoUrl.trim();
+    const externalEmbedUrl = formState.embedUrl.trim();
+    const hasLocalUploadPreview = Boolean(localPreviewUrl);
+    const hasStoragePath = Boolean(formState.storagePath.trim());
+
+    if (!title) {
+      return {
+        title: "Missing title",
+        detail: "Add a title before publishing this short."
+      };
     }
 
-    if (!formState.summary.trim()) {
-      return "Please add a short caption or summary.";
+    if (!summary) {
+      return {
+        title: "Missing caption",
+        detail: "Add a short caption or summary before publishing."
+      };
     }
 
-    if (!formState.videoUrl.trim() && !formState.embedUrl.trim()) {
-      return "Upload a short to get started, or use the advanced external source option if needed.";
+    if (!category) {
+      return {
+        title: "Missing category",
+        detail: "Choose a category for this short before publishing."
+      };
+    }
+
+    if (isUploading) {
+      return {
+        title: "Upload did not complete",
+        detail: "Please wait for the short upload to finish before publishing."
+      };
+    }
+
+    if (!hostedVideoUrl && !externalEmbedUrl) {
+      return {
+        title: hasLocalUploadPreview || hasStoragePath ? "Upload did not complete" : "Missing short source",
+        detail:
+          hasLocalUploadPreview || hasStoragePath
+            ? "The preview loaded, but the hosted short URL is still missing. Please re-upload the file or wait for the upload to finish."
+            : "Upload a short video file or add an external short-form source before publishing."
+      };
+    }
+
+    if (formState.playbackMode === "file" && !hostedVideoUrl) {
+      return {
+        title: "Upload did not complete",
+        detail: "This short is set to file playback, but the hosted video URL is missing. Please re-upload the file."
+      };
+    }
+
+    if (formState.playbackMode === "embed" && !externalEmbedUrl && !hostedVideoUrl) {
+      return {
+        title: "Missing short source",
+        detail: "Add a valid external embed URL or hosted video file before publishing."
+      };
     }
 
     if (!formState.duration.trim()) {
-      return "Duration is required.";
+      return {
+        title: "Missing duration",
+        detail: "Duration is required before publishing."
+      };
     }
 
     const durationSeconds = parseDurationToSeconds(formState.duration);
     if (!Number.isFinite(durationSeconds)) {
-      return "Duration must be a valid mm:ss style value.";
+      return {
+        title: "Invalid duration",
+        detail: "Duration must be a valid mm:ss style value."
+      };
     }
 
     if (durationSeconds > SHORT_MAX_DURATION_SECONDS) {
-      return "Shorts must be 60 seconds or less.";
+      return {
+        title: "Validation failed",
+        detail: "Shorts must be 60 seconds or less."
+      };
     }
 
     if (!formState.vertical) {
-      return "Please confirm the short is vertical-friendly before publishing.";
+      return {
+        title: "Vertical confirmation required",
+        detail: "Please confirm the short is vertical-friendly before publishing."
+      };
     }
 
     return null;
@@ -645,11 +710,11 @@ export function AdminShortsManager() {
 
     const validationError = validateForm();
     if (validationError) {
-      setError(validationError);
+      setError(validationError.detail);
       updateFlowStatus({
         tone: "error",
-        title: "Validation failed",
-        detail: validationError
+        title: validationError.title,
+        detail: validationError.detail
       });
       return;
     }
