@@ -3,19 +3,17 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ChevronDown,
-  ChevronUp,
-  Clapperboard,
+  ArrowLeft,
   ExternalLink,
   Heart,
   MessageCircle,
+  Pause,
   Play,
   Share2,
   Volume2,
   VolumeX,
   X
 } from "lucide-react";
-import { AppShell } from "@/components/layout/app-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ShareActions } from "@/components/ui/share-actions";
 import { useAppData } from "@/hooks/use-app-data";
@@ -28,9 +26,15 @@ import { CuratedShortItem } from "@/types";
 
 const SHORTS_MUTED_STORAGE_KEY = "habeshagram-shorts-muted";
 const SHORTS_REACTIONS_STORAGE_KEY = "habeshagram-shorts-reactions-v2";
-const SHORTS_DOUBLE_TAP_MS = 280;
-const SHORTS_DOUBLE_TAP_DISTANCE_PX = 24;
-const QUICK_REACTIONS = ["🔥", "👏", "😂", "🇪🇹"] as const;
+const SHORTS_DOUBLE_TAP_MS = 260;
+const SHORTS_DOUBLE_TAP_DISTANCE_PX = 22;
+const SHORTS_SINGLE_TAP_DELAY_MS = 210;
+const QUICK_REACTIONS = [
+  "\uD83D\uDD25",
+  "\uD83D\uDC4F",
+  "\uD83D\uDE02",
+  "\uD83C\uDDEA\uD83C\uDDF9"
+] as const;
 
 type ShortComment = {
   id: string;
@@ -61,55 +65,6 @@ function buildShortsEmbedUrl(embedUrl: string, muted: boolean) {
   }
 }
 
-function ShortFeedMedia({
-  video,
-  isActive,
-  shouldPreloadNext,
-  isMuted
-}: {
-  video: CuratedShortItem;
-  isActive: boolean;
-  shouldPreloadNext: boolean;
-  isMuted: boolean;
-}) {
-  if (!(isActive || shouldPreloadNext)) {
-    return null;
-  }
-
-  if (video.playbackMode === "file") {
-    return (
-      <video
-        key={`${video.id}-${isMuted ? "muted" : "sound"}-${isActive ? "active" : "preload"}`}
-        src={video.videoUrl}
-        muted={isMuted}
-        autoPlay={isActive}
-        loop={isActive}
-        playsInline
-        preload={isActive ? "auto" : "metadata"}
-        controls={false}
-        className={cn(
-          "absolute inset-0 h-full w-full object-cover",
-          isActive ? "pointer-events-none opacity-100" : "pointer-events-none opacity-0"
-        )}
-      />
-    );
-  }
-
-  return (
-    <iframe
-      key={`${video.id}-${isMuted ? "muted" : "sound"}-${isActive ? "active" : "preload"}`}
-      src={buildShortsEmbedUrl(video.embedUrl, isMuted)}
-      title={video.title}
-      className={cn(
-        "absolute inset-0 h-full w-full",
-        isActive ? "pointer-events-none opacity-100" : "pointer-events-none opacity-0"
-      )}
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      allowFullScreen
-    />
-  );
-}
-
 function getDefaultReactionState(): ShortReactionState {
   return {
     liked: false,
@@ -126,11 +81,7 @@ function readShortsReactionState(): ShortsReactionMap {
 
   try {
     const raw = window.localStorage.getItem(SHORTS_REACTIONS_STORAGE_KEY);
-    if (!raw) {
-      return {};
-    }
-
-    return JSON.parse(raw) as ShortsReactionMap;
+    return raw ? (JSON.parse(raw) as ShortsReactionMap) : {};
   } catch {
     return {};
   }
@@ -146,82 +97,6 @@ function writeShortsReactionState(state: ShortsReactionMap) {
 
 function getReactionStateForVideo(state: ShortsReactionMap, videoId: string) {
   return state[videoId] ?? getDefaultReactionState();
-}
-
-function ShortsActionRail({
-  video,
-  reactions,
-  canGoUp,
-  canGoDown,
-  onUp,
-  onDown,
-  onOpenDrawer
-}: {
-  video: CuratedShortItem;
-  reactions: ShortReactionState;
-  canGoUp: boolean;
-  canGoDown: boolean;
-  onUp: () => void;
-  onDown: () => void;
-  onOpenDrawer: () => void;
-}) {
-  return (
-    <div className="flex flex-row gap-2 overflow-x-auto no-scrollbar xl:flex-col xl:items-center xl:justify-end">
-      <button
-        type="button"
-        onClick={onUp}
-        disabled={!canGoUp}
-        className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/14 text-white shadow-lg backdrop-blur transition hover:bg-white/22 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        <ChevronUp className="h-5 w-5" />
-      </button>
-      <button
-        type="button"
-        onClick={onDown}
-        disabled={!canGoDown}
-        className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/14 text-white shadow-lg backdrop-blur transition hover:bg-white/22 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        <ChevronDown className="h-5 w-5" />
-      </button>
-      <button
-        type="button"
-        onClick={onOpenDrawer}
-        className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/14 text-white shadow-lg backdrop-blur transition hover:bg-white/22"
-      >
-        <div className="relative">
-          <Heart className={cn("h-4 w-4", reactions.liked && "fill-white text-white")} />
-          {reactions.likeCount > 0 ? (
-            <span className="absolute -right-3 -top-3 rounded-full bg-white/90 px-1.5 py-0.5 text-[10px] font-bold text-ink">
-              {reactions.likeCount}
-            </span>
-          ) : null}
-        </div>
-      </button>
-      <button
-        type="button"
-        onClick={onOpenDrawer}
-        className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/14 text-white shadow-lg backdrop-blur transition hover:bg-white/22"
-      >
-        <div className="relative">
-          <MessageCircle className="h-4 w-4" />
-          {reactions.comments.length ? (
-            <span className="absolute -right-3 -top-3 rounded-full bg-white/90 px-1.5 py-0.5 text-[10px] font-bold text-ink">
-              {reactions.comments.length}
-            </span>
-          ) : null}
-        </div>
-      </button>
-      <Link
-        href={`/shorts/${video.id}`}
-        className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/14 text-white shadow-lg backdrop-blur transition hover:bg-white/22"
-      >
-        <ExternalLink className="h-4 w-4" />
-      </Link>
-      <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/14 text-white shadow-lg backdrop-blur">
-        <Share2 className="h-4 w-4" />
-      </div>
-    </div>
-  );
 }
 
 function ShortsDrawer({
@@ -242,19 +117,28 @@ function ShortsDrawer({
   onReact: (emoji: string) => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/45 backdrop-blur-[2px]">
-      <button type="button" aria-label="Close reactions drawer" className="absolute inset-0" onClick={onClose} />
-      <div className="relative w-full rounded-t-[32px] border border-brand-100/80 bg-white p-4 shadow-[0_-20px_60px_rgba(21,16,12,0.22)] sm:p-5">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-brand-100" />
-        <div className="flex items-start justify-between gap-4">
+    <div className="fixed inset-0 z-[70] flex items-end bg-black/50 backdrop-blur-[4px]">
+      <button
+        type="button"
+        aria-label="Close reactions drawer"
+        className="absolute inset-0"
+        onClick={onClose}
+      />
+      <div className="relative w-full rounded-t-[30px] border border-white/10 bg-[#fffaf5] px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-24px_80px_rgba(0,0,0,0.34)] sm:mx-auto sm:max-w-xl sm:rounded-[30px] sm:px-5 sm:pb-5">
+        <div className="mx-auto h-1.5 w-12 rounded-full bg-stone-300/85" />
+        <div className="mt-4 flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">Reactions</p>
-            <h3 className="mt-1 line-clamp-2 text-lg font-black tracking-tight text-ink">{video.title}</h3>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-700">
+              Reactions
+            </p>
+            <h3 className="mt-1 line-clamp-2 text-lg font-black tracking-tight text-ink">
+              {video.title}
+            </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-800 transition hover:bg-brand-100"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-stone-700 shadow-sm transition hover:bg-stone-50"
           >
             <X className="h-4 w-4" />
           </button>
@@ -266,7 +150,7 @@ function ShortsDrawer({
               key={emoji}
               type="button"
               onClick={() => onReact(emoji)}
-              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-brand-100 bg-brand-50/60 px-4 py-2 text-sm font-semibold text-brand-900 transition hover:bg-brand-100"
+              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-brand-100 bg-white px-4 py-2 text-sm font-semibold text-brand-900 shadow-sm transition hover:bg-brand-50"
             >
               <span className="text-base">{emoji}</span>
               <span>{reactions.emojiCounts[emoji] ?? 0}</span>
@@ -274,13 +158,13 @@ function ShortsDrawer({
           ))}
         </div>
 
-        <div className="mt-5 rounded-[24px] bg-brand-50/45 px-4 py-3">
+        <div className="mt-5 rounded-[24px] border border-brand-100 bg-white px-4 py-3 shadow-sm">
           <div className="flex items-center gap-2 text-brand-800">
             <Heart className={cn("h-4 w-4", reactions.liked && "fill-current")} />
             <p className="text-sm font-semibold text-ink">{reactions.likeCount} likes on this short</p>
           </div>
           <p className="mt-1 text-sm text-stone-600">
-            Double tap on the active short to like it instantly with a quick heart burst.
+            Double tap on the active short to like it instantly without leaving the feed.
           </p>
         </div>
 
@@ -292,13 +176,13 @@ function ShortsDrawer({
             </p>
           </div>
 
-          <div className="max-h-56 space-y-3 overflow-y-auto pr-1">
+          <div className="max-h-[42dvh] space-y-3 overflow-y-auto pr-1">
             {reactions.comments.length ? (
               reactions.comments
                 .slice()
                 .reverse()
                 .map((comment) => (
-                  <div key={comment.id} className="rounded-[20px] border border-brand-100 bg-white px-4 py-3">
+                  <div key={comment.id} className="rounded-[20px] border border-brand-100 bg-white px-4 py-3 shadow-sm">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-ink">@{comment.username}</p>
                       <p className="text-xs text-stone-500">{formatRelativeTime(comment.createdAt)}</p>
@@ -307,25 +191,25 @@ function ShortsDrawer({
                   </div>
                 ))
             ) : (
-              <div className="rounded-[20px] border border-dashed border-brand-100 bg-brand-50/35 px-4 py-4 text-sm text-stone-600">
+              <div className="rounded-[20px] border border-dashed border-brand-100 bg-white/80 px-4 py-4 text-sm text-stone-600">
                 No comments yet. Start the conversation without leaving the shorts feed.
               </div>
             )}
           </div>
 
-          <div className="rounded-[24px] border border-brand-100 bg-white p-3">
+          <div className="rounded-[24px] border border-brand-100 bg-white p-3 shadow-sm">
             <textarea
               value={draftComment}
               onChange={(event) => onChangeDraft(event.target.value)}
               placeholder="Drop a quick reaction..."
               rows={3}
-              className="w-full resize-none rounded-[18px] bg-brand-50/40 px-3 py-3 text-sm outline-none placeholder:text-stone-400"
+              className="w-full resize-none rounded-[18px] bg-brand-50/45 px-3 py-3 text-sm outline-none placeholder:text-stone-400"
             />
             <div className="mt-3 flex justify-end">
               <button
                 type="button"
                 onClick={onSubmitComment}
-                className="inline-flex min-h-10 items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600"
+                className="inline-flex min-h-10 items-center gap-2 rounded-full bg-gradient-to-r from-brand-500 to-orange-400 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:brightness-105"
               >
                 <MessageCircle className="h-4 w-4" />
                 Post comment
@@ -335,6 +219,86 @@ function ShortsDrawer({
         </div>
       </div>
     </div>
+  );
+}
+
+type MediaLayerProps = {
+  video: CuratedShortItem;
+  isActive: boolean;
+  shouldPreload: boolean;
+  isMuted: boolean;
+  isPaused: boolean;
+  videoRef: (node: HTMLVideoElement | null) => void;
+};
+
+function MediaLayer({
+  video,
+  isActive,
+  shouldPreload,
+  isMuted,
+  isPaused,
+  videoRef
+}: MediaLayerProps) {
+  const shouldMount = isActive || shouldPreload;
+
+  if (!shouldMount) {
+    return (
+      <img
+        src={video.thumbnailURL}
+        alt={video.title}
+        loading="lazy"
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+    );
+  }
+
+  if (video.playbackMode === "file") {
+    return (
+      <video
+        ref={videoRef}
+        key={`${video.id}-${shouldPreload ? "warm" : "cold"}`}
+        src={video.videoUrl}
+        muted={isMuted}
+        loop
+        playsInline
+        preload={shouldPreload ? "auto" : "metadata"}
+        autoPlay={isActive && !isPaused}
+        poster={video.thumbnailURL || undefined}
+        className={cn(
+          "absolute inset-0 h-full w-full object-cover transition-opacity duration-300",
+          isActive ? "opacity-100" : "opacity-0"
+        )}
+      />
+    );
+  }
+
+  return (
+    <>
+      <img
+        src={video.thumbnailURL}
+        alt={video.title}
+        loading={shouldPreload ? "eager" : "lazy"}
+        decoding="async"
+        className={cn(
+          "absolute inset-0 h-full w-full object-cover transition-opacity duration-300",
+          isActive ? "opacity-0" : "opacity-100"
+        )}
+      />
+      {isActive || shouldPreload ? (
+        <iframe
+          key={`${video.id}-${isMuted ? "muted" : "sound"}-${isActive ? "active" : "preload"}`}
+          src={buildShortsEmbedUrl(video.embedUrl, isMuted)}
+          title={video.title}
+          className={cn(
+            "absolute inset-0 h-full w-full transition-opacity duration-300",
+            isActive ? "opacity-100" : "opacity-0"
+          )}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -348,8 +312,14 @@ export function ShortsPage() {
   const [reactionState, setReactionState] = useState<ShortsReactionMap>({});
   const [drawerVideoId, setDrawerVideoId] = useState<string | null>(null);
   const [draftComment, setDraftComment] = useState("");
+  const [pausedShortId, setPausedShortId] = useState<string | null>(null);
+  const [showPauseFlash, setShowPauseFlash] = useState(false);
+  const [shareVideoId, setShareVideoId] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<Array<HTMLElement | null>>([]);
+  const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const lastTapRef = useRef<{ at: number; x: number; y: number } | null>(null);
+  const tapTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -374,6 +344,9 @@ export function ShortsPage() {
 
     return () => {
       isMounted = false;
+      if (tapTimerRef.current) {
+        clearTimeout(tapTimerRef.current);
+      }
     };
   }, []);
 
@@ -388,10 +361,11 @@ export function ShortsPage() {
   useEffect(() => {
     setDrawerVideoId(null);
     setDraftComment("");
+    setShareVideoId(null);
   }, [activeIndex]);
 
   useEffect(() => {
-    if (!videos.length) {
+    if (!videos.length || !scrollRef.current) {
       return;
     }
 
@@ -409,7 +383,8 @@ export function ShortsPage() {
         setActiveIndex((current) => (current === nextIndex ? current : nextIndex));
       },
       {
-        threshold: [0.55, 0.75]
+        root: scrollRef.current,
+        threshold: [0.62, 0.8, 0.95]
       }
     );
 
@@ -419,9 +394,7 @@ export function ShortsPage() {
       }
     });
 
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, [videos]);
 
   useEffect(() => {
@@ -445,13 +418,47 @@ export function ShortsPage() {
     });
   }, [activeIndex, videos]);
 
+  useEffect(() => {
+    const activeVideo = videos[activeIndex];
+    const raf = window.requestAnimationFrame(() => {
+      videos.forEach((video, index) => {
+        const node = videoRefs.current[video.id];
+        if (!node || video.playbackMode !== "file") {
+          return;
+        }
+
+        if (index !== activeIndex) {
+          node.pause();
+          node.currentTime = node.currentTime;
+          return;
+        }
+
+        node.muted = isMuted;
+
+        if (pausedShortId === activeVideo?.id) {
+          node.pause();
+          return;
+        }
+
+        void node.play().catch(() => {
+          setPausedShortId(video.id);
+        });
+      });
+    });
+
+    return () => window.cancelAnimationFrame(raf);
+  }, [activeIndex, isMuted, pausedShortId, videos]);
+
   function scrollToIndex(nextIndex: number) {
     const clamped = Math.max(0, Math.min(nextIndex, videos.length - 1));
     cardRefs.current[clamped]?.scrollIntoView({ behavior: "smooth", block: "start" });
     setActiveIndex(clamped);
   }
 
-  function updateReactionState(videoId: string, updater: (current: ShortReactionState) => ShortReactionState) {
+  function updateReactionState(
+    videoId: string,
+    updater: (current: ShortReactionState) => ShortReactionState
+  ) {
     setReactionState((current) => {
       const next = {
         ...current,
@@ -472,11 +479,22 @@ export function ShortsPage() {
     setHeartBurstVideoId(video.id);
     window.setTimeout(() => {
       setHeartBurstVideoId((current) => (current === video.id ? null : current));
-    }, 900);
+    }, 820);
 
     trackEvent("short_like", {
       video_id: video.id
     });
+  }
+
+  function togglePlayback(video: CuratedShortItem) {
+    if (video.playbackMode !== "file") {
+      return;
+    }
+
+    const nextPaused = pausedShortId === video.id ? null : video.id;
+    setPausedShortId(nextPaused);
+    setShowPauseFlash(true);
+    window.setTimeout(() => setShowPauseFlash(false), 520);
   }
 
   function handleVideoTap(video: CuratedShortItem, event: React.PointerEvent<HTMLButtonElement>) {
@@ -489,14 +507,15 @@ export function ShortsPage() {
     const previousTap = lastTapRef.current;
     lastTapRef.current = nextTap;
 
-    if (!previousTap) {
-      return;
-    }
-
-    const diffMs = nextTap.at - previousTap.at;
-    const distance = Math.hypot(nextTap.x - previousTap.x, nextTap.y - previousTap.y);
-
-    if (diffMs <= SHORTS_DOUBLE_TAP_MS && distance <= SHORTS_DOUBLE_TAP_DISTANCE_PX) {
+    if (
+      previousTap &&
+      nextTap.at - previousTap.at <= SHORTS_DOUBLE_TAP_MS &&
+      Math.hypot(nextTap.x - previousTap.x, nextTap.y - previousTap.y) <= SHORTS_DOUBLE_TAP_DISTANCE_PX
+    ) {
+      if (tapTimerRef.current) {
+        clearTimeout(tapTimerRef.current);
+        tapTimerRef.current = null;
+      }
       triggerLike(video);
       trackEvent("short_double_tap_like", {
         video_id: video.id,
@@ -504,7 +523,17 @@ export function ShortsPage() {
         surface: "shorts_feed"
       });
       lastTapRef.current = null;
+      return;
     }
+
+    if (tapTimerRef.current) {
+      clearTimeout(tapTimerRef.current);
+    }
+
+    tapTimerRef.current = window.setTimeout(() => {
+      togglePlayback(video);
+      tapTimerRef.current = null;
+    }, SHORTS_SINGLE_TAP_DELAY_MS);
   }
 
   function addQuickReaction(videoId: string, emoji: string) {
@@ -540,10 +569,13 @@ export function ShortsPage() {
   }
 
   const activeVideo = videos[activeIndex];
-  const activeReactions = activeVideo ? getReactionStateForVideo(reactionState, activeVideo.id) : getDefaultReactionState();
+  const activeReactions = activeVideo
+    ? getReactionStateForVideo(reactionState, activeVideo.id)
+    : getDefaultReactionState();
   const drawerVideo = drawerVideoId ? videos.find((video) => video.id === drawerVideoId) ?? null : null;
-  const drawerReactions = drawerVideo ? getReactionStateForVideo(reactionState, drawerVideo.id) : getDefaultReactionState();
-
+  const drawerReactions = drawerVideo
+    ? getReactionStateForVideo(reactionState, drawerVideo.id)
+    : getDefaultReactionState();
   const activeProgress = useMemo(() => {
     if (!videos.length) {
       return 0;
@@ -552,272 +584,299 @@ export function ShortsPage() {
     return ((activeIndex + 1) / videos.length) * 100;
   }, [activeIndex, videos.length]);
 
-  return (
-    <AppShell>
-      <div className="page-stack pb-20 lg:pb-8">
-        <section className="page-hero overflow-hidden border-b border-brand-100/80 bg-white/96 sm:border">
-          <div className="bg-gradient-to-br from-stone-950 via-stone-900 to-brand-950 px-4 py-5 text-white sm:px-6 sm:py-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-2xl">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">Shorts</p>
-                <h1 className="page-title mt-1 text-white">Swipeable clips, HabeshaGram style</h1>
-                <p className="mt-3 text-sm leading-6 text-white/82 sm:text-[15px]">
-                  A dedicated admin-curated short-form lane with persistent sound state, smoother next-clip loading, double-tap likes, and an in-feed reactions drawer.
-                </p>
-              </div>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black px-3 py-3 text-white sm:px-4">
+        <div className="mx-auto max-w-md space-y-3">
+          {[1, 2].map((item) => (
+            <div
+              key={item}
+              className="min-h-[calc(100dvh-1.5rem)] animate-pulse rounded-[32px] bg-white/10"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
-              <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
-                  <Clapperboard className="h-3.5 w-3.5" />
-                  {videos.length || 0} clips loaded
-                </span>
-                <Link
-                  href="/"
-                  className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/16"
-                >
-                  Back home
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2].map((item) => (
-              <div key={item} className="surface-panel overflow-hidden rounded-[32px] p-3 sm:p-4">
-                <div className="min-h-[calc(100dvh-11rem)] animate-pulse rounded-[28px] bg-brand-100/80" />
-              </div>
-            ))}
-          </div>
-        ) : !videos.length ? (
+  if (!videos.length) {
+    return (
+      <div className="min-h-screen bg-black px-4 py-10">
+        <div className="mx-auto max-w-xl">
           <EmptyState
             title="No shorts available yet"
             description="Curated shorts will appear here once admins publish vertical-friendly short-form clips into the dedicated shorts collection."
           />
-        ) : (
-          <>
-            <div className="surface-panel sticky top-[74px] z-20 overflow-hidden rounded-[24px] px-4 py-3 shadow-soft sm:top-[82px]">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">Shorts feed</p>
-                  <p className="truncate text-sm text-stone-600">
-                    {activeIndex + 1} of {videos.length}
-                    {activeVideo ? ` · ${activeVideo.title}` : ""}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsMuted((current) => !current)}
-                    className="inline-flex min-h-10 items-center gap-2 rounded-full border border-brand-100 bg-white px-3.5 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-brand-800 shadow-sm transition hover:bg-brand-50"
-                  >
-                    {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                    {isMuted ? "Muted" : "Sound on"}
-                  </button>
-                </div>
-              </div>
-              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-brand-100/80">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-brand-500 via-orange-400 to-brand-300 transition-[width] duration-300"
-                  style={{ width: `${activeProgress}%` }}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-black text-white">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-40 h-32 bg-gradient-to-b from-black/70 via-black/18 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-40 h-36 bg-gradient-to-t from-black/82 via-black/26 to-transparent" />
+
+      <div className="absolute inset-x-0 top-0 z-50 px-3 pb-2 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-4">
+        <div className="mx-auto flex max-w-md items-start justify-between gap-3">
+          <Link
+            href="/"
+            className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/12 bg-black/28 text-white backdrop-blur-xl transition hover:bg-black/40"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+
+          <div className="min-w-0 flex-1 rounded-full border border-white/10 bg-black/28 px-4 py-2.5 text-center backdrop-blur-xl">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">Shorts</p>
+            <p className="truncate text-sm font-semibold text-white/92">
+              {activeIndex + 1} of {videos.length}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsMuted((current) => !current)}
+            className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/12 bg-black/28 text-white backdrop-blur-xl transition hover:bg-black/40"
+          >
+            {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+          </button>
+        </div>
+
+        <div className="mx-auto mt-3 max-w-md">
+          <div className="h-1.5 overflow-hidden rounded-full bg-white/12">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-brand-500 via-orange-400 to-brand-200 transition-[width] duration-300"
+              style={{ width: `${activeProgress}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div
+        ref={scrollRef}
+        className="h-screen snap-y snap-mandatory overflow-y-auto overscroll-y-contain no-scrollbar touch-pan-y"
+      >
+        {videos.map((video, index) => {
+          const isActive = index === activeIndex;
+          const shouldPreload = index === activeIndex || index === activeIndex + 1 || index === activeIndex - 1;
+          const isPaused = pausedShortId === video.id;
+          const reactions = getReactionStateForVideo(reactionState, video.id);
+
+          return (
+            <article
+              key={video.id}
+              ref={(node) => {
+                cardRefs.current[index] = node;
+              }}
+              data-index={index}
+              className="relative h-screen snap-start"
+            >
+              <div className="absolute inset-0">
+                <MediaLayer
+                  video={video}
+                  isActive={isActive}
+                  shouldPreload={shouldPreload}
+                  isMuted={isMuted}
+                  isPaused={isPaused}
+                  videoRef={(node) => {
+                    videoRefs.current[video.id] = node;
+                  }}
                 />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_20%,rgba(0,0,0,0.16)_68%,rgba(0,0,0,0.34)_100%)]" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/82 via-black/18 to-black/10" />
+                <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/46 via-black/14 to-transparent" />
               </div>
-            </div>
 
-            <div className="max-h-[calc(100dvh-8.75rem)] snap-y snap-mandatory overflow-y-auto no-scrollbar">
-              <div className="space-y-4">
-                {videos.map((video, index) => {
-                  const isActive = index === activeIndex;
-                  const shouldPreloadNext = index === activeIndex + 1;
-                  const reactions = getReactionStateForVideo(reactionState, video.id);
+              {isActive ? (
+                <button
+                  type="button"
+                  aria-label="Toggle playback or double tap to like"
+                  onPointerUp={(event) => handleVideoTap(video, event)}
+                  className="absolute inset-0 z-[5] block h-full w-full"
+                />
+              ) : (
+                <button
+                  type="button"
+                  aria-label={`Open ${video.title}`}
+                  onClick={() => scrollToIndex(index)}
+                  className="absolute inset-0 z-[5] block h-full w-full"
+                />
+              )}
 
-                  return (
-                    <article
-                      key={video.id}
-                      ref={(node) => {
-                        cardRefs.current[index] = node;
-                      }}
-                      data-index={index}
-                      className="snap-start"
-                    >
-                      <div className="surface-panel overflow-hidden rounded-[32px] p-2.5 sm:p-3">
-                        <div className="relative min-h-[calc(100dvh-9.5rem)] overflow-hidden rounded-[28px] bg-black shadow-soft">
-                          <ShortFeedMedia
-                            video={video}
-                            isActive={isActive}
-                            shouldPreloadNext={shouldPreloadNext}
-                            isMuted={isMuted}
-                          />
+              {heartBurstVideoId === video.id ? (
+                <div className="pointer-events-none absolute inset-0 z-[7] flex items-center justify-center">
+                  <div className="animate-[ping_700ms_cubic-bezier(0.22,1,0.36,1)] rounded-full bg-white/12 p-10">
+                    <Heart className="h-16 w-16 fill-white text-white drop-shadow-[0_18px_36px_rgba(0,0,0,0.38)]" />
+                  </div>
+                </div>
+              ) : null}
 
-                          {!isActive ? (
-                            <button
-                              type="button"
-                              onClick={() => scrollToIndex(index)}
-                              className="absolute inset-0 block h-full w-full text-left"
-                            >
-                              <img
-                                src={video.thumbnailURL}
-                                alt={video.title}
-                                loading={shouldPreloadNext ? "eager" : "lazy"}
-                                decoding="async"
-                                className="h-full w-full object-cover transition duration-500"
-                              />
-                            </button>
-                          ) : null}
+              {isActive && showPauseFlash ? (
+                <div className="pointer-events-none absolute inset-0 z-[7] flex items-center justify-center">
+                  <div className="rounded-full bg-black/34 p-5 backdrop-blur-xl">
+                    {isPaused ? (
+                      <Play className="h-10 w-10 fill-white text-white" />
+                    ) : (
+                      <Pause className="h-10 w-10 fill-white text-white" />
+                    )}
+                  </div>
+                </div>
+              ) : null}
 
-                          {isActive ? (
-                            <button
-                              type="button"
-                              aria-label="Double tap to like this short"
-                              onPointerUp={(event) => handleVideoTap(video, event)}
-                              className="absolute inset-0 z-[1] block h-full w-full"
-                            />
-                          ) : null}
+              <div className="absolute inset-x-0 bottom-0 z-[8] px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-4">
+                <div className="mx-auto max-w-md">
+                  <div className="grid items-end gap-4 md:grid-cols-[minmax(0,1fr)_64px]">
+                    <div className="min-w-0">
+                      <div className="mb-3 flex flex-wrap gap-2">
+                        <span className="rounded-full bg-white/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-xl">
+                          {video.category}
+                        </span>
+                        <span className="rounded-full bg-black/35 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur-xl">
+                          {video.duration}
+                        </span>
+                        <span className="rounded-full bg-black/35 px-3 py-1 text-[11px] font-semibold text-white/82 backdrop-blur-xl">
+                          {video.publishLabel ?? "Fresh pick"}
+                        </span>
+                      </div>
 
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/28 to-transparent" />
-                          <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/45 via-black/10 to-transparent" />
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/68">
+                        {video.source}
+                      </p>
+                      <h1 className="mt-2 line-clamp-2 text-[1.9rem] font-black tracking-[-0.045em] text-white sm:text-[2.15rem]">
+                        {video.title}
+                      </h1>
+                      <p className="mt-3 max-w-[26rem] text-sm leading-6 text-white/85 sm:text-[15px]">
+                        {video.summary}
+                      </p>
 
-                          {heartBurstVideoId === video.id ? (
-                            <div className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center">
-                              <div className="animate-[ping_700ms_cubic-bezier(0.22,1,0.36,1)] rounded-full bg-white/18 p-10">
-                                <Heart className="h-16 w-16 fill-white text-white drop-shadow-[0_10px_26px_rgba(0,0,0,0.35)]" />
-                              </div>
-                            </div>
-                          ) : null}
+                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                        {video.teamTag ? (
+                          <Link
+                            href={`/football/${getTeamSlug(video.teamTag)}`}
+                            className="pointer-events-auto rounded-full bg-white/12 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-xl transition hover:bg-white/18"
+                          >
+                            {video.teamTag}
+                          </Link>
+                        ) : null}
+                        {video.hashtags?.slice(0, 4).map((tag) => (
+                          <Link
+                            key={tag}
+                            href={`/topic/${tag}`}
+                            className="pointer-events-auto rounded-full bg-white/12 px-3 py-1.5 text-xs font-semibold text-white/90 backdrop-blur-xl transition hover:bg-white/18"
+                          >
+                            #{tag}
+                          </Link>
+                        ))}
+                      </div>
 
-                          <div className="absolute inset-x-4 top-4 z-[3] flex items-start justify-between gap-3 sm:inset-x-5">
-                            <div className="flex flex-wrap gap-2">
-                              <span className="rounded-full bg-white/14 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
-                                {video.category}
-                              </span>
-                              <span className="rounded-full bg-black/35 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur">
-                                {video.duration}
-                              </span>
-                            </div>
-                            <span className="rounded-full bg-white/14 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
-                              Clip {index + 1}
-                            </span>
-                          </div>
+                      <div className="pointer-events-auto mt-4 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => togglePlayback(video)}
+                          className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-soft transition hover:bg-white/92 active:scale-[0.98]"
+                        >
+                          {isPaused ? (
+                            <Play className="h-4 w-4 fill-current" />
+                          ) : (
+                            <Pause className="h-4 w-4 fill-current" />
+                          )}
+                          {isPaused ? "Play" : "Pause"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDrawerVideoId(video.id)}
+                          className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/14 bg-white/12 px-4 py-2 text-sm font-semibold text-white backdrop-blur-xl transition hover:bg-white/18"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          React
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShareVideoId((current) => (current === video.id ? null : video.id))}
+                          className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/14 bg-white/12 px-4 py-2 text-sm font-semibold text-white backdrop-blur-xl transition hover:bg-white/18"
+                        >
+                          <Share2 className="h-4 w-4" />
+                          Share
+                        </button>
+                      </div>
 
-                          <div className="absolute inset-x-4 bottom-4 z-[3] sm:inset-x-5 sm:bottom-5">
-                            <div className="grid items-end gap-4 xl:grid-cols-[minmax(0,1fr)_5rem]">
-                              <div className="space-y-4">
-                                <div className="max-w-2xl">
-                                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/72">{video.source}</p>
-                                  <h2 className="mt-2 line-clamp-2 text-2xl font-black tracking-tight text-white sm:text-[2rem]">
-                                    {video.title}
-                                  </h2>
-                                  <p className="mt-3 line-clamp-3 max-w-xl text-sm leading-6 text-white/86 sm:text-[15px]">
-                                    {video.summary}
-                                  </p>
-                                </div>
-
-                                <div className="flex flex-wrap gap-2 text-xs font-medium text-white/85">
-                                  <span className="rounded-full bg-white/12 px-3 py-1.5 backdrop-blur">
-                                    {video.publishLabel ?? "Fresh pick"}
-                                  </span>
-                                  {video.teamTag ? (
-                                    <Link
-                                      href={`/football/${getTeamSlug(video.teamTag)}`}
-                                      className="pointer-events-auto rounded-full bg-white/12 px-3 py-1.5 font-semibold backdrop-blur transition hover:bg-white/20"
-                                    >
-                                      {video.teamTag}
-                                    </Link>
-                                  ) : null}
-                                </div>
-
-                                {video.hashtags?.length ? (
-                                  <div className="flex flex-wrap gap-2">
-                                    {video.hashtags.slice(0, 4).map((tag) => (
-                                      <Link
-                                        key={tag}
-                                        href={`/topic/${tag}`}
-                                        className="pointer-events-auto rounded-full bg-white/12 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur transition hover:bg-white/20"
-                                      >
-                                        #{tag}
-                                      </Link>
-                                    ))}
-                                  </div>
-                                ) : null}
-
-                                <div className="pointer-events-auto flex flex-wrap gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => scrollToIndex(Math.min(index + 1, videos.length - 1))}
-                                    className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-soft transition hover:scale-[1.01] hover:bg-white/92 active:scale-[0.98]"
-                                  >
-                                    <Play className="h-4 w-4 fill-current" />
-                                    {index === videos.length - 1 ? "Replay current" : "Next clip"}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setDrawerVideoId(video.id)}
-                                    className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/16 bg-white/12 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/18"
-                                  >
-                                    <MessageCircle className="h-4 w-4" />
-                                    React
-                                  </button>
-                                  <Link
-                                    href={`/shorts/${video.id}`}
-                                    className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/16 bg-white/12 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/18"
-                                  >
-                                    Full page
-                                    <ExternalLink className="h-3.5 w-3.5" />
-                                  </Link>
-                                </div>
-                              </div>
-
-                              <div className="pointer-events-auto xl:justify-self-end">
-                                <ShortsActionRail
-                                  video={video}
-                                  reactions={reactions}
-                                  canGoUp={index > 0}
-                                  canGoDown={index < videos.length - 1}
-                                  onUp={() => scrollToIndex(index - 1)}
-                                  onDown={() => scrollToIndex(index + 1)}
-                                  onOpenDrawer={() => setDrawerVideoId(video.id)}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 flex flex-col gap-3 rounded-[24px] bg-gradient-to-r from-white to-brand-50/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="min-w-0">
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-700">Share this clip</p>
-                            <p className="truncate text-sm text-stone-600">Send people straight to the dedicated HabeshaGram short route.</p>
-                          </div>
+                      {shareVideoId === video.id ? (
+                        <div className="pointer-events-auto mt-3 w-fit rounded-[24px] border border-white/12 bg-black/28 px-3 py-3 backdrop-blur-xl">
                           <ShareActions
                             path={`/shorts/${video.id}`}
                             title={video.title}
                             text={video.summary}
+                            compact
                           />
                         </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            </div>
-          </>
-        )}
+                      ) : null}
+                    </div>
 
-        {drawerVideo ? (
-          <ShortsDrawer
-            video={drawerVideo}
-            reactions={drawerReactions}
-            draftComment={draftComment}
-            onChangeDraft={setDraftComment}
-            onClose={() => {
-              setDrawerVideoId(null);
-              setDraftComment("");
-            }}
-            onSubmitComment={() => submitComment(drawerVideo.id)}
-            onReact={(emoji) => addQuickReaction(drawerVideo.id, emoji)}
-          />
-        ) : null}
+                    <div className="pointer-events-auto flex flex-row gap-3 md:flex-col md:items-center md:justify-end">
+                      <button
+                        type="button"
+                        onClick={() => triggerLike(video)}
+                        className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-white/12 text-white shadow-lg backdrop-blur-xl transition hover:bg-white/18"
+                      >
+                        <div className="relative">
+                          <Heart className={cn("h-5 w-5", reactions.liked && "fill-white text-white")} />
+                          {reactions.likeCount > 0 ? (
+                            <span className="absolute -right-3 -top-3 rounded-full bg-white/90 px-1.5 py-0.5 text-[10px] font-bold text-ink">
+                              {reactions.likeCount}
+                            </span>
+                          ) : null}
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDrawerVideoId(video.id)}
+                        className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-white/12 text-white shadow-lg backdrop-blur-xl transition hover:bg-white/18"
+                      >
+                        <div className="relative">
+                          <MessageCircle className="h-5 w-5" />
+                          {reactions.comments.length > 0 ? (
+                            <span className="absolute -right-3 -top-3 rounded-full bg-white/90 px-1.5 py-0.5 text-[10px] font-bold text-ink">
+                              {reactions.comments.length}
+                            </span>
+                          ) : null}
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsMuted((current) => !current)}
+                        className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-white/12 text-white shadow-lg backdrop-blur-xl transition hover:bg-white/18"
+                      >
+                        {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                      </button>
+                      <Link
+                        href={`/shorts/${video.id}`}
+                        className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-white/12 text-white shadow-lg backdrop-blur-xl transition hover:bg-white/18"
+                      >
+                        <ExternalLink className="h-5 w-5" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+          );
+        })}
       </div>
-    </AppShell>
+
+      {drawerVideo ? (
+        <ShortsDrawer
+          video={drawerVideo}
+          reactions={drawerReactions}
+          draftComment={draftComment}
+          onChangeDraft={setDraftComment}
+          onClose={() => {
+            setDrawerVideoId(null);
+            setDraftComment("");
+          }}
+          onSubmitComment={() => submitComment(drawerVideo.id)}
+          onReact={(emoji) => addQuickReaction(drawerVideo.id, emoji)}
+        />
+      ) : null}
+    </div>
   );
 }
