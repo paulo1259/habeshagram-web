@@ -1,7 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Clapperboard, Pencil, Save, Trash2, Upload, Video, X } from "lucide-react";
+import {
+  CheckCircle2,
+  Clapperboard,
+  Loader2,
+  Pencil,
+  Save,
+  Trash2,
+  Upload,
+  Video,
+  X,
+  AlertCircle
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { sortAdminItems } from "@/lib/admin-content";
 import { cn, createId, normalizeHashtag } from "@/lib/utils";
@@ -44,8 +55,7 @@ const ALLOWED_SHORT_VIDEO_TYPES = new Set([
 const SHORT_MAX_DURATION_SECONDS = 60;
 const SHORT_WARNING_DURATION_SECONDS = 45;
 const SHORT_MAX_HASHTAGS = 8;
-const SOURCE_PROMPT_MESSAGE =
-  "Upload a short to get started, or use the advanced external source option if needed.";
+const THUMBNAIL_TIMEOUT_MS = 4000;
 
 type ShortsFormState = {
   id: string;
@@ -70,6 +80,14 @@ type ShortMediaMetadata = {
   durationSeconds: number;
   width: number;
   height: number;
+};
+
+type StatusTone = "info" | "success" | "warning" | "error";
+
+type FlowStatus = {
+  tone: StatusTone;
+  title: string;
+  detail: string;
 };
 
 function createInitialFormState(): ShortsFormState {
@@ -145,6 +163,89 @@ function getManualDurationWarning(duration: string) {
   return null;
 }
 
+function getStatusToneClass(tone: StatusTone) {
+  if (tone === "success") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-800";
+  }
+
+  if (tone === "warning") {
+    return "border-orange-200 bg-orange-50 text-orange-800";
+  }
+
+  if (tone === "error") {
+    return "border-red-200 bg-red-50 text-red-700";
+  }
+
+  return "border-brand-200 bg-brand-50 text-brand-900";
+}
+
+function getStatusIcon(tone: StatusTone, busy = false) {
+  if (busy || tone === "info") {
+    return <Loader2 className="h-4 w-4 animate-spin" />;
+  }
+
+  if (tone === "success") {
+    return <CheckCircle2 className="h-4 w-4" />;
+  }
+
+  return <AlertCircle className="h-4 w-4" />;
+}
+
+function mapUploadErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : "Unable to process this short video.";
+
+  if (message.toLowerCase().includes("storage")) {
+    return {
+      title: "Storage error",
+      detail: message
+    };
+  }
+
+  if (
+    message.toLowerCase().includes("duration") ||
+    message.toLowerCase().includes("vertical") ||
+    message.toLowerCase().includes("landscape")
+  ) {
+    return {
+      title: "Validation failed",
+      detail: message
+    };
+  }
+
+  return {
+    title: "Upload failed",
+    detail: message
+  };
+}
+
+function mapSaveErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : "Unable to save this short.";
+
+  if (message.toLowerCase().includes("storage")) {
+    return {
+      title: "Storage error",
+      detail: message
+    };
+  }
+
+  if (
+    message.toLowerCase().includes("permission") ||
+    message.toLowerCase().includes("firestore") ||
+    message.toLowerCase().includes("database") ||
+    message.toLowerCase().includes("admin request")
+  ) {
+    return {
+      title: "Database save error",
+      detail: message
+    };
+  }
+
+  return {
+    title: "Publish failed",
+    detail: message
+  };
+}
+
 async function extractVideoMetadata(file: File): Promise<ShortMediaMetadata> {
   const objectUrl = URL.createObjectURL(file);
 
@@ -165,6 +266,7 @@ async function extractVideoMetadata(file: File): Promise<ShortMediaMetadata> {
 
       video.onerror = () => reject(new Error("Could not read the selected video file."));
       video.src = objectUrl;
+      video.load();
     });
 
     return metadata;
@@ -177,30 +279,38 @@ async function generateShortThumbnail(file: File): Promise<Blob | null> {
   const objectUrl = URL.createObjectURL(file);
 
   try {
-    return await new Promise<Blob | null>((resolve) => {
-      const video = document.createElement("video");
-      video.preload = "auto";
-      video.muted = true;
-      video.playsInline = true;
+    return await Promise.race([
+      new Promise<Blob | null>((resolve) => {
+        const video = document.createElement("video");
+        video.preload = "auto";
+        video.muted = true;
+        video.playsInline = true;
 
-      video.onloadeddata = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const context = canvas.getContext("2d");
+        const finish = (value: Blob | null) => resolve(value);
 
-        if (!context) {
-          resolve(null);
-          return;
-        }
+        video.onloadeddata = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const context = canvas.getContext("2d");
 
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.82);
-      };
+          if (!context) {
+            finish(null);
+            return;
+          }
 
-      video.onerror = () => resolve(null);
-      video.src = objectUrl;
-    });
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob((blob) => finish(blob), "image/jpeg", 0.82);
+        };
+
+        video.onerror = () => finish(null);
+        video.src = objectUrl;
+        video.load();
+      }),
+      new Promise<null>((resolve) => {
+        window.setTimeout(() => resolve(null), THUMBNAIL_TIMEOUT_MS);
+      })
+    ]);
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
@@ -209,6 +319,7 @@ async function generateShortThumbnail(file: File): Promise<Blob | null> {
 export function AdminShortsManager() {
   const { currentUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const statusRef = useRef<HTMLDivElement | null>(null);
   const [items, setItems] = useState<CuratedShortItem[]>([]);
   const [formState, setFormState] = useState<ShortsFormState>(createInitialFormState);
   const [hashtags, setHashtags] = useState<string[]>([]);
@@ -224,18 +335,24 @@ export function AdminShortsManager() {
   const [detectedVideoMeta, setDetectedVideoMeta] = useState<ShortMediaMetadata | null>(null);
   const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
   const [showAdvancedSource, setShowAdvancedSource] = useState(false);
+  const [flowStatus, setFlowStatus] = useState<FlowStatus | null>(null);
 
-  const submitLabel = useMemo(
-    () => (editingId ? "Save short" : "Publish short"),
-    [editingId]
-  );
+  const submitLabel = useMemo(() => {
+    if (isUploading) {
+      return "Uploading short...";
+    }
+
+    if (isSaving) {
+      return "Publishing short...";
+    }
+
+    return editingId ? "Save short" : "Publish short";
+  }, [editingId, isSaving, isUploading]);
 
   const durationWarning = useMemo(
     () => getManualDurationWarning(formState.duration),
     [formState.duration]
   );
-
-  const isSourcePromptMessage = error === SOURCE_PROMPT_MESSAGE;
 
   useEffect(() => {
     let isMounted = true;
@@ -275,9 +392,21 @@ export function AdminShortsManager() {
     };
   }, [localPreviewUrl]);
 
-  function resetUiState() {
+  function scrollStatusIntoView() {
+    window.setTimeout(() => {
+      statusRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 0);
+  }
+
+  function updateFlowStatus(next: FlowStatus) {
+    setFlowStatus(next);
+    scrollStatusIntoView();
+  }
+
+  function clearFeedback() {
     setMessage(null);
     setError(null);
+    setFlowStatus(null);
   }
 
   function resetForm() {
@@ -288,6 +417,7 @@ export function AdminShortsManager() {
     setUploadWarning(null);
     setDetectedVideoMeta(null);
     setShowAdvancedSource(false);
+    setFlowStatus(null);
     if (localPreviewUrl) {
       URL.revokeObjectURL(localPreviewUrl);
       setLocalPreviewUrl(null);
@@ -323,28 +453,51 @@ export function AdminShortsManager() {
   }
 
   async function handleVideoFileChange(file: File | null) {
-    if (!file) {
+    if (!file || isUploading || isSaving) {
       return;
     }
 
-    resetUiState();
+    clearFeedback();
     setUploadWarning(null);
 
     if (!currentUser) {
-      setError("You need an active admin session before uploading shorts.");
+      const nextError = "You need an active admin session before uploading shorts.";
+      setError(nextError);
+      updateFlowStatus({
+        tone: "error",
+        title: "Upload failed",
+        detail: nextError
+      });
       return;
     }
 
     if (!ALLOWED_SHORT_VIDEO_TYPES.has(file.type)) {
-      setError("Please upload an MP4, WebM, MOV, or M4V short video.");
+      const nextError = "Please upload an MP4, WebM, MOV, or M4V short video.";
+      setError(nextError);
+      updateFlowStatus({
+        tone: "error",
+        title: "Validation failed",
+        detail: nextError
+      });
       return;
     }
 
     setIsUploading(true);
 
     try {
+      updateFlowStatus({
+        tone: "info",
+        title: "Reading short...",
+        detail: "Extracting video metadata."
+      });
       const metadata = await extractVideoMetadata(file);
       setDetectedVideoMeta(metadata);
+
+      updateFlowStatus({
+        tone: "info",
+        title: "Validating short...",
+        detail: "Checking duration and vertical-friendly framing."
+      });
 
       if (!Number.isFinite(metadata.durationSeconds)) {
         throw new Error("The selected video is missing a readable duration.");
@@ -369,26 +522,48 @@ export function AdminShortsManager() {
       setLocalPreviewUrl(previewUrl);
 
       const currentId = editingId ?? formState.id ?? createId("short");
-      const [videoUpload, thumbnailBlob] = await Promise.all([
-        uploadShortVideo({
-          file,
-          userId: currentUser.id,
-          shortId: currentId
-        }),
-        generateShortThumbnail(file)
-      ]);
+
+      updateFlowStatus({
+        tone: "info",
+        title: "Uploading short...",
+        detail: "Sending the video to storage."
+      });
+      const videoUpload = await uploadShortVideo({
+        file,
+        userId: currentUser.id,
+        shortId: currentId
+      });
 
       let thumbnailURL = formState.thumbnailURL;
       let thumbnailStoragePath = formState.thumbnailStoragePath;
 
+      updateFlowStatus({
+        tone: "info",
+        title: "Generating thumbnail...",
+        detail: "Creating a preview frame. If this fails, publish can still continue."
+      });
+      const thumbnailBlob = await generateShortThumbnail(file);
+
       if (thumbnailBlob) {
-        const thumbnailUpload = await uploadShortThumbnail({
-          blob: thumbnailBlob,
-          userId: currentUser.id,
-          shortId: currentId
-        });
-        thumbnailURL = thumbnailUpload.url;
-        thumbnailStoragePath = thumbnailUpload.storagePath;
+        try {
+          const thumbnailUpload = await uploadShortThumbnail({
+            blob: thumbnailBlob,
+            userId: currentUser.id,
+            shortId: currentId
+          });
+          thumbnailURL = thumbnailUpload.url;
+          thumbnailStoragePath = thumbnailUpload.storagePath;
+        } catch (thumbnailError) {
+          setUploadWarning(
+            thumbnailError instanceof Error
+              ? `Thumbnail fallback: ${thumbnailError.message}`
+              : "Thumbnail fallback: the short can still be published without a generated thumbnail."
+          );
+        }
+      } else {
+        setUploadWarning(
+          "Thumbnail fallback: preview generation was skipped or timed out. You can still publish the short."
+        );
       }
 
       setFormState((current) => ({
@@ -404,8 +579,20 @@ export function AdminShortsManager() {
         duration: formatDuration(metadata.durationSeconds),
         vertical: true
       }));
+
+      updateFlowStatus({
+        tone: "success",
+        title: "Upload complete",
+        detail: "Your short is uploaded and ready to publish."
+      });
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "Could not process this short video.");
+      const mapped = mapUploadErrorMessage(nextError);
+      setError(mapped.detail);
+      updateFlowStatus({
+        tone: "error",
+        title: mapped.title,
+        detail: mapped.detail
+      });
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -424,7 +611,7 @@ export function AdminShortsManager() {
     }
 
     if (!formState.videoUrl.trim() && !formState.embedUrl.trim()) {
-      return SOURCE_PROMPT_MESSAGE;
+      return "Upload a short to get started, or use the advanced external source option if needed.";
     }
 
     if (!formState.duration.trim()) {
@@ -449,15 +636,30 @@ export function AdminShortsManager() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    resetUiState();
+
+    if (isUploading || isSaving) {
+      return;
+    }
+
+    clearFeedback();
 
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
+      updateFlowStatus({
+        tone: "error",
+        title: "Validation failed",
+        detail: validationError
+      });
       return;
     }
 
     setIsSaving(true);
+    updateFlowStatus({
+      tone: "info",
+      title: "Saving short...",
+      detail: "Publishing the curatedShorts record."
+    });
 
     try {
       const payload = {
@@ -489,20 +691,31 @@ export function AdminShortsManager() {
       setItems(nextItems);
       setMessage(
         response.message ??
-          (editingId
-            ? "Short updated successfully."
-            : "Short published successfully.")
+          (editingId ? "Short updated successfully." : "Short published successfully.")
       );
+      updateFlowStatus({
+        tone: "success",
+        title: "Published successfully",
+        detail: editingId
+          ? "Your short changes are now live."
+          : "Your short is now live in the curated shorts feed."
+      });
       resetForm();
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "Could not save this short.");
+      const mapped = mapSaveErrorMessage(nextError);
+      setError(mapped.detail);
+      updateFlowStatus({
+        tone: "error",
+        title: mapped.title,
+        detail: mapped.detail
+      });
     } finally {
       setIsSaving(false);
     }
   }
 
   async function handleDelete(id: string) {
-    resetUiState();
+    clearFeedback();
 
     if (!window.confirm("Delete this short from the live curated shorts collection?")) {
       return;
@@ -525,7 +738,7 @@ export function AdminShortsManager() {
   }
 
   function handleEdit(item: CuratedShortItem) {
-    resetUiState();
+    clearFeedback();
     setEditingId(item.id);
     setFormState({
       id: item.id,
@@ -568,14 +781,7 @@ export function AdminShortsManager() {
         />
 
         {error ? (
-          <div
-            className={cn(
-              "rounded-[24px] px-4 py-3 text-sm",
-              isSourcePromptMessage
-                ? "border border-brand-100 bg-brand-50/70 text-stone-700"
-                : "border border-red-200 bg-red-50 text-red-700"
-            )}
-          >
+          <div className="rounded-[24px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         ) : null}
@@ -669,7 +875,7 @@ export function AdminShortsManager() {
             type="button"
             variant="outline"
             onClick={() => {
-              resetUiState();
+              clearFeedback();
               resetForm();
             }}
             disabled={isSaving || isUploading}
@@ -1019,16 +1225,42 @@ export function AdminShortsManager() {
             </div>
           ) : null}
 
+          <div
+            ref={statusRef}
+            className={cn(
+              "rounded-[24px] border px-4 py-3 text-sm shadow-sm transition",
+              flowStatus ? getStatusToneClass(flowStatus.tone) : "border-brand-100 bg-white text-stone-600"
+            )}
+          >
+            {flowStatus ? (
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5">{getStatusIcon(flowStatus.tone, isUploading || isSaving)}</div>
+                <div>
+                  <p className="font-semibold">{flowStatus.title}</p>
+                  <p className="mt-1 leading-6">{flowStatus.detail}</p>
+                </div>
+              </div>
+            ) : (
+              <p className="leading-6">
+                Publish progress and validation feedback will appear here so mobile admins never have to guess what happened.
+              </p>
+            )}
+          </div>
+
           <div className="flex gap-3 pt-2">
             <Button type="submit" disabled={isSaving || isUploading}>
-              <Save className="mr-2 h-4 w-4" />
-              {isSaving ? "Saving..." : submitLabel}
+              {(isSaving || isUploading) ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              {submitLabel}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => {
-                resetUiState();
+                clearFeedback();
                 resetForm();
               }}
               disabled={isSaving || isUploading}
