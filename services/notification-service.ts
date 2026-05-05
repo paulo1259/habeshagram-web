@@ -78,6 +78,27 @@ function mapNotification(
   };
 }
 
+async function requestPushDelivery(recipientUserId: string, notificationId: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    await fetch("/api/push/notify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        recipientUserId,
+        notificationId
+      })
+    });
+  } catch {
+    // Push delivery is best-effort only.
+  }
+}
+
 export async function getNotifications(userId: string): Promise<NotificationItem[]> {
   if (!userId) {
     return [];
@@ -296,6 +317,7 @@ export async function createNotification(input: {
         }),
         "Timed out while creating the notification."
       );
+      void requestPushDelivery(input.recipientUserId, notificationRef.id);
       return;
     } catch {
       return;
