@@ -18,8 +18,8 @@ export default function CreatePage() {
             <h1 className="mt-2 text-2xl font-black tracking-tight text-ink">Start a new post</h1>
             <p className="mt-2 text-sm leading-6 text-stone-600">
               Text is required. Adding an image is optional. New posts are saved to Firebase
-              Firestore, selected images are uploaded to Firebase Storage, and optional football
-              team tags can send the post straight into the matching fan zone.
+              Firestore, selected images are uploaded to Firebase Storage, and optional team or
+              topic tags can send the post straight into the matching conversation lane.
             </p>
             {!currentUser ? (
               <p className="mt-4 text-sm text-brand-800">

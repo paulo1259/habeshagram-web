@@ -233,7 +233,7 @@ export default function HomePage() {
                 {mmaHub.featuredFight.weightClass}
               </p>
               <p className="mt-2 text-sm text-white/88">
-                Featured fight, cleaner cards, real recent results, and live-room energy around major nights.
+                Next big fight, curated cards, recent results, and the live-room prompt people can actually use on major nights.
               </p>
             </div>
             <Link

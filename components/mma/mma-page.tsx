@@ -45,7 +45,7 @@ export function MMAPage() {
                 </div>
                 <div className="rounded-[24px] bg-white/12 px-4 py-3 backdrop-blur">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">Focus</p>
-                  <p className="mt-2 text-xl font-black">MMA</p>
+                  <p className="mt-2 text-xl font-black">Combat Sports</p>
                 </div>
                 <div className="col-span-2 rounded-[24px] bg-white/12 p-3 backdrop-blur">
                   <ShareActions
@@ -93,13 +93,38 @@ export function MMAPage() {
                   <p className="mt-2 text-sm leading-6 text-stone-600">{featured.blueCorner.summary}</p>
                 </div>
               </div>
+              <div className="mt-4 rounded-[22px] bg-white px-4 py-4 shadow-sm">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">Main card pulse</p>
+                <div className="mt-3 space-y-3">
+                  {featured.mainCardFights.map((fight) => (
+                    <div key={fight.id}>
+                      <p className="text-sm font-bold text-ink">{fight.fighterAName} vs {fight.fighterBName}</p>
+                      <p className="text-xs text-stone-500">
+                        {fight.weightClass}
+                        {fight.stakes ? ` • ${fight.stakes}` : ""}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {featured.discussionPrompt ? (
+                <div className="mt-4 rounded-[22px] bg-brand-50 px-4 py-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-700">Discussion prompt</p>
+                  <p className="mt-2 text-sm leading-6 text-brand-950">{featured.discussionPrompt}</p>
+                  {featured.relatedRoomTitle ? (
+                    <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-brand-800">
+                      Room tonight: {featured.relatedRoomTitle}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
             </article>
 
             <article className="rounded-[26px] border border-brand-100/80 bg-white p-5 shadow-sm">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">Fighter spotlight</p>
               <p className="mt-3 text-2xl font-black tracking-tight text-ink">{mmaHub.fighterSpotlight.name}</p>
               <p className="mt-2 text-sm font-semibold text-brand-800">{mmaHub.fighterSpotlight.weightClass}</p>
-              <p className="mt-1 text-sm text-stone-500">{mmaHub.fighterSpotlight.record} · {mmaHub.fighterSpotlight.country}</p>
+              <p className="mt-1 text-sm text-stone-500">{mmaHub.fighterSpotlight.record} • {mmaHub.fighterSpotlight.country}</p>
               <p className="mt-3 text-sm leading-6 text-stone-600">{mmaHub.fighterSpotlight.summary}</p>
             </article>
           </div>
@@ -117,14 +142,36 @@ export function MMAPage() {
               <article key={card.id} className="rounded-[24px] border border-brand-100/80 bg-white px-4 py-4 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                   <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-800">
-                    Upcoming
+                    {card.promotion}
                   </span>
                   <span className="text-xs font-medium text-stone-500">{card.dateLabel}</span>
                 </div>
-                <p className="mt-3 text-lg font-black tracking-tight text-ink">{card.title}</p>
+                <p className="mt-3 text-lg font-black tracking-tight text-ink">{card.eventName}</p>
                 <p className="mt-2 text-sm font-semibold text-brand-800">{card.headlineFight}</p>
                 <p className="mt-2 text-sm text-stone-600">{card.venue}</p>
                 <p className="mt-3 text-sm leading-6 text-stone-600">{card.note}</p>
+                <div className="mt-4 space-y-3">
+                  {card.mainCardFights.map((fight) => (
+                    <div key={fight.id}>
+                      <p className="text-sm font-bold text-ink">{fight.fighterAName} vs {fight.fighterBName}</p>
+                      <p className="text-xs text-stone-500">
+                        {fight.weightClass}
+                        {fight.stakes ? ` • ${fight.stakes}` : ""}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                {card.discussionPrompt ? (
+                  <div className="mt-4 rounded-[18px] bg-brand-50 px-3 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-700">Fight-week angle</p>
+                    <p className="mt-2 text-sm leading-6 text-brand-950">{card.discussionPrompt}</p>
+                    {card.relatedRoomTitle ? (
+                      <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-brand-800">
+                        Related room: {card.relatedRoomTitle}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>
@@ -150,7 +197,7 @@ export function MMAPage() {
                   <p className="mt-2 text-sm font-semibold text-brand-800">
                     {result.winnerName} def. {result.loserName}
                   </p>
-                  <p className="mt-2 text-sm text-stone-500">{result.timeLabel}</p>
+                  <p className="mt-2 text-sm text-stone-500">{result.timeLabel} • {result.weightClass}</p>
                   <p className="mt-3 text-sm leading-6 text-stone-600">{result.summary}</p>
                 </article>
               ))}
@@ -168,7 +215,12 @@ export function MMAPage() {
                 <article key={discussion.id} className="rounded-[22px] border border-brand-100/80 bg-white px-4 py-4 shadow-sm">
                   <p className="text-base font-black tracking-tight text-ink">{discussion.title}</p>
                   <p className="mt-2 text-sm leading-6 text-stone-600">{discussion.summary}</p>
-                  <p className="mt-3 text-xs font-medium text-stone-500">{discussion.source} · {discussion.timeAgo}</p>
+                  <p className="mt-3 text-xs font-medium text-stone-500">{discussion.source} • {discussion.timeAgo}</p>
+                  {discussion.discussionPrompt ? (
+                    <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-brand-800">
+                      {discussion.discussionPrompt}
+                    </p>
+                  ) : null}
                 </article>
               ))}
             </div>

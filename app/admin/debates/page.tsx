@@ -22,7 +22,7 @@ export default function AdminDebatesPage() {
         title="Daily debates"
         description="Only active debates rotate into the public app. Featured debates bubble up first before the daily rotation is applied."
         emptyTitle="No debates available today"
-        emptyDescription="Add a debate prompt here to power the homepage and football discovery debate cards."
+        emptyDescription="Add a debate prompt here to power the homepage and discovery debate cards."
         initialValues={{
           prompt: "",
           category: "Big Debate",

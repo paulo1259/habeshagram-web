@@ -6,6 +6,7 @@ import { mmaHub } from "@/services/mma-hub-data";
 
 export function MMATeaser() {
   const featured = mmaHub.featuredFight;
+  const nextCard = mmaHub.upcomingFightCards[0];
 
   return (
     <section className="overflow-hidden rounded-[28px] border border-brand-100/80 bg-white/96 p-4 shadow-soft sm:p-5">
@@ -14,7 +15,7 @@ export function MMATeaser() {
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">MMA</p>
           <h3 className="mt-1 text-lg font-black tracking-tight text-ink">{featured.headline}</h3>
           <p className="mt-1 text-sm text-stone-500">
-            {featured.dateLabel} · {featured.venue}
+            {featured.dateLabel} • {featured.venue}
           </p>
         </div>
         <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold text-brand-800">
@@ -25,6 +26,13 @@ export function MMATeaser() {
 
       <p className="mt-3 text-sm leading-6 text-stone-600">{featured.note}</p>
 
+      {featured.discussionPrompt ? (
+        <div className="mt-4 rounded-[20px] bg-brand-50 px-4 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-700">Next big fight</p>
+          <p className="mt-2 text-sm leading-6 text-brand-950">{featured.discussionPrompt}</p>
+        </div>
+      ) : null}
+
       <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-stone-500">
         <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1.5">
           <Swords className="h-3.5 w-3.5 text-brand-700" />
@@ -32,9 +40,15 @@ export function MMATeaser() {
         </span>
         <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1.5">
           <Mic2 className="h-3.5 w-3.5 text-brand-700" />
-          {mmaHub.liveRooms.length} live rooms queued
+          {featured.relatedRoomTitle ?? `${mmaHub.liveRooms.length} live rooms queued`}
         </span>
       </div>
+
+      {nextCard ? (
+        <p className="mt-4 text-sm text-stone-500">
+          Up next: {nextCard.eventName} with {nextCard.mainCardFights.length + 1} featured fights on deck.
+        </p>
+      ) : null}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <Link
