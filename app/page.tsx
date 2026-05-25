@@ -3,72 +3,36 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Flame, ImagePlus, PenSquare, Sparkles } from "lucide-react";
-import { BreakingNow } from "@/components/discovery/breaking-now";
 import { CommunityHighlights } from "@/components/discovery/community-highlights";
 import { CommunitySpotlight } from "@/components/discovery/community-spotlight";
 import { DailyDebates } from "@/components/discovery/daily-debates";
 import { EventHighlights } from "@/components/discovery/event-highlights";
-import { FootballBuzz } from "@/components/discovery/football-buzz";
-import { FootballTeaser } from "@/components/football/football-teaser";
 import { LocalNewsSection } from "@/components/discovery/local-news-section";
 import { TrendingTopics } from "@/components/discovery/trending-topics";
 import { VideoHighlights } from "@/components/discovery/video-highlights";
 import { WhoToFollow } from "@/components/discovery/who-to-follow";
 import { AppShell } from "@/components/layout/app-shell";
-import { GoalAlertStack } from "@/components/match/goal-alert-stack";
+import { MMATeaser } from "@/components/mma/mma-teaser";
 import { FeedList } from "@/components/posts/feed-list";
-import { WorldNewsTeaser } from "@/components/world-news/world-news-teaser";
+import { RadioTeaser } from "@/components/radio/radio-teaser";
 import { EmptyState } from "@/components/ui/empty-state";
+import { WorldCupBanner } from "@/components/world-cup/world-cup-banner";
+import { WorldNewsTeaser } from "@/components/world-news/world-news-teaser";
 import { useAppData } from "@/hooks/use-app-data";
-import { useLiveMatchPulse } from "@/hooks/use-live-match-pulse";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import {
-  getHomepageSectionScores,
   getPersonalizationProfile,
   getPreferredTeam,
   hasEnoughPersonalizationData,
   rankPersonalizedFeedPosts
 } from "@/lib/personalization";
-import { RadioTeaser } from "@/components/radio/radio-teaser";
 import { getFollowingIds } from "@/services/follow-service";
-import { formatFixtureTime, getFeaturedMatch } from "@/services/matchday-service";
 import { getPostsByUsers } from "@/services/post-service";
-import { LiveMatch, MatchdayFixture, Post } from "@/types";
-
-function getMatchStripCopy(fixture: MatchdayFixture | null) {
-  if (!fixture) {
-    return "No live matches right now";
-  }
-
-  if (fixture.status === "live") {
-    return `LIVE: ${fixture.homeTeam} ${fixture.homeScore ?? 0}-${fixture.awayScore ?? 0} ${fixture.awayTeam}`;
-  }
-
-  if (fixture.status === "finished") {
-    return `FT: ${fixture.homeTeam} ${fixture.homeScore ?? 0}-${fixture.awayScore ?? 0} ${fixture.awayTeam}`;
-  }
-
-  return `Tonight: ${fixture.homeTeam} vs ${fixture.awayTeam} (${formatFixtureTime(fixture.kickoffAt)})`;
-}
-
-function getFeaturedMatchClock(fixture: MatchdayFixture | null, liveMatches: LiveMatch[]) {
-  if (!fixture || fixture.status !== "live") {
-    return "";
-  }
-
-  const matchingLiveMatch = liveMatches.find(
-    (match) =>
-      match.homeTeam === fixture.homeTeam &&
-      match.awayTeam === fixture.awayTeam &&
-      match.status === "LIVE"
-  );
-
-  return matchingLiveMatch?.matchClock ? ` (${matchingLiveMatch.matchClock})` : "";
-}
+import { mmaHub } from "@/services/mma-hub-data";
+import { Post } from "@/types";
 
 export default function HomePage() {
   const { currentUser, deletedPostIds, posts, isLoading, errorMessage, savedPostIds } = useAppData();
-  const { matches: liveMatches, goalAlerts } = useLiveMatchPulse({ posts });
   const [feedMode, setFeedMode] = useState<"for-you" | "following">("for-you");
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [followingPosts, setFollowingPosts] = useState<Post[]>([]);
@@ -151,8 +115,6 @@ export default function HomePage() {
   const visibleBasePosts = activePosts.filter((post) => !deletedPostIds.includes(post.id));
   const activeLoading = feedMode === "following" ? isFollowingLoading : isLoading;
   const activeError = feedMode === "following" ? followingError : errorMessage;
-  const featuredMatch = getFeaturedMatch(liveMatches);
-  const featuredMatchClock = getFeaturedMatchClock(featuredMatch, liveMatches);
   const personalizationProfile = useMemo(
     () => getPersonalizationProfile(),
     [currentUser?.id, followingIds, posts, savedPostIds]
@@ -174,7 +136,6 @@ export default function HomePage() {
       })
     : false;
   const preferredTeam = canPersonalize ? getPreferredTeam(personalizationProfile) : undefined;
-  const sectionScores = canPersonalize ? getHomepageSectionScores(personalizationProfile) : null;
   const visibleActivePosts =
     feedMode === "for-you" && canPersonalize
       ? rankPersonalizedFeedPosts({
@@ -186,56 +147,10 @@ export default function HomePage() {
           profile: personalizationProfile
         })
       : visibleBasePosts;
-  const homepageSectionOrder = useMemo(() => {
-    const sections = [
-      {
-        key: "football" as const,
-        baseOrder: 0,
-        render: () => <FootballTeaser liveMatches={liveMatches} />
-      },
-      {
-        key: "videos" as const,
-        baseOrder: 1,
-        render: () => <VideoHighlights team={preferredTeam} />
-      },
-      {
-        key: "radio" as const,
-        baseOrder: 2,
-        render: () => <RadioTeaser />
-      },
-      {
-        key: "world-news" as const,
-        baseOrder: 3,
-        render: () => <WorldNewsTeaser />
-      },
-      {
-        key: "debates" as const,
-        baseOrder: 4,
-        render: () => <DailyDebates team={preferredTeam} />
-      }
-    ];
-
-    if (!sectionScores) {
-      return sections;
-    }
-
-    return [...sections].sort((left, right) => {
-      const leftScore = (sectionScores[left.key] ?? 0) + (preferredTeam && (left.key === "football" || left.key === "videos" || left.key === "debates") ? 1.2 : 0);
-      const rightScore = (sectionScores[right.key] ?? 0) + (preferredTeam && (right.key === "football" || right.key === "videos" || right.key === "debates") ? 1.2 : 0);
-
-      if (rightScore !== leftScore) {
-        return rightScore - leftScore;
-      }
-
-      return left.baseOrder - right.baseOrder;
-    });
-  }, [liveMatches, preferredTeam, sectionScores]);
 
   return (
     <AppShell>
       <div className="space-y-4 sm:space-y-5">
-        <GoalAlertStack alerts={goalAlerts} />
-
         <section className="relative overflow-hidden border-b border-brand-100/80 bg-white/96 px-3 py-4 sm:rounded-[32px] sm:border sm:px-5 sm:py-5 sm:shadow-soft">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-500 via-orange-400 to-brand-300 sm:rounded-t-[32px]" />
           <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -247,8 +162,7 @@ export default function HomePage() {
                 {currentUser ? `Selam, @${currentUser.username}` : "Welcome to HabeshaGram"}
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600 sm:text-[15px]">
-                Share hot takes, memes, style, football reactions, music, and culture in a warm,
-                mobile-first space built for Habesha timelines.
+                Share hot takes, memes, style, radio moments, fight-night reactions, and community updates in a warm, mobile-first Habesha timeline.
               </p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium text-stone-600">
                 <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1.5">
@@ -257,7 +171,7 @@ export default function HomePage() {
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1.5">
                   <Flame className="h-3.5 w-3.5 text-orange-600" />
-                  Football buzz
+                  Fight week
                 </span>
               </div>
             </div>
@@ -270,7 +184,7 @@ export default function HomePage() {
           </div>
           <p className="relative mt-4 rounded-[22px] bg-brand-50 px-4 py-3 text-sm text-brand-900">
             {isFirebaseConfigured
-              ? "Firebase auth is connected. Feed, posts, likes, comments, and profiles are live, and discovery sections now render real data or clean empty states."
+              ? "Firebase auth is connected. Feed, posts, likes, comments, profiles, and discovery surfaces are live."
               : "Add your Firebase env values in .env.local to enable login and signup. Discovery sections will render real data when those services are configured."}
           </p>
         </section>
@@ -306,41 +220,37 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[28px] border border-brand-100/80 bg-gradient-to-r from-red-600 via-orange-400 to-brand-500 px-4 py-4 text-white shadow-soft sm:px-5">
+        <section className="overflow-hidden rounded-[28px] border border-brand-100/80 bg-gradient-to-r from-red-700 via-orange-500 to-brand-500 px-4 py-4 text-white shadow-soft sm:px-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/75">
-                Match Strip
+                Tonight's focus
               </p>
               <p className="mt-1 text-lg font-black tracking-tight">
-                {getMatchStripCopy(featuredMatch)}
-                {featuredMatchClock}
+                {mmaHub.featuredFight.headline}
               </p>
-              {featuredMatch?.heatSignal ? (
-                <p className="mt-2 inline-flex rounded-full bg-white/14 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">
-                  {featuredMatch.heatSignal}
-                </p>
-              ) : null}
+              <p className="mt-2 inline-flex rounded-full bg-white/14 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">
+                {mmaHub.featuredFight.weightClass}
+              </p>
               <p className="mt-2 text-sm text-white/88">
-                {featuredMatch
-                  ? featuredMatch.status === "finished"
-                    ? "Catch the post-match chatter and jump into fresh reactions."
-                    : "Open the match center and jump straight into fan reactions."
-                  : "The next tracked football moment will show up here as soon as coverage is available."}
+                Featured fight, cleaner cards, real recent results, and live-room energy around major nights.
               </p>
             </div>
             <Link
-              href="/match/live"
+              href="/football"
               className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-800 shadow-soft transition hover:bg-brand-50"
             >
-              Join live reactions
+              Open MMA hub
             </Link>
           </div>
         </section>
 
-        {homepageSectionOrder.map((section) => (
-          <div key={section.key}>{section.render()}</div>
-        ))}
+        <WorldCupBanner />
+        <MMATeaser />
+        <RadioTeaser />
+        <VideoHighlights team={preferredTeam} />
+        <WorldNewsTeaser />
+        <DailyDebates team={preferredTeam} />
 
         {activeError ? (
           <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{activeError}</div>
@@ -397,7 +307,7 @@ export default function HomePage() {
           ) : feedMode === "following" && !activeLoading && !visibleActivePosts.length ? (
             <EmptyState
               title="Your following feed is waiting"
-              description="Follow a few creators, football fans, or culture pages to make this tab feel alive."
+              description="Follow a few creators, fight fans, or culture pages to make this tab feel alive."
             />
           ) : (
             <FeedList posts={visibleActivePosts} isLoading={activeLoading} />

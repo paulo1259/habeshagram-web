@@ -2,20 +2,20 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bookmark, Clapperboard, Dribbble, Globe2, House, LogOut, Mic2, PenSquare, Radio, Shield, UserCircle2 } from "lucide-react";
+import { Bookmark, Clapperboard, Dribbble, Flame, Globe2, House, LogOut, Mic2, PenSquare, Radio, UserCircle2 } from "lucide-react";
 import { useAppData } from "@/hooks/use-app-data";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const items = [
   { href: "/", label: "Home", icon: House },
-  { href: "/football", label: "Football", icon: Shield },
+  { href: "/football", label: "MMA", icon: Flame },
   { href: "/world-news", label: "World News", icon: Globe2 },
   { href: "/radio", label: "Radio", icon: Mic2 },
   { href: "/shorts", label: "Shorts", icon: Clapperboard },
   { href: "/basketball", label: "Basketball", icon: Dribbble },
   { href: "/create", label: "Create Post", icon: PenSquare },
-  { href: "/match/live", label: "Live Match Center", icon: Radio },
+  { href: "/live-rooms", label: "Fight Rooms", icon: Radio },
   { href: "/saved", label: "Saved", icon: Bookmark },
   { href: "/profile", label: "Profile", icon: UserCircle2 }
 ];
@@ -29,7 +29,7 @@ export function DesktopSidebar() {
     <aside className="glass-card sticky top-24 hidden h-fit rounded-[32px] border border-brand-100/80 p-5 shadow-soft lg:block">
       <p className="text-2xl font-black tracking-tight text-ink">HabeshaGram</p>
       <p className="mt-2 text-sm leading-6 text-stone-600">
-        A brighter Habesha timeline for food, fashion, music, memes, football takes, and city culture.
+        A brighter Habesha timeline for food, fashion, music, memes, fight-night takes, and city culture.
       </p>
 
       <nav className="mt-6 space-y-1.5">
@@ -70,7 +70,7 @@ export function DesktopSidebar() {
             {authMode === "firebase" ? "Firebase auth" : "Setup needed"}
           </span>
           <span className="rounded-full bg-white px-3 py-1">Saved posts</span>
-          <span className="rounded-full bg-white px-3 py-1">Fan zone</span>
+          <span className="rounded-full bg-white px-3 py-1">Fight week</span>
         </div>
       </div>
 

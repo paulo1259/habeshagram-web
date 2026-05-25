@@ -47,7 +47,7 @@ export function TopBar() {
             type="text"
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
-            placeholder="Search posts, people, football, trends"
+            placeholder="Search posts, people, MMA, trends"
             className="w-full bg-transparent text-sm outline-none placeholder:text-stone-400"
           />
         </form>

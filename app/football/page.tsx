@@ -1,5 +1,5 @@
-import { FootballPage } from "@/components/football/football-page";
+import { MMAPage } from "@/components/mma/mma-page";
 
 export default function FootballRoutePage() {
-  return <FootballPage />;
+  return <MMAPage />;
 }

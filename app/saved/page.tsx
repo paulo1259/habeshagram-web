@@ -59,7 +59,7 @@ export default function SavedPage() {
             </p>
             <h1 className="mt-1 text-2xl font-black tracking-tight text-ink">Posts you want to revisit</h1>
             <p className="mt-2 text-sm leading-6 text-stone-600">
-              Keep your favorite conversations, images, and football takes in one easy place.
+              Keep your favorite conversations, images, and fight-night takes in one easy place.
             </p>
           </section>
 
