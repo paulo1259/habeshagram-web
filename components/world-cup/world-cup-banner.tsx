@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Globe2 } from "lucide-react";
 import {
@@ -14,30 +14,30 @@ import {
 } from "@/services/world-cup-data";
 
 export function WorldCupBanner() {
-  const target = new Date(worldCupConfig.openingMatchAt);
-  const [cd, setCd] = useState(buildCountdown(target));
+  const openingMatchAt = worldCupConfig.openingMatchAt;
+  const target = useMemo(() => new Date(openingMatchAt), [openingMatchAt]);
+  const [cd, setCd] = useState(() => buildCountdown(target));
   const [isLive, setIsLive] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
 
   useEffect(() => {
-    // Load favorites from localStorage (client-only)
     setFavoriteIds(loadFavorites());
     setIsLive(isTournamentLive());
+
     const timer = setInterval(() => {
       setCd(buildCountdown(target));
       setIsLive(isTournamentLive());
     }, 1000);
+
     return () => clearInterval(timer);
   }, [target]);
 
   if (!worldCupConfig.enabled) return null;
 
-  // Show next match for favorite teams if any, otherwise next tournament match
-  const favMatch = favoriteIds.length > 0
-    ? getUpcomingMatchesForFavorites(favoriteIds, 1)[0]
-    : undefined;
+  const favMatch =
+    favoriteIds.length > 0 ? getUpcomingMatchesForFavorites(favoriteIds, 1)[0] : undefined;
   const nextMatch = favMatch ?? getUpcomingMatches(1)[0];
-  const hasFav = !!favMatch;
+  const hasFav = Boolean(favMatch);
 
   const teamA = nextMatch ? getTeamById(nextMatch.teamAId) : undefined;
   const teamB = nextMatch ? getTeamById(nextMatch.teamBId) : undefined;
@@ -57,31 +57,30 @@ export function WorldCupBanner() {
             </div>
           ) : (
             <p className="text-lg font-black tracking-tight tabular-nums">
-              Opens in {cd.days}d {String(cd.hours).padStart(2,"0")}h{" "}
-              {String(cd.minutes).padStart(2,"0")}m {String(cd.seconds).padStart(2,"0")}s
+              Opens in {cd.days}d {String(cd.hours).padStart(2, "0")}h{" "}
+              {String(cd.minutes).padStart(2, "0")}m {String(cd.seconds).padStart(2, "0")}s
             </p>
           )}
 
-          {/* Smart next-match preview */}
-          {nextMatch && teamA && teamB && (
+          {nextMatch && teamA && teamB ? (
             <div className="flex items-center gap-1.5 text-xs text-white/80">
               {hasFav ? (
-                <span className="font-semibold text-amber-300">⭐ Your team:</span>
+                <span className="font-semibold text-amber-300">Your team:</span>
               ) : (
                 <span className="font-semibold">Next:</span>
               )}
               <span>{teamA.flag} {teamA.code}</span>
               <span className="text-white/50">vs</span>
               <span>{teamB.flag} {teamB.code}</span>
-              <span className="text-white/50">·</span>
+              <span className="text-white/50">•</span>
               <span>{nextMatch.timeEt}</span>
-              <span className="text-white/50">·</span>
+              <span className="text-white/50">•</span>
               <span>{nextMatch.city}</span>
             </div>
-          )}
+          ) : null}
 
           <p className="text-xs text-white/60">
-            🇲🇽 Mexico · 🇨🇦 Canada · 🇺🇸 USA · 48 teams · Jun 11 – Jul 19
+            Mexico • Canada • USA • 48 teams • Jun 11 - Jul 19
           </p>
         </div>
 
