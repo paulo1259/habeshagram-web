@@ -642,6 +642,7 @@ export function WorldCupPage() {
           </div>
         </div>
       </section>
+
     </AppShell>
   );
 }
