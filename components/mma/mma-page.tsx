@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Flame, Mic2, Swords, Trophy } from "lucide-react";
+import { ArrowRight, Flame, Mic2, Trophy } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { SectionHeader } from "@/components/ui/section-header";
 import { ShareActions } from "@/components/ui/share-actions";
@@ -19,18 +19,18 @@ export function MMAPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-2xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">MMA</p>
-                <h1 className="page-title mt-1">Fight week, cleaned up</h1>
+                <h1 className="page-title mt-1">Official events, honest hype</h1>
                 <p className="mt-3 text-sm leading-6 text-white/90 sm:text-[15px]">
-                  A premium MMA/UFC destination for headline fights, upcoming cards, fresh results, trending debates, and the live-room energy around major nights.
+                  A premium MMA/UFC destination for verified official events, clearly labeled community prompts, and fight-night rooms that do not depend on shaky live-score feeds.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white/95">
                     <Flame className="h-3.5 w-3.5" />
-                    {mmaHub.upcomingFightCards.length} cards queued
+                    {mmaHub.upcomingFightCards.length} official events
                   </span>
                   <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white/95">
                     <Trophy className="h-3.5 w-3.5" />
-                    {mmaHub.recentResults.length} recent results
+                    {mmaHub.recentResults.length} verified results
                   </span>
                   <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white/95">
                     <Mic2 className="h-3.5 w-3.5" />
@@ -45,19 +45,27 @@ export function MMAPage() {
                   <p className="mt-2 text-xl font-black">{featured.weightClass}</p>
                 </div>
                 <div className="rounded-[24px] bg-white/12 px-4 py-3 backdrop-blur">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">Focus</p>
-                  <p className="mt-2 text-xl font-black">Combat Sports</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">Trust label</p>
+                  <p className="mt-2 text-sm font-black leading-5">{mmaHub.sourceLabel}</p>
                 </div>
                 <div className="col-span-2 rounded-[24px] bg-white/12 p-3 backdrop-blur">
                   <ShareActions
                     path="/football"
                     title="MMA on HabeshaGram"
-                    text="Open HabeshaGram's MMA hub for featured fights, upcoming cards, fresh results, and fight-week conversations."
+                    text="Open HabeshaGram's MMA hub for verified UFC events, community prompts, and fight-week rooms."
                   />
                 </div>
               </div>
             </div>
           </div>
+        </section>
+
+        <section className="surface-panel p-4 sm:p-5">
+          <SectionHeader
+            eyebrow="Source label"
+            title={mmaHub.sourceLabel}
+            description="Verified UFC events stay separate from community prompts. If a full card is not confirmed yet, HabeshaGram says so directly."
+          />
         </section>
 
         <section className="surface-panel p-4 sm:p-5">
@@ -84,33 +92,41 @@ export function MMAPage() {
                 <div className="rounded-[22px] bg-white px-4 py-4 shadow-sm">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">Red corner</p>
                   <p className="mt-2 text-lg font-black text-ink">{featured.redCorner.name}</p>
-                  <p className="mt-1 text-sm text-brand-800">{featured.redCorner.record}</p>
+                  {featured.redCorner.record ? (
+                    <p className="mt-1 text-sm text-brand-800">{featured.redCorner.record}</p>
+                  ) : null}
                   <p className="mt-2 text-sm leading-6 text-stone-600">{featured.redCorner.summary}</p>
                 </div>
                 <div className="rounded-[22px] bg-white px-4 py-4 shadow-sm">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">Blue corner</p>
                   <p className="mt-2 text-lg font-black text-ink">{featured.blueCorner.name}</p>
-                  <p className="mt-1 text-sm text-brand-800">{featured.blueCorner.record}</p>
+                  {featured.blueCorner.record ? (
+                    <p className="mt-1 text-sm text-brand-800">{featured.blueCorner.record}</p>
+                  ) : null}
                   <p className="mt-2 text-sm leading-6 text-stone-600">{featured.blueCorner.summary}</p>
                 </div>
               </div>
               <div className="mt-4 rounded-[22px] bg-white px-4 py-4 shadow-sm">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">Main card pulse</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">Official card notes</p>
                 <div className="mt-3 space-y-3">
-                  {featured.mainCardFights.map((fight) => (
-                    <div key={fight.id}>
-                      <p className="text-sm font-bold text-ink">{fight.fighterAName} vs {fight.fighterBName}</p>
-                      <p className="text-xs text-stone-500">
-                        {fight.weightClass}
-                        {fight.stakes ? ` • ${fight.stakes}` : ""}
-                      </p>
-                    </div>
-                  ))}
+                  {featured.mainCardFights.length > 0 ? (
+                    featured.mainCardFights.map((fight) => (
+                      <div key={fight.id}>
+                        <p className="text-sm font-bold text-ink">{fight.fighterAName} vs {fight.fighterBName}</p>
+                        <p className="text-xs text-stone-500">
+                          {fight.weightClass}
+                          {fight.stakes ? ` | ${fight.stakes}` : ""}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-stone-500">Fight card details coming soon.</p>
+                  )}
                 </div>
               </div>
               {featured.discussionPrompt ? (
                 <div className="mt-4 rounded-[22px] bg-brand-50 px-4 py-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-700">Discussion prompt</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-700">{mmaHub.communityLabel}</p>
                   <p className="mt-2 text-sm leading-6 text-brand-950">{featured.discussionPrompt}</p>
                   {featured.relatedRoomTitle ? (
                     <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-brand-800">
@@ -121,24 +137,26 @@ export function MMAPage() {
               ) : null}
             </article>
 
-            <article className="rounded-[26px] border border-brand-100/80 bg-white p-5 shadow-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">Fighter spotlight</p>
-              <p className="mt-3 text-2xl font-black tracking-tight text-ink">{mmaHub.fighterSpotlight.name}</p>
-              <p className="mt-2 text-sm font-semibold text-brand-800">{mmaHub.fighterSpotlight.weightClass}</p>
-              <p className="mt-1 text-sm text-stone-500">{mmaHub.fighterSpotlight.record} • {mmaHub.fighterSpotlight.country}</p>
-              <p className="mt-3 text-sm leading-6 text-stone-600">{mmaHub.fighterSpotlight.summary}</p>
-            </article>
+            {mmaHub.fighterSpotlight ? (
+              <article className="rounded-[26px] border border-brand-100/80 bg-white p-5 shadow-sm">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">Fighter spotlight</p>
+                <p className="mt-3 text-2xl font-black tracking-tight text-ink">{mmaHub.fighterSpotlight.name}</p>
+                <p className="mt-2 text-sm font-semibold text-brand-800">{mmaHub.fighterSpotlight.weightClass}</p>
+                <p className="mt-1 text-sm text-stone-500">
+                  {mmaHub.communityLabel} | {mmaHub.fighterSpotlight.country}
+                </p>
+                <p className="mt-3 text-sm leading-6 text-stone-600">{mmaHub.fighterSpotlight.summary}</p>
+              </article>
+            ) : null}
           </div>
         </section>
 
-
-        {/* ── Community prediction poll ───────────────────────────────────── */}
         {mmaHub.featuredPoll ? (
           <section className="surface-panel p-4 sm:p-5">
             <SectionHeader
               eyebrow="Community predictions"
               title="Where is the room leaning?"
-              description="One vote per member, locked at walkout. Community picks only — no gambling, no money."
+              description="One vote per member, locked before the main event. Community picks only."
             />
             <div className="mt-4 lg:max-w-2xl">
               <MMAPredictionPollCard poll={mmaHub.featuredPoll} />
@@ -148,9 +166,9 @@ export function MMAPage() {
 
         <section className="surface-panel p-4 sm:p-5">
           <SectionHeader
-            eyebrow="Upcoming cards"
+            eyebrow="Official UFC events"
             title="What is next on the calendar"
-            description="No tables, no fake live scores, just the cards and angles most likely to matter."
+            description="Only verified UFC events appear here. If details are pending, the desk says so clearly."
           />
 
           <div className="mt-4 grid gap-3 lg:grid-cols-3">
@@ -167,19 +185,23 @@ export function MMAPage() {
                 <p className="mt-2 text-sm text-stone-600">{card.venue}</p>
                 <p className="mt-3 text-sm leading-6 text-stone-600">{card.note}</p>
                 <div className="mt-4 space-y-3">
-                  {card.mainCardFights.map((fight) => (
-                    <div key={fight.id}>
-                      <p className="text-sm font-bold text-ink">{fight.fighterAName} vs {fight.fighterBName}</p>
-                      <p className="text-xs text-stone-500">
-                        {fight.weightClass}
-                        {fight.stakes ? ` • ${fight.stakes}` : ""}
-                      </p>
-                    </div>
-                  ))}
+                  {card.mainCardFights.length > 0 ? (
+                    card.mainCardFights.map((fight) => (
+                      <div key={fight.id}>
+                        <p className="text-sm font-bold text-ink">{fight.fighterAName} vs {fight.fighterBName}</p>
+                        <p className="text-xs text-stone-500">
+                          {fight.weightClass}
+                          {fight.stakes ? ` | ${fight.stakes}` : ""}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-stone-500">Fight card details coming soon.</p>
+                  )}
                 </div>
                 {card.discussionPrompt ? (
                   <div className="mt-4 rounded-[18px] bg-brand-50 px-3 py-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-700">Fight-week angle</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-700">{mmaHub.communityLabel}</p>
                     <p className="mt-2 text-sm leading-6 text-brand-950">{card.discussionPrompt}</p>
                     {card.relatedRoomTitle ? (
                       <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-brand-800">
@@ -196,42 +218,52 @@ export function MMAPage() {
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
           <section className="surface-panel p-4 sm:p-5">
             <SectionHeader
-              eyebrow="Recent results"
-              title="Fresh outcomes"
-              description="The finishes and decisions people are still unpacking."
+              eyebrow="Verified results"
+              title="Recent results"
+              description="Results only appear once they can be verified from official UFC sources."
             />
-            <div className="mt-4 space-y-3">
-              {mmaHub.recentResults.map((result) => (
-                <article key={result.id} className="rounded-[22px] border border-brand-100/80 bg-white px-4 py-4 shadow-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-stone-500">{result.eventName}</p>
-                    <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-orange-700">
-                      {result.method} {result.round}
-                    </span>
-                  </div>
-                  <p className="mt-3 text-lg font-black tracking-tight text-ink">{result.headline}</p>
-                  <p className="mt-2 text-sm font-semibold text-brand-800">
-                    {result.winnerName} def. {result.loserName}
-                  </p>
-                  <p className="mt-2 text-sm text-stone-500">{result.timeLabel} • {result.weightClass}</p>
-                  <p className="mt-3 text-sm leading-6 text-stone-600">{result.summary}</p>
-                </article>
-              ))}
-            </div>
+            {mmaHub.recentResults.length > 0 ? (
+              <div className="mt-4 space-y-3">
+                {mmaHub.recentResults.map((result) => (
+                  <article key={result.id} className="rounded-[22px] border border-brand-100/80 bg-white px-4 py-4 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-stone-500">{result.eventName}</p>
+                      <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-orange-700">
+                        {result.method} {result.round}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-lg font-black tracking-tight text-ink">{result.headline}</p>
+                    <p className="mt-2 text-sm font-semibold text-brand-800">
+                      {result.winnerName} def. {result.loserName}
+                    </p>
+                    <p className="mt-2 text-sm text-stone-500">{result.timeLabel} | {result.weightClass}</p>
+                    <p className="mt-3 text-sm leading-6 text-stone-600">{result.summary}</p>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-4 rounded-[22px] border border-brand-100/80 bg-white px-4 py-4 shadow-sm">
+                <p className="text-lg font-black tracking-tight text-ink">Results coming soon</p>
+                <p className="mt-3 text-sm leading-6 text-stone-600">
+                  Official UFC results will appear here after verified cards conclude.
+                </p>
+              </div>
+            )}
           </section>
 
           <section className="surface-panel p-4 sm:p-5">
             <SectionHeader
-              eyebrow="Trending discussions"
-              title="What people are arguing about"
-              description="The conversation fuel around title pictures, contenders, and fight-night takeaways."
+              eyebrow="Community prompts"
+              title="What people are talking about"
+              description="Clearly labeled editorial and community discussion cards."
             />
             <div className="mt-4 space-y-3">
               {mmaHub.trendingDiscussions.map((discussion) => (
                 <article key={discussion.id} className="rounded-[22px] border border-brand-100/80 bg-white px-4 py-4 shadow-sm">
-                  <p className="text-base font-black tracking-tight text-ink">{discussion.title}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-700">{mmaHub.communityLabel}</p>
+                  <p className="mt-2 text-base font-black tracking-tight text-ink">{discussion.title}</p>
                   <p className="mt-2 text-sm leading-6 text-stone-600">{discussion.summary}</p>
-                  <p className="mt-3 text-xs font-medium text-stone-500">{discussion.source} • {discussion.timeAgo}</p>
+                  <p className="mt-3 text-xs font-medium text-stone-500">{discussion.source} | {discussion.timeAgo}</p>
                   {discussion.discussionPrompt ? (
                     <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-brand-800">
                       {discussion.discussionPrompt}

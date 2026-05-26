@@ -3,7 +3,7 @@ export type WebFighter = {
   name: string;
   nickname?: string;
   country: string;
-  record: string;
+  record?: string;
   weightClass: string;
   imageURL?: string;
   summary: string;
@@ -116,283 +116,195 @@ export type WebMMAPredictionPoll = {
   options: WebMMAPollOption[];
 };
 
-const topuria: WebFighter = {
-  id: "topuria",
-  name: "Ilia Topuria",
-  nickname: "El Matador",
-  country: "Spain / Georgia",
-  record: "16-0-0",
-  weightClass: "Featherweight",
+const belalMuhammad: WebFighter = {
+  id: "belal-muhammad",
+  name: "Belal Muhammad",
+  country: "United States",
+  weightClass: "Welterweight",
   summary:
-    "The kind of finisher who changes the whole temperature of a fight card before the first walkout even starts."
+    "Verified featured fighter from the UFC Fight Night main event on June 6. HabeshaGram is keeping the desk honest and discussion-first while the official card settles.",
 };
 
-const oliveira: WebFighter = {
-  id: "oliveira",
-  name: "Charles Oliveira",
-  nickname: "Do Bronx",
+const gabrielBonfim: WebFighter = {
+  id: "gabriel-bonfim",
+  name: "Gabriel Bonfim",
   country: "Brazil",
-  record: "35-10-0",
-  weightClass: "Lightweight",
+  weightClass: "Welterweight",
   summary:
-    "Still one of the most dangerous closers in the sport, especially once the fight gets messy."
+    "Verified featured opponent from the same official UFC main event. The matchup matters because UFC has formally attached Bonfim to a former champion in a five-round headliner.",
 };
 
-const tsarukyan: WebFighter = {
-  id: "tsarukyan",
-  name: "Arman Tsarukyan",
-  country: "Armenia",
-  record: "22-3-0",
-  weightClass: "Lightweight",
-  summary:
-    "A pressure-heavy contender who makes every title-picture conversation feel more urgent."
-};
-
-const oliveiraTsarukyanMainCard: WebFightLineupItem[] = [
+const verifiedMainCardNotes: WebFightLineupItem[] = [
   {
-    id: "309-co-main",
-    fighterAName: "Valentina Shevchenko",
-    fighterBName: "Manon Fiorot",
-    weightClass: "Women's Flyweight",
-    stakes: "Title eliminator energy"
-  },
-  {
-    id: "309-feature",
-    fighterAName: "Beneil Dariush",
-    fighterBName: "Mateusz Gamrot",
-    weightClass: "Lightweight",
-    stakes: "Contender reset"
-  },
-  {
-    id: "309-opener",
-    fighterAName: "Nassourdine Imavov",
-    fighterBName: "Roman Dolidze",
+    id: "ufc-june-06-featured",
+    fighterAName: "Brendan Allen",
+    fighterBName: "Edmen Shahbazyan",
     weightClass: "Middleweight",
-    stakes: "Main card opener"
-  }
+    stakes: "Featured bout",
+  },
 ];
 
-const omalleyMerabMainCard: WebFightLineupItem[] = [
+export const verifiedUfcEvents: WebUpcomingFightCard[] = [
   {
-    id: "fn-omalley-co-main",
-    fighterAName: "Arnold Allen",
-    fighterBName: "Brian Ortega",
-    weightClass: "Featherweight",
-    stakes: "Five-round relevance"
+    id: "ufc-fight-night-june-06-2026",
+    promotion: "UFC",
+    eventName: "UFC Fight Night: Muhammad vs Bonfim",
+    dateLabel: "Sat Jun 6 | 8:00 PM EDT",
+    venue: "Meta APEX, Las Vegas",
+    headlineFight: "Belal Muhammad vs Gabriel Bonfim",
+    status: "upcoming",
+    mainCardFights: verifiedMainCardNotes,
+    discussionPrompt:
+      "Community discussion: does the former champion control the pace, or does the younger contender turn this into a statement night?",
+    relatedRoomTitle: "June 6 fight-night room",
+    note:
+      "Verified on UFC.com. This is the clearest official fight card available right now, so it anchors the whole MMA desk.",
   },
   {
-    id: "fn-omalley-feature",
-    fighterAName: "Shavkat Rakhmonov",
-    fighterBName: "Ian Machado Garry",
-    weightClass: "Welterweight",
-    stakes: "Next title case"
-  }
+    id: "ufc-fight-night-oklahoma-city-2026",
+    promotion: "Fight Night",
+    eventName: "UFC Fight Night Oklahoma City",
+    dateLabel: "Sat Jul 18 | Official UFC event",
+    venue: "Paycom Center, Oklahoma City",
+    headlineFight: "Fight card details coming soon.",
+    status: "upcoming",
+    mainCardFights: [],
+    discussionPrompt:
+      "Community discussion: which weight class should headline Oklahoma City once UFC reveals the card?",
+    relatedRoomTitle: "Oklahoma City fight-week room",
+    note:
+      "Verified event announcement from UFC. Matchups are still pending official confirmation in the app.",
+  },
+  {
+    id: "ufc-fight-night-abu-dhabi-2026",
+    promotion: "Fight Night",
+    eventName: "UFC Fight Night Abu Dhabi",
+    dateLabel: "Sat Jul 25 | Official UFC event",
+    venue: "Etihad Arena, Yas Island",
+    headlineFight: "Fight card details coming soon.",
+    status: "upcoming",
+    mainCardFights: [],
+    discussionPrompt:
+      "Community discussion: what should UFC save for Abu Dhabi once the official matchups land?",
+    relatedRoomTitle: "Abu Dhabi fight-week room",
+    note:
+      "Verified event announcement from UFC. Full card details are still pending.",
+  },
 ];
 
-const whittakerChimaevMainCard: WebFightLineupItem[] = [
+export const mmaCommunityPrompts: WebDiscussion[] = [
   {
-    id: "fn-whittaker-co-main",
-    fighterAName: "Magomed Ankalaev",
-    fighterBName: "Jan Blachowicz",
-    weightClass: "Light Heavyweight",
-    stakes: "No. 1 contender pressure"
+    id: "mma-discussion-1",
+    title: "Community discussion: what kind of win does Muhammad need?",
+    summary:
+      "This is a curated community prompt tied to the official June 6 main event, not a live-results feed.",
+    source: "Curated community prompt",
+    timeAgo: "Fight week",
+    discussionPrompt:
+      "Is a calm five-round win enough here, or does Muhammad need a statement finish to reset the narrative around him?",
+    relatedEventId: "ufc-fight-night-june-06-2026",
   },
   {
-    id: "fn-whittaker-feature",
-    fighterAName: "Alexa Grasso",
-    fighterBName: "Natalia Silva",
-    weightClass: "Women's Flyweight",
-    stakes: "Statement fight"
-  }
+    id: "mma-discussion-2",
+    title: "Community discussion: which summer UFC stop should HabeshaGram rally around next?",
+    summary:
+      "Oklahoma City and Abu Dhabi are both official UFC events, but the best conversation may come from whichever room the community chooses to build first.",
+    source: "Curated community prompt",
+    timeAgo: "This week",
+    discussionPrompt: "Which official summer event deserves the next Live Room watch circle?",
+    relatedEventId: "ufc-fight-night-oklahoma-city-2026",
+  },
+  {
+    id: "mma-discussion-3",
+    title: "Community discussion: what makes a fight-night card worth showing up for?",
+    summary:
+      "Without fake score widgets or invented records, the conversation shifts toward style, stakes, and who people actually trust to deliver.",
+    source: "Curated community prompt",
+    timeAgo: "Now",
+    discussionPrompt: "Do you need a famous main event, or just a matchup that promises real tension?",
+  },
+];
+
+const mmaLiveRooms: WebLiveRoomPromo[] = [
+  {
+    id: "mma-room-1",
+    title: "June 6 fight-night room",
+    topic: "Official event watch circle for Muhammad vs Bonfim, with scorecard reactions and community predictions.",
+    listeners: 184,
+    status: "scheduled",
+  },
+  {
+    id: "mma-room-2",
+    title: "Summer UFC roadmap room",
+    topic: "A lighter room for Oklahoma City, Abu Dhabi, and which verified UFC event deserves the next watch party.",
+    listeners: 96,
+    status: "scheduled",
+  },
 ];
 
 const featuredPoll: WebMMAPredictionPoll = {
-  pollId: "poll-ufc-309-main-event",
-  eventId: "ufc-309",
-  fightTitle: "Oliveira vs Tsarukyan 2",
-  fighterA: "Charles Oliveira",
-  fighterB: "Arman Tsarukyan",
-  closesAt: "2026-06-01T01:00:00.000Z",
-  closesLabel: "Closes at walkout",
+  pollId: "poll-ufc-fight-night-june-06-main-event",
+  eventId: "ufc-fight-night-june-06-2026",
+  fightTitle: "Muhammad vs Bonfim",
+  fighterA: "Belal Muhammad",
+  fighterB: "Gabriel Bonfim",
+  closesAt: "2026-06-07T00:00:00.000Z",
+  closesLabel: "Closes before the main event",
   totalVotes: 0,
   methods: ["KO/TKO", "Submission", "Decision"],
-  relatedRoomTitle: "309 main card live room",
+  relatedRoomTitle: "June 6 fight-night room",
   options: [
-    { id: "oliveira-ko", label: "Oliveira by KO/TKO", fighterName: "Charles Oliveira", method: "KO/TKO" },
-    { id: "oliveira-sub", label: "Oliveira by Submission", fighterName: "Charles Oliveira", method: "Submission" },
-    { id: "oliveira-dec", label: "Oliveira by Decision", fighterName: "Charles Oliveira", method: "Decision" },
-    { id: "tsarukyan-ko", label: "Tsarukyan by KO/TKO", fighterName: "Arman Tsarukyan", method: "KO/TKO" },
-    { id: "tsarukyan-sub", label: "Tsarukyan by Submission", fighterName: "Arman Tsarukyan", method: "Submission" },
-    { id: "tsarukyan-dec", label: "Tsarukyan by Decision", fighterName: "Arman Tsarukyan", method: "Decision" }
-  ]
+    { id: "muhammad-ko", label: "Muhammad by KO/TKO", fighterName: "Belal Muhammad", method: "KO/TKO" },
+    { id: "muhammad-sub", label: "Muhammad by Submission", fighterName: "Belal Muhammad", method: "Submission" },
+    { id: "muhammad-dec", label: "Muhammad by Decision", fighterName: "Belal Muhammad", method: "Decision" },
+    { id: "bonfim-ko", label: "Bonfim by KO/TKO", fighterName: "Gabriel Bonfim", method: "KO/TKO" },
+    { id: "bonfim-sub", label: "Bonfim by Submission", fighterName: "Gabriel Bonfim", method: "Submission" },
+    { id: "bonfim-dec", label: "Bonfim by Decision", fighterName: "Gabriel Bonfim", method: "Decision" },
+  ],
 };
 
 export const mmaHub = {
   featuredFight: {
-    id: "featured-fight",
+    id: "featured-fight-verified",
     promotion: "UFC",
-    eventName: "UFC 309",
-    headline: "Oliveira vs Tsarukyan 2",
-    venue: "Las Vegas, Nevada",
-    dateLabel: "Sat 10:00 PM ET",
+    eventName: "UFC Fight Night: Muhammad vs Bonfim",
+    headline: "Muhammad vs Bonfim",
+    venue: "Meta APEX, Las Vegas",
+    dateLabel: "Sat Jun 6 | 8:00 PM EDT",
     status: "upcoming" as const,
-    weightClass: "Lightweight",
-    imageURL:
-      "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1200&q=80",
-    thumbnailURL:
-      "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=800&q=80",
-    redCorner: oliveira,
-    blueCorner: tsarukyan,
-    mainCardFights: oliveiraTsarukyanMainCard,
+    weightClass: "Welterweight",
+    redCorner: belalMuhammad,
+    blueCorner: gabrielBonfim,
+    mainCardFights: verifiedMainCardNotes,
     discussionPrompt:
-      "Does this rematch decide the true next lightweight title challenger, or just reset the whole conversation again?",
-    relatedRoomTitle: "309 main card live room",
+      "Community discussion: does this official main event feel like a veteran control fight or a contender breakthrough spot?",
+    relatedRoomTitle: "June 6 fight-night room",
     note:
-      "A premium lightweight main event with title pressure, violence, and enough technical tension to drive the whole weekend."
+      "Verified from the UFC official event page. HabeshaGram is centering the desk on one official headliner instead of pretending to know more than UFC has published.",
   } satisfies WebFightCard,
   featuredPoll,
-  upcomingFightCards: [
-    {
-      id: "ufc-309",
-      promotion: "UFC",
-      eventName: "UFC 309",
-      dateLabel: "Sat 10:00 PM ET",
-      venue: "Las Vegas, Nevada",
-      headlineFight: "Oliveira vs Tsarukyan 2",
-      status: "upcoming",
-      imageURL:
-        "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=1200&q=80",
-      mainCardFights: oliveiraTsarukyanMainCard,
-      discussionPrompt:
-        "Which matchup below the main event has the best chance to steal the whole night?",
-      relatedRoomTitle: "309 main card live room",
-      note: "The sharpest fight-week card in the lineup, with real stakes and real finishing danger."
-    },
-    {
-      id: "fight-night-omalley",
-      promotion: "Fight Night",
-      eventName: "UFC Fight Night: O'Malley vs Dvalishvili",
-      dateLabel: "Next Wed 8:00 PM ET",
-      venue: "Abu Dhabi, UAE",
-      headlineFight: "O'Malley vs Dvalishvili",
-      status: "upcoming",
-      imageURL:
-        "https://images.unsplash.com/photo-1564415315949-7a0c4c73aab4?auto=format&fit=crop&w=1200&q=80",
-      mainCardFights: omalleyMerabMainCard,
-      discussionPrompt:
-        "Will volume and pace beat pure star power, or does O'Malley still own the biggest moments?",
-      relatedRoomTitle: "Bantamweight after dark",
-      note: "A style-clash main event that should light up the clip economy and the scorecard debates."
-    },
-    {
-      id: "fight-night-whittaker",
-      promotion: "Fight Night",
-      eventName: "UFC Fight Night: Whittaker vs Chimaev",
-      dateLabel: "Next Sat 9:00 PM ET",
-      venue: "Riyadh, Saudi Arabia",
-      headlineFight: "Whittaker vs Chimaev",
-      status: "upcoming",
-      imageURL:
-        "https://images.unsplash.com/photo-1517438322307-e67111335449?auto=format&fit=crop&w=1200&q=80",
-      mainCardFights: whittakerChimaevMainCard,
-      discussionPrompt:
-        "Is this the cleanest middleweight contender test of the whole season?",
-      relatedRoomTitle: "Middleweight watch circle",
-      note: "A middleweight card built for high-stakes reads, pressure, and instant discourse."
-    }
-  ] satisfies WebUpcomingFightCard[],
-  recentResults: [
-    {
-      id: "result-topuria",
-      eventName: "UFC 308",
-      headline: "Topuria vs Holloway",
-      weightClass: "Featherweight",
-      winnerName: "Ilia Topuria",
-      loserName: "Max Holloway",
-      method: "KO/TKO",
-      round: "R3",
-      timeLabel: "2:41",
-      thumbnailURL:
-        "https://images.unsplash.com/photo-1511884642898-4c92249e20b6?auto=format&fit=crop&w=800&q=80",
-      summary:
-        "Topuria landed the sequence everyone spent the rest of the night replaying and pushed his rise into a bigger tier."
-    },
-    {
-      id: "result-whittaker",
-      eventName: "UFC Fight Night",
-      headline: "Whittaker vs Costa",
-      weightClass: "Middleweight",
-      winnerName: "Robert Whittaker",
-      loserName: "Paulo Costa",
-      method: "Decision",
-      round: "R5",
-      timeLabel: "5:00",
-      thumbnailURL:
-        "https://images.unsplash.com/photo-1555597673-b21d5c935865?auto=format&fit=crop&w=800&q=80",
-      summary:
-        "Whittaker stayed cleaner for longer, then closed the fight with the kind of veteran control people trust."
-    }
-  ] satisfies WebFightResult[],
-  trendingDiscussions: [
-    {
-      id: "discussion-1",
-      title: "Is lightweight the real center of gravity in the UFC right now?",
-      summary:
-        "Contender depth, title uncertainty, and finishing danger keep pulling the biggest conversations back here.",
-      source: "HabeshaGram MMA Desk",
-      timeAgo: "18m",
-      discussionPrompt:
-        "If the belt is only part of the story, what really makes this division feel must-watch right now?",
-      relatedEventId: "ufc-309"
-    },
-    {
-      id: "discussion-2",
-      title: "Fight Night cards are becoming better live-room events than some pay-per-views",
-      summary:
-        "Smaller cards are rewarding close watchers and producing sharper room audio than big-star autopilot weekends.",
-      source: "Community Pulse",
-      timeAgo: "52m",
-      discussionPrompt:
-        "Are Fight Night cards actually giving fans the best live-room experience right now?",
-      relatedEventId: "fight-night-omalley"
-    },
-    {
-      id: "discussion-3",
-      title: "Who actually deserves the next bantamweight title shot?",
-      summary:
-        "The rankings, the momentum, and the clip economy are all pointing in slightly different directions.",
-      source: "Fight Week Notes",
-      timeAgo: "1h",
-      discussionPrompt:
-        "Who has the strongest real claim, not just the loudest clips, in the bantamweight queue?",
-      relatedEventId: "fight-night-omalley"
-    }
-  ] satisfies WebDiscussion[],
-  fighterSpotlight: topuria,
-  liveRooms: [
-    {
-      id: "mma-room-1",
-      title: "309 main card live room",
-      topic: "Round-by-round reactions, scorecards, and the best diaspora fight-night takes.",
-      listeners: 184,
-      status: "live" as const
-    },
-    {
-      id: "mma-room-2",
-      title: "Bantamweight after dark",
-      topic: "O'Malley, Merab, and everything that changes after the bell.",
-      listeners: 96,
-      status: "scheduled" as const
-    }
-  ] satisfies WebLiveRoomPromo[]
+  upcomingFightCards: verifiedUfcEvents,
+  recentResults: [] as WebFightResult[],
+  trendingDiscussions: mmaCommunityPrompts,
+  fighterSpotlight: {
+    id: "fighter-spotlight-muhammad",
+    name: "Belal Muhammad",
+    country: "United States",
+    weightClass: "Welterweight",
+    summary:
+      "Community spotlight: the featured UFC event is built around Muhammad, so this week the conversation is less about records and more about what a former champion still looks like in a five-round headliner.",
+  } satisfies WebFighter,
+  liveRooms: mmaLiveRooms,
+  sourceLabel: "Source: UFC official events / curated community prompts",
+  communityLabel: "Community discussion",
 };
 
 export const worldCupPromo: WebWorldCupPromo = {
   enabled: true,
   title: "World Cup Watch",
-  subtitle: "A temporary tournament desk that can be promoted from Home without becoming permanent navigation clutter.",
+  subtitle: "A temporary tournament desk promoted from Home, not a permanent nav commitment.",
   body:
-    "Use this for fixtures, reactions, and special tournament rooms while the tournament is active, then switch it off cleanly later.",
+    "Use this for verified FIFA fixtures, community prompts, and tournament rooms while the World Cup is active, then switch it off cleanly later.",
   href: "/world-cup",
-  statusLabel: "Temporary hub"
+  statusLabel: "Temporary hub",
 };

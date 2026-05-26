@@ -15,12 +15,12 @@ export function MMATeaser() {
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">MMA</p>
           <h3 className="mt-1 text-lg font-black tracking-tight text-ink">{featured.headline}</h3>
           <p className="mt-1 text-sm text-stone-500">
-            {featured.dateLabel} • {featured.venue}
+            {featured.dateLabel} | {featured.venue}
           </p>
         </div>
         <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold text-brand-800">
           <Flame className="h-3.5 w-3.5" />
-          Fight week
+          Official event
         </div>
       </div>
 
@@ -28,7 +28,7 @@ export function MMATeaser() {
 
       {featured.discussionPrompt ? (
         <div className="mt-4 rounded-[20px] bg-brand-50 px-4 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-700">Next big fight</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-700">{mmaHub.communityLabel}</p>
           <p className="mt-2 text-sm leading-6 text-brand-950">{featured.discussionPrompt}</p>
         </div>
       ) : null}
@@ -46,9 +46,13 @@ export function MMATeaser() {
 
       {nextCard ? (
         <p className="mt-4 text-sm text-stone-500">
-          Up next: {nextCard.eventName} with {nextCard.mainCardFights.length + 1} featured fights on deck.
+          Up next: {nextCard.eventName}. If the matchup is not confirmed yet, the hub says so clearly.
         </p>
       ) : null}
+
+      <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-brand-700">
+        {mmaHub.sourceLabel}
+      </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <Link
@@ -57,7 +61,7 @@ export function MMATeaser() {
         >
           Open MMA hub
         </Link>
-        <p className="text-sm text-stone-500">One place for headline fights, recent finishes, and live-room energy.</p>
+        <p className="text-sm text-stone-500">Official UFC events plus community prompts, without fake cards or guessed records.</p>
       </div>
     </section>
   );
