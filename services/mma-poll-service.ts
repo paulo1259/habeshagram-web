@@ -45,10 +45,8 @@ function normalizeCounts(raw: unknown, poll: WebMMAPredictionPoll) {
   const entries = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
 
   return poll.options.reduce<Record<string, number>>((accumulator, option) => {
-    accumulator[option.id] =
-      typeof entries[option.id] === "number" && entries[option.id] >= 0
-        ? (entries[option.id] as number)
-        : 0;
+    const val = entries[option.id];
+    accumulator[option.id] = typeof val === "number" && val >= 0 ? val : 0;
     return accumulator;
   }, {});
 }
@@ -115,10 +113,11 @@ export async function submitMMAPollVote(input: {
     throw new Error("Prediction voting is not available until Firebase is configured.");
   }
 
+  const db = firebaseDb!;
   return withTimeout(
-    runTransaction(firebaseDb, async (transaction) => {
-      const pollRef = doc(firebaseDb, POLLS_COLLECTION, poll.pollId);
-      const voteRef = doc(firebaseDb, POLLS_COLLECTION, poll.pollId, "votes", userId);
+    runTransaction(db, async (transaction) => {
+      const pollRef = doc(db, POLLS_COLLECTION, poll.pollId);
+      const voteRef = doc(db, POLLS_COLLECTION, poll.pollId, "votes", userId);
       const [pollSnapshot, voteSnapshot] = await Promise.all([
         transaction.get(pollRef),
         transaction.get(voteRef),

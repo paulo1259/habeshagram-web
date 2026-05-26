@@ -14,6 +14,7 @@ import {
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/section-header";
+import { logEvent } from "@/lib/analytics-events";
 import { cn } from "@/lib/utils";
 import { radioStations } from "@/services/discovery-data";
 import { RadioStation } from "@/types";
@@ -314,7 +315,7 @@ export function RadioPage() {
             <RadioStationCard
               station={featuredStation}
               active={activeStationId === featuredStation.id}
-              onActivate={(nextStation) => setActiveStationId(nextStation.id)}
+              onActivate={(nextStation) => { setActiveStationId(nextStation.id); logEvent("radio_play"); }}
             />
           </section>
         ) : null}
@@ -332,7 +333,7 @@ export function RadioPage() {
                 key={station.id}
                 station={station}
                 active={activeStationId === station.id}
-                onActivate={(nextStation) => setActiveStationId(nextStation.id)}
+                onActivate={(nextStation) => { setActiveStationId(nextStation.id); logEvent("radio_play"); }}
               />
             ))}
           </div>

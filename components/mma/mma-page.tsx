@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { SectionHeader } from "@/components/ui/section-header";
 import { ShareActions } from "@/components/ui/share-actions";
 import { mmaHub } from "@/services/mma-hub-data";
+import { MMAPredictionPollCard } from "@/components/mma/mma-prediction-poll-card";
 
 export function MMAPage() {
   const featured = mmaHub.featuredFight;
@@ -129,6 +130,21 @@ export function MMAPage() {
             </article>
           </div>
         </section>
+
+
+        {/* ── Community prediction poll ───────────────────────────────────── */}
+        {mmaHub.featuredPoll ? (
+          <section className="surface-panel p-4 sm:p-5">
+            <SectionHeader
+              eyebrow="Community predictions"
+              title="Where is the room leaning?"
+              description="One vote per member, locked at walkout. Community picks only — no gambling, no money."
+            />
+            <div className="mt-4 lg:max-w-2xl">
+              <MMAPredictionPollCard poll={mmaHub.featuredPoll} />
+            </div>
+          </section>
+        ) : null}
 
         <section className="surface-panel p-4 sm:p-5">
           <SectionHeader

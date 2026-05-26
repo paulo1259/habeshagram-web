@@ -29,6 +29,7 @@ import {
 import { getFollowingIds } from "@/services/follow-service";
 import { getPostsByUsers } from "@/services/post-service";
 import { mmaHub } from "@/services/mma-hub-data";
+import { logEvent } from "@/lib/analytics-events";
 import { Post } from "@/types";
 
 export default function HomePage() {
@@ -39,6 +40,10 @@ export default function HomePage() {
   const [isFollowingLoading, setIsFollowingLoading] = useState(false);
   const [followingError, setFollowingError] = useState("");
   const [hasLoadedFollowing, setHasLoadedFollowing] = useState(false);
+
+  useEffect(() => {
+    logEvent("home_view", currentUser?.id);
+  }, [currentUser?.id]);
 
   useEffect(() => {
     setFollowingIds([]);
@@ -220,6 +225,8 @@ export default function HomePage() {
           </div>
         </section>
 
+        <WorldCupBanner />
+
         <section className="overflow-hidden rounded-[28px] border border-brand-100/80 bg-gradient-to-r from-red-700 via-orange-500 to-brand-500 px-4 py-4 text-white shadow-soft sm:px-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -245,7 +252,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        <WorldCupBanner />
         <MMATeaser />
         <RadioTeaser />
         <VideoHighlights team={preferredTeam} />

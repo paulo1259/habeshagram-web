@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useAppData } from "@/hooks/use-app-data";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { logEvent } from "@/lib/analytics-events";
 import { isFollowingUser, toggleFollowUser } from "@/services/follow-service";
 import { searchPosts, searchUsers } from "@/services/search-service";
 import { Post, User } from "@/types";
@@ -44,6 +45,8 @@ export function SearchPageClient({ initialQuery }: { initialQuery: string }) {
       setIsLoading(false);
       return;
     }
+
+    logEvent("search_use", currentUser?.id);
 
     let isMounted = true;
 

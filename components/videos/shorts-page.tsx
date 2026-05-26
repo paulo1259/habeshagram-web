@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ShareActions } from "@/components/ui/share-actions";
 import { useAppData } from "@/hooks/use-app-data";
 import { trackEvent } from "@/lib/analytics";
+import { logEvent } from "@/lib/analytics-events";
 import { recordSectionUsage, recordVideoEngagement } from "@/lib/personalization";
 import { cn, createId, formatRelativeTime } from "@/lib/utils";
 import { getCuratedShorts, sortShortsForFeed } from "@/services/curated-shorts-service";
@@ -336,6 +337,7 @@ export function ShortsPage() {
     })();
 
     recordSectionUsage("videos", 2);
+    logEvent("reels_open", currentUser?.id);
 
     const storedMuted =
       typeof window !== "undefined" ? window.localStorage.getItem(SHORTS_MUTED_STORAGE_KEY) : null;

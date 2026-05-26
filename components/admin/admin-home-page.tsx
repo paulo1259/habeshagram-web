@@ -1,10 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Clapperboard, Film, Flag, Newspaper, Sparkles } from "lucide-react";
+import { BarChart2, Clapperboard, Film, Flag, Newspaper, Sparkles } from "lucide-react";
 import { AdminLayout } from "@/components/admin/admin-layout";
 
 const cards = [
+  {
+    href: "/admin/insights",
+    title: "Product Insights",
+    description:
+      "Live usage signals from the last 7 days — event breakdown, platform split, top reels, live rooms, and World Cup team activity.",
+    icon: BarChart2
+  },
   {
     href: "/admin/videos",
     title: "Curated Videos",
