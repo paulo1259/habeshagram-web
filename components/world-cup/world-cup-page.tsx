@@ -298,8 +298,8 @@ export function WorldCupPage() {
         <section className="surface-panel p-4 sm:p-5">
           <SectionHeader
             eyebrow="Official fixtures"
-            title="What is confirmed"
-            description="Only verified FIFA fixtures appear here. Unconfirmed matchups or kickoff details stay out of the way."
+            title="Verified fixtures"
+            description="Only official FIFA fixtures appear here. The rest will arrive when they are ready to be trusted."
           />
 
           <div className="mt-4 grid gap-3 lg:grid-cols-2">
@@ -322,7 +322,7 @@ export function WorldCupPage() {
           <SectionHeader
             eyebrow="Groups"
             title="FIFA final draw"
-            description="Official groups only. Team rows can still be starred without implying a generated round-robin schedule."
+            description="Official groups only, with favorites still easy to save."
           />
           <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
             {worldCupGroupsSourceLabel}

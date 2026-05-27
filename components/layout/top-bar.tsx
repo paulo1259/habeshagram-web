@@ -55,31 +55,31 @@ export function TopBar() {
         <div className="ml-auto flex items-center gap-2">
           <Link
             href="/search"
-            className="inline-flex rounded-full border border-brand-100/80 bg-white/90 p-2.5 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200 md:hidden"
+            className="inline-flex rounded-full border border-brand-100/80 bg-white/90 p-2.5 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200 active:scale-[0.98] md:hidden"
           >
             <Search className="h-4 w-4 text-stone-600" />
           </Link>
           <Link
             href="/radio"
-            className="inline-flex rounded-full border border-brand-100/80 bg-white/90 p-2.5 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200"
+            className="inline-flex rounded-full border border-brand-100/80 bg-white/90 p-2.5 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200 active:scale-[0.98]"
           >
             <Mic2 className="h-4 w-4 text-stone-600" />
           </Link>
           <Link
             href="/shorts"
-            className="inline-flex rounded-full border border-brand-100/80 bg-white/90 p-2.5 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200"
+            className="inline-flex rounded-full border border-brand-100/80 bg-white/90 p-2.5 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200 active:scale-[0.98]"
           >
             <Clapperboard className="h-4 w-4 text-stone-600" />
           </Link>
           <Link
             href="/world-news"
-            className="inline-flex rounded-full border border-brand-100/80 bg-white/90 p-2.5 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200"
+            className="inline-flex rounded-full border border-brand-100/80 bg-white/90 p-2.5 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200 active:scale-[0.98]"
           >
             <Globe2 className="h-4 w-4 text-stone-600" />
           </Link>
           <Link
             href="/notifications"
-            className="relative inline-flex rounded-full border border-brand-100/80 bg-white/90 p-2.5 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200"
+            className="relative inline-flex rounded-full border border-brand-100/80 bg-white/90 p-2.5 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200 active:scale-[0.98]"
           >
             <Bell className="h-4 w-4 text-stone-600" />
             {currentUser && unreadNotificationCount > 0 ? (
@@ -106,9 +106,9 @@ export function TopBar() {
             </p>
             <p className="text-xs text-stone-500">
               {currentUser
-                ? "Firebase session active"
+                ? "You are in"
                 : authMode === "unconfigured"
-                  ? "Add Firebase config to enable sign-in"
+                  ? "Sign-in will be ready once the app config is connected"
                   : "Browse the community"}
             </p>
           </div>

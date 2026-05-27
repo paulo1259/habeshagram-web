@@ -81,13 +81,13 @@ export function WorldCupBanner() {
             </div>
           ) : null}
 
-          <p className="text-xs text-white/78">{worldCupCurationLabel}</p>
+          <p className="text-xs text-white/78">Verified fixtures first, with groups and watch-room energy built around them.</p>
           <p className="text-xs text-white/62">{worldCupSourceLabel}</p>
         </div>
 
         <Link
           href="/world-cup"
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-800 shadow-soft transition hover:bg-brand-50"
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-800 shadow-soft transition hover:bg-brand-50 active:scale-[0.98]"
         >
           <Globe2 className="h-4 w-4" />
           {isLive ? "Open hub" : "Verified fixtures"}

@@ -167,7 +167,7 @@ export default function HomePage() {
                 {currentUser ? `Selam, @${currentUser.username}` : "Welcome to HabeshaGram"}
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600 sm:text-[15px]">
-                Share hot takes, memes, style, radio moments, fight-night reactions, and community updates in a warm, mobile-first Habesha timeline.
+                Reels, trusted radio, fight-night energy, and community updates should all feel easy to step into from here.
               </p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium text-stone-600">
                 <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1.5">
@@ -189,8 +189,8 @@ export default function HomePage() {
           </div>
           <p className="relative mt-4 rounded-[22px] bg-brand-50 px-4 py-3 text-sm text-brand-900">
             {isFirebaseConfigured
-              ? "Firebase auth is connected. Feed, posts, likes, comments, profiles, and discovery surfaces are live."
-              : "Add your Firebase env values in .env.local to enable login and signup. Discovery sections will render real data when those services are configured."}
+              ? "Your community feed, profiles, and discovery surfaces are ready to use."
+              : "Sign-in and posting will feel complete once the app configuration is connected."}
           </p>
         </section>
 
@@ -204,7 +204,7 @@ export default function HomePage() {
                 href="/create"
                 className="flex min-h-11 items-center rounded-full border border-brand-100 bg-brand-50/40 px-4 text-sm text-stone-500 transition hover:border-brand-200 hover:bg-brand-50"
               >
-                {currentUser ? "What would you like to share?" : "Log in to start posting"}
+                {currentUser ? "What should the community see from you today?" : "Log in to start posting"}
               </Link>
               <div className="flex items-center gap-2 text-xs text-stone-500">
                 <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1">
@@ -212,7 +212,7 @@ export default function HomePage() {
                   Image posts
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1">
-                  Community updates
+                  Community voice
                 </span>
               </div>
             </div>
@@ -240,7 +240,7 @@ export default function HomePage() {
                 {mmaHub.featuredFight.weightClass}
               </p>
               <p className="mt-2 text-sm text-white/88">
-                Next big fight, curated cards, recent results, and the live-room prompt people can actually use on major nights.
+                The next official event, the strongest fight-week conversations, and a room people can actually join when the night matters.
               </p>
             </div>
             <Link

@@ -46,7 +46,7 @@ export function MMATeaser() {
 
       {nextCard ? (
         <p className="mt-4 text-sm text-stone-500">
-          Up next: {nextCard.eventName}. The hub highlights the next official event first and lets confirmed matchups arrive in their own time.
+          Up next: {nextCard.eventName}. HabeshaGram keeps the event visible first and lets confirmed matchups arrive in their own time.
         </p>
       ) : null}
 
@@ -57,11 +57,11 @@ export function MMATeaser() {
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <Link
           href="/football"
-          className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-brand-500 to-orange-400 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:brightness-105"
+          className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-brand-500 to-orange-400 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:brightness-105 active:scale-[0.98]"
         >
           Open MMA hub
         </Link>
-        <p className="text-sm text-stone-500">Official UFC events plus community prompts, without fake cards or guessed records.</p>
+        <p className="text-sm text-stone-500">Official UFC events first, with community prompts layered in without guesswork.</p>
       </div>
     </section>
   );
