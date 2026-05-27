@@ -46,7 +46,7 @@ export function MMATeaser() {
 
       {nextCard ? (
         <p className="mt-4 text-sm text-stone-500">
-          Up next: {nextCard.eventName}. If the matchup is not confirmed yet, the hub says so clearly.
+          Up next: {nextCard.eventName}. The hub highlights the next official event first and lets confirmed matchups arrive in their own time.
         </p>
       ) : null}
 

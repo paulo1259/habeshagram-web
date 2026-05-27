@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { logEvent } from "@/lib/analytics-events";
 import { Globe2, Mic2 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { SectionHeader } from "@/components/ui/section-header";
@@ -150,6 +151,7 @@ export function WorldCupPage() {
   useEffect(() => {
     setFavoriteIds(loadFavorites());
     setPredictionsMap(loadPredictions());
+    logEvent("world_cup_hub_open");
 
     timerRef.current = setInterval(() => {
       setCountdown(buildCountdown(target));
@@ -245,6 +247,9 @@ export function WorldCupPage() {
               />
             ))}
           </div>
+          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
+            More fixtures coming as FIFA confirms details.
+          </p>
         </section>
 
         <section className="surface-panel p-4 sm:p-5">
@@ -310,14 +315,20 @@ export function WorldCupPage() {
             title="Verified tournament footprint"
             description="Official host cities only."
           />
-          <div className="mt-4 flex flex-wrap gap-2">
-            {verifiedHostCities.map((city) => (
-              <span
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {verifiedHostCities.map((city, index) => (
+              <article
                 key={city}
-                className="rounded-full bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-800"
+                className="rounded-[22px] border border-brand-100/80 bg-white px-4 py-4 shadow-sm"
               >
-                {city}
-              </span>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-700">
+                  Host city
+                </p>
+                <p className="mt-2 text-base font-black tracking-tight text-ink">{city}</p>
+                <p className="mt-2 text-sm text-stone-500">
+                  {index < 3 ? "Opening-week energy" : index < 8 ? "Group-stage stage" : "Tournament stop"}
+                </p>
+              </article>
             ))}
           </div>
         </section>
@@ -360,7 +371,8 @@ export function WorldCupPage() {
             }
           />
           <div className="mt-4 rounded-[24px] border border-brand-100/80 bg-white px-4 py-4 shadow-sm">
-            <p className="text-lg font-black tracking-tight text-ink">World Cup watch rooms</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-700">Verified match rooms</p>
+            <p className="mt-2 text-lg font-black tracking-tight text-ink">World Cup watch rooms</p>
             <p className="mt-3 text-sm leading-6 text-stone-600">
               Bring verified fixtures into a watch-room flow without pretending HabeshaGram has live score coverage it cannot verify.
             </p>

@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
+import { logEvent } from "@/lib/analytics-events";
 import { ArrowRight, Flame, Mic2, Trophy } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { SectionHeader } from "@/components/ui/section-header";
@@ -10,6 +12,10 @@ import { MMAPredictionPollCard } from "@/components/mma/mma-prediction-poll-card
 
 export function MMAPage() {
   const featured = mmaHub.featuredFight;
+
+  useEffect(() => {
+    logEvent("mma_hub_open");
+  }, []);
 
   return (
     <AppShell>
@@ -75,7 +81,7 @@ export function MMAPage() {
             description={featured.note}
           />
 
-          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+            <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
             <article className="rounded-[26px] border border-brand-100/80 bg-gradient-to-br from-white via-white to-brand-50/35 p-5 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <span className="rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-800">
@@ -171,7 +177,7 @@ export function MMAPage() {
             description="Only verified UFC events appear here. If details are pending, the desk says so clearly."
           />
 
-          <div className="mt-4 grid gap-3 lg:grid-cols-3">
+            <div className="mt-4 grid gap-3 lg:grid-cols-3">
             {mmaHub.upcomingFightCards.map((card) => (
               <article key={card.id} className="rounded-[24px] border border-brand-100/80 bg-white px-4 py-4 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
@@ -196,7 +202,12 @@ export function MMAPage() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-stone-500">Fight card details coming soon.</p>
+                    <div className="rounded-[18px] bg-stone-50 px-3 py-3">
+                      <p className="text-sm font-semibold text-ink">Fight card details coming soon.</p>
+                      <p className="mt-2 text-xs leading-5 text-stone-500">
+                        This is an official UFC event. HabeshaGram will add matchup depth only after UFC confirms it.
+                      </p>
+                    </div>
                   )}
                 </div>
                 {card.discussionPrompt ? (
@@ -302,6 +313,7 @@ export function MMAPage() {
                 </div>
                 <p className="mt-3 text-lg font-black tracking-tight text-ink">{room.title}</p>
                 <p className="mt-2 text-sm leading-6 text-stone-600">{room.topic}</p>
+                <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-700">Official event room</p>
                 <Link
                   href="/live-rooms"
                   className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-brand-800 transition hover:text-brand-900"
