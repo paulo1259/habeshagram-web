@@ -12,6 +12,7 @@ import {
   buildCountdown,
   getMatchBadges,
   getTeamById,
+  getTeamsForGroup,
   getUpcomingMatches,
   getUpcomingMatchesForFavorites,
   isTournamentLive,
@@ -24,6 +25,8 @@ import {
   worldCupCommunityPrompts,
   worldCupConfig,
   worldCupCurationLabel,
+  worldCupGroups,
+  worldCupGroupsSourceLabel,
   worldCupSourceLabel,
 } from "@/services/world-cup-data";
 
@@ -140,6 +143,69 @@ function FixtureCard({
   );
 }
 
+function GroupCard({
+  favoriteIds,
+  groupId,
+  groupName,
+  onToggleFavorite,
+}: {
+  favoriteIds: string[];
+  groupId: string;
+  groupName: string;
+  onToggleFavorite: (teamId: string) => void;
+}) {
+  const teams = getTeamsForGroup(groupId);
+
+  return (
+    <article className="rounded-[24px] border border-brand-100/80 bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-lg font-black tracking-tight text-ink">{groupName}</p>
+        <span className="rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-800">
+          Official draw
+        </span>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {teams.map((team) => {
+          const isFavorite = favoriteIds.includes(team.id);
+
+          return (
+            <button
+              key={team.id}
+              type="button"
+              onClick={() => onToggleFavorite(team.id)}
+              className={[
+                "flex w-full items-center justify-between gap-3 rounded-[18px] px-3 py-3 text-left transition",
+                isFavorite
+                  ? "border border-brand-300 bg-brand-50"
+                  : "bg-stone-50 hover:bg-brand-50/70",
+              ].join(" ")}
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="text-2xl">{team.flag}</span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-black text-ink">{team.name}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
+                      {team.code}
+                    </span>
+                    {team.isHost ? (
+                      <span className="rounded-full bg-stone-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white">
+                        Host
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+              <span className="text-lg font-bold text-brand-700">{isFavorite ? "★" : "☆"}</span>
+            </button>
+          );
+        })}
+      </div>
+    </article>
+  );
+}
+
 export function WorldCupPage() {
   const target = useMemo(() => new Date(worldCupConfig.openingMatchAt), []);
   const [countdown, setCountdown] = useState(() => buildCountdown(target));
@@ -250,6 +316,28 @@ export function WorldCupPage() {
           <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
             More fixtures coming as FIFA confirms details.
           </p>
+        </section>
+
+        <section className="surface-panel p-4 sm:p-5">
+          <SectionHeader
+            eyebrow="Groups"
+            title="FIFA final draw"
+            description="Official groups only. Team rows can still be starred without implying a generated round-robin schedule."
+          />
+          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
+            {worldCupGroupsSourceLabel}
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {worldCupGroups.map((group) => (
+              <GroupCard
+                key={group.id}
+                favoriteIds={favoriteIds}
+                groupId={group.id}
+                groupName={group.name}
+                onToggleFavorite={handleToggleFavorite}
+              />
+            ))}
+          </div>
         </section>
 
         <section className="surface-panel p-4 sm:p-5">

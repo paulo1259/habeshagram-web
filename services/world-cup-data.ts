@@ -45,9 +45,17 @@ export type WorldCupConfig = {
 
 export type PredictionPick = 'home' | 'draw' | 'away';
 
+/**
+ * Trust model:
+ * - worldCupGroups + worldCupTeams come from the FIFA official final draw.
+ * - verifiedWorldCupFixtures stays intentionally limited to fixtures FIFA has
+ *   already published clearly enough for the app to stand behind.
+ * - We do not regenerate the full round-robin schedule from the groups.
+ */
 export const worldCupSourceLabel = 'Source: FIFA official fixtures';
 export const worldCupCurationLabel =
   'Curated from official FIFA fixtures. Check FIFA for final kickoff details.';
+export const worldCupGroupsSourceLabel = 'Groups from FIFA official final draw.';
 
 export const worldCupConfig: WorldCupConfig = {
   enabled: true,
@@ -77,15 +85,71 @@ export const verifiedHostCities = [
 ];
 
 export const worldCupTeams: WorldCupTeam[] = [
-  { id: 'mex', name: 'Mexico', code: 'MEX', flag: '🇲🇽', groupId: 'HOST', isHost: true },
-  { id: 'rsa', name: 'South Africa', code: 'RSA', flag: '🇿🇦', groupId: 'HOST', isHost: false },
-  { id: 'usa', name: 'United States', code: 'USA', flag: '🇺🇸', groupId: 'HOST', isHost: true },
-  { id: 'par', name: 'Paraguay', code: 'PAR', flag: '🇵🇾', groupId: 'HOST', isHost: false },
-  { id: 'can', name: 'Canada', code: 'CAN', flag: '🇨🇦', groupId: 'HOST', isHost: true },
-  { id: 'bih', name: 'Bosnia and Herzegovina', code: 'BIH', flag: '🇧🇦', groupId: 'HOST', isHost: false },
+  { id: 'mex', name: 'Mexico', code: 'MEX', flag: '🇲🇽', groupId: 'A', isHost: true },
+  { id: 'kor', name: 'South Korea', code: 'KOR', flag: '🇰🇷', groupId: 'A', isHost: false },
+  { id: 'rsa', name: 'South Africa', code: 'RSA', flag: '🇿🇦', groupId: 'A', isHost: false },
+  { id: 'uefa-d', name: 'UEFA Playoff D winner', code: 'UEFA-D', flag: '🏴', groupId: 'A', isHost: false },
+  { id: 'can', name: 'Canada', code: 'CAN', flag: '🇨🇦', groupId: 'B', isHost: true },
+  { id: 'bih', name: 'Bosnia and Herzegovina', code: 'BIH', flag: '🇧🇦', groupId: 'Official', isHost: false },
+  { id: 'sui', name: 'Switzerland', code: 'SUI', flag: '🇨🇭', groupId: 'B', isHost: false },
+  { id: 'qat', name: 'Qatar', code: 'QAT', flag: '🇶🇦', groupId: 'B', isHost: false },
+  { id: 'uefa-a', name: 'UEFA Playoff A winner', code: 'UEFA-A', flag: '🏴', groupId: 'B', isHost: false },
+  { id: 'bra', name: 'Brazil', code: 'BRA', flag: '🇧🇷', groupId: 'C', isHost: false },
+  { id: 'mar', name: 'Morocco', code: 'MAR', flag: '🇲🇦', groupId: 'C', isHost: false },
+  { id: 'sco', name: 'Scotland', code: 'SCO', flag: '🏴', groupId: 'C', isHost: false },
+  { id: 'hai', name: 'Haiti', code: 'HAI', flag: '🇭🇹', groupId: 'C', isHost: false },
+  { id: 'usa', name: 'United States', code: 'USA', flag: '🇺🇸', groupId: 'D', isHost: true },
+  { id: 'par', name: 'Paraguay', code: 'PAR', flag: '🇵🇾', groupId: 'D', isHost: false },
+  { id: 'aus', name: 'Australia', code: 'AUS', flag: '🇦🇺', groupId: 'D', isHost: false },
+  { id: 'uefa-c', name: 'UEFA Playoff C winner', code: 'UEFA-C', flag: '🏴', groupId: 'D', isHost: false },
+  { id: 'ger', name: 'Germany', code: 'GER', flag: '🇩🇪', groupId: 'E', isHost: false },
+  { id: 'ecu', name: 'Ecuador', code: 'ECU', flag: '🇪🇨', groupId: 'E', isHost: false },
+  { id: 'civ', name: 'Ivory Coast', code: 'CIV', flag: '🇨🇮', groupId: 'E', isHost: false },
+  { id: 'cuw', name: 'Curacao', code: 'CUW', flag: '🇨🇼', groupId: 'E', isHost: false },
+  { id: 'ned', name: 'Netherlands', code: 'NED', flag: '🇳🇱', groupId: 'F', isHost: false },
+  { id: 'jpn', name: 'Japan', code: 'JPN', flag: '🇯🇵', groupId: 'F', isHost: false },
+  { id: 'tun', name: 'Tunisia', code: 'TUN', flag: '🇹🇳', groupId: 'F', isHost: false },
+  { id: 'uefa-b', name: 'UEFA Playoff B winner', code: 'UEFA-B', flag: '🏴', groupId: 'F', isHost: false },
+  { id: 'bel', name: 'Belgium', code: 'BEL', flag: '🇧🇪', groupId: 'G', isHost: false },
+  { id: 'irn', name: 'Iran', code: 'IRN', flag: '🇮🇷', groupId: 'G', isHost: false },
+  { id: 'egy', name: 'Egypt', code: 'EGY', flag: '🇪🇬', groupId: 'G', isHost: false },
+  { id: 'nzl', name: 'New Zealand', code: 'NZL', flag: '🇳🇿', groupId: 'G', isHost: false },
+  { id: 'esp', name: 'Spain', code: 'ESP', flag: '🇪🇸', groupId: 'H', isHost: false },
+  { id: 'uru', name: 'Uruguay', code: 'URU', flag: '🇺🇾', groupId: 'H', isHost: false },
+  { id: 'ksa', name: 'Saudi Arabia', code: 'KSA', flag: '🇸🇦', groupId: 'H', isHost: false },
+  { id: 'cpv', name: 'Cape Verde', code: 'CPV', flag: '🇨🇻', groupId: 'H', isHost: false },
+  { id: 'fra', name: 'France', code: 'FRA', flag: '🇫🇷', groupId: 'I', isHost: false },
+  { id: 'sen', name: 'Senegal', code: 'SEN', flag: '🇸🇳', groupId: 'I', isHost: false },
+  { id: 'nor', name: 'Norway', code: 'NOR', flag: '🇳🇴', groupId: 'I', isHost: false },
+  { id: 'playoff-2', name: 'Inter-confederation Playoff 2 winner', code: 'ICP-2', flag: '🌍', groupId: 'I', isHost: false },
+  { id: 'arg', name: 'Argentina', code: 'ARG', flag: '🇦🇷', groupId: 'J', isHost: false },
+  { id: 'aut', name: 'Austria', code: 'AUT', flag: '🇦🇹', groupId: 'J', isHost: false },
+  { id: 'alg', name: 'Algeria', code: 'ALG', flag: '🇩🇿', groupId: 'J', isHost: false },
+  { id: 'jor', name: 'Jordan', code: 'JOR', flag: '🇯🇴', groupId: 'J', isHost: false },
+  { id: 'por', name: 'Portugal', code: 'POR', flag: '🇵🇹', groupId: 'K', isHost: false },
+  { id: 'col', name: 'Colombia', code: 'COL', flag: '🇨🇴', groupId: 'K', isHost: false },
+  { id: 'uzb', name: 'Uzbekistan', code: 'UZB', flag: '🇺🇿', groupId: 'K', isHost: false },
+  { id: 'playoff-1', name: 'Inter-confederation Playoff 1 winner', code: 'ICP-1', flag: '🌍', groupId: 'K', isHost: false },
+  { id: 'eng', name: 'England', code: 'ENG', flag: '🏴', groupId: 'L', isHost: false },
+  { id: 'cro', name: 'Croatia', code: 'CRO', flag: '🇭🇷', groupId: 'L', isHost: false },
+  { id: 'pan', name: 'Panama', code: 'PAN', flag: '🇵🇦', groupId: 'L', isHost: false },
+  { id: 'gha', name: 'Ghana', code: 'GHA', flag: '🇬🇭', groupId: 'L', isHost: false },
 ];
 
-export const worldCupGroups: WorldCupGroup[] = [];
+export const worldCupGroups: WorldCupGroup[] = [
+  { id: 'A', name: 'Group A', teamIds: ['mex', 'kor', 'rsa', 'uefa-d'] },
+  { id: 'B', name: 'Group B', teamIds: ['can', 'sui', 'qat', 'uefa-a'] },
+  { id: 'C', name: 'Group C', teamIds: ['bra', 'mar', 'sco', 'hai'] },
+  { id: 'D', name: 'Group D', teamIds: ['usa', 'par', 'aus', 'uefa-c'] },
+  { id: 'E', name: 'Group E', teamIds: ['ger', 'ecu', 'civ', 'cuw'] },
+  { id: 'F', name: 'Group F', teamIds: ['ned', 'jpn', 'tun', 'uefa-b'] },
+  { id: 'G', name: 'Group G', teamIds: ['bel', 'irn', 'egy', 'nzl'] },
+  { id: 'H', name: 'Group H', teamIds: ['esp', 'uru', 'ksa', 'cpv'] },
+  { id: 'I', name: 'Group I', teamIds: ['fra', 'sen', 'nor', 'playoff-2'] },
+  { id: 'J', name: 'Group J', teamIds: ['arg', 'aut', 'alg', 'jor'] },
+  { id: 'K', name: 'Group K', teamIds: ['por', 'col', 'uzb', 'playoff-1'] },
+  { id: 'L', name: 'Group L', teamIds: ['eng', 'cro', 'pan', 'gha'] },
+];
 
 export const verifiedWorldCupFixtures: WorldCupMatch[] = [
   {
