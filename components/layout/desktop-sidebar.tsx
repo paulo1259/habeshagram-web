@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Bookmark, Clapperboard, Globe2, House, LogOut, Mic2, PenSquare, UserCircle2 } from "lucide-react";
+import { Bookmark, Globe2, House, LogOut, Mic2, PenSquare, UserCircle2 } from "lucide-react";
 import { useAppData } from "@/hooks/use-app-data";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ const items = [
   { href: "/", label: "Home", icon: House },
   { href: "/world-news", label: "World News", icon: Globe2 },
   { href: "/radio", label: "Radio", icon: Mic2 },
-  { href: "/shorts", label: "Shorts", icon: Clapperboard },
   { href: "/create", label: "Create Post", icon: PenSquare },
   { href: "/saved", label: "Saved", icon: Bookmark },
   { href: "/profile", label: "Profile", icon: UserCircle2 }

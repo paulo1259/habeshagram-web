@@ -10,10 +10,6 @@ function getKindLabel(kind: string) {
     return "video";
   }
 
-  if (kind === "shorts") {
-    return "short";
-  }
-
   if (kind === "debates") {
     return "debate";
   }

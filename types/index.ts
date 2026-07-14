@@ -154,31 +154,6 @@ export type CuratedVideoItem = {
   featured?: boolean;
 };
 
-export type CuratedShortCategory =
-  | "Fan Cam"
-  | "Quick Take"
-  | "Culture Burst";
-
-export type CuratedShortItem = {
-  id: string;
-  title: string;
-  category: CuratedShortCategory;
-  source: string;
-  summary: string;
-  thumbnailURL: string;
-  videoUrl: string;
-  embedUrl: string;
-  duration: string;
-  playbackMode: "file" | "embed";
-  vertical: boolean;
-  storagePath?: string;
-  thumbnailStoragePath?: string;
-  hashtags?: string[];
-  createdAt: string;
-  publishLabel?: string;
-  featured?: boolean;
-};
-
 export type NotificationItem = {
   id: string;
   type: "like" | "comment" | "follow";

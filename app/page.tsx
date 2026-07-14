@@ -176,7 +176,7 @@ export default function HomePage() {
                 className="mt-3 max-w-2xl animate-fade-up text-sm leading-6 text-stone-500 sm:text-[15px]"
                 style={{ animationDelay: "120ms" }}
               >
-                Reels, trusted radio, East Africa news, and community updates should all feel easy to step into from here.
+                Trusted radio, East Africa news, and community updates should all feel easy to step into from here.
               </p>
               <div
                 className="mt-4 flex animate-fade-up flex-wrap gap-2 text-xs font-medium"

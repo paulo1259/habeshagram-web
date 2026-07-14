@@ -17,7 +17,6 @@
  *
  * USAGE — always fire-and-forget:
  *   logEvent('home_view', user?.uid);
- *   logEvent('reel_like', user?.uid, { reelId: short.id });
  */
 
 import { addDoc, collection, Timestamp } from "firebase/firestore";
@@ -29,9 +28,6 @@ import { firebaseDb } from "./firebase";
 export type AnalyticsEventName =
   | "app_open"
   | "home_view"
-  | "reels_open"
-  | "reel_play"
-  | "reel_like"
   | "radio_play"
   | "live_room_join"
   | "post_create"
@@ -40,7 +36,6 @@ export type AnalyticsEventName =
   | "search_use";
 
 export interface AnalyticsMetadata {
-  reelId?: string;
   roomId?: string;
   matchId?: string;
   teamId?: string;

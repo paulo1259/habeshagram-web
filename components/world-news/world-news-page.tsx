@@ -1,21 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Globe2, MapPinned, UsersRound } from "lucide-react";
+import { Globe2, MapPinned, Sparkles, UsersRound } from "lucide-react";
 import { NewsCard } from "@/components/discovery/news-card";
 import { AppShell } from "@/components/layout/app-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
+import { getWorldNewsDigest, type WorldNewsDigestPayload } from "@/services/ai-digest-client-service";
 import { getWorldNewsFeed } from "@/services/world-news-client-service";
 import type { WorldNewsFeedPayload } from "@/services/world-news-service";
 import type { LocalNewsItem, WorldNewsItem } from "@/types";
 
-function toCardItem(item: WorldNewsItem): LocalNewsItem {
+function toCardItem(item: WorldNewsItem, aiSummary?: string): LocalNewsItem {
   return {
     id: item.id,
     headline: item.headline,
     source: `${item.source} · ${item.publishLabel}`,
-    summary: item.summary,
+    summary: aiSummary ? `✨ ${aiSummary}` : item.summary,
     category: item.category,
     imageURL: item.imageURL,
     link: item.link,
@@ -29,20 +30,22 @@ function WorldNewsLane({
   title,
   description,
   items,
-  emptyLabel
+  emptyLabel,
+  aiSummaries
 }: {
   eyebrow: string;
   title: string;
   description: string;
   items: WorldNewsItem[];
   emptyLabel: string;
+  aiSummaries?: Record<string, string>;
 }) {
   return (
     <section className="surface-panel p-4 sm:p-5">
       <SectionHeader eyebrow={eyebrow} title={title} description={description} />
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         {items.length ? (
-          items.map((item) => <NewsCard key={item.id} item={toCardItem(item)} compact />)
+          items.map((item) => <NewsCard key={item.id} item={toCardItem(item, aiSummaries?.[item.id])} compact />)
         ) : (
           <EmptyState title={emptyLabel} description="Fresh coverage will appear here once this lane updates." />
         )}
@@ -53,6 +56,8 @@ function WorldNewsLane({
 
 export function WorldNewsPage() {
   const [payload, setPayload] = useState<WorldNewsFeedPayload | null>(null);
+  const [digest, setDigest] = useState<WorldNewsDigestPayload | null>(null);
+  const [isDigestLoading, setIsDigestLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -85,6 +90,30 @@ export function WorldNewsPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    void (async () => {
+      try {
+        const nextDigest = await getWorldNewsDigest();
+        if (isMounted) {
+          setDigest(nextDigest);
+        }
+      } catch {
+        // The digest is an enhancement — the page works fine without it.
+      } finally {
+        if (isMounted) {
+          setIsDigestLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const aiSummaries = digest?.storySummaries;
   const topStories = payload?.topStories ?? [];
   const ethiopiaStories = payload?.ethiopia ?? [];
   const eastAfricaStories = payload?.eastafrica ?? [];
@@ -146,6 +175,61 @@ export function WorldNewsPage() {
           </div>
         ) : null}
 
+        <section className="card-lux relative overflow-hidden p-4 sm:p-5">
+          <div className="pointer-events-none absolute inset-0 bg-gold-radial opacity-60" />
+          <div className="relative">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-orange-500 text-brand-950 shadow-glow-sm">
+                  <Sparkles className="h-4 w-4" />
+                </span>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">
+                    AI Daily Digest
+                  </p>
+                  <p className="text-xs text-stone-500">East Africa in 60 seconds</p>
+                </div>
+              </div>
+              {digest?.generatedAt ? (
+                <span className="rounded-full border border-brand-500/20 bg-brand-50 px-3 py-1 text-[11px] font-semibold text-brand-700">
+                  {digest.storyCount} stories · refreshed every few hours
+                </span>
+              ) : null}
+            </div>
+
+            {isDigestLoading ? (
+              <div className="mt-4 space-y-2.5">
+                <div className="skeleton-dark h-6 w-2/3 rounded-full" />
+                <div className="skeleton-dark h-4 w-full rounded-full" />
+                <div className="skeleton-dark h-4 w-5/6 rounded-full" />
+                <div className="skeleton-dark h-4 w-4/6 rounded-full" />
+              </div>
+            ) : digest?.headline && digest.paragraphs?.length ? (
+              <div className="mt-4">
+                <h2 className="font-display text-xl font-bold tracking-tight text-gold sm:text-2xl">
+                  {digest.headline}
+                </h2>
+                <div className="mt-3 space-y-3">
+                  {digest.paragraphs.map((paragraph, index) => (
+                    <p key={index} className="text-sm leading-7 text-stone-600 sm:text-[15px]">
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+                <p className="mt-4 text-[11px] text-stone-400">
+                  Generated by AI from the live news lanes below — always check the original reporting for details.
+                  {digest.stale ? " Showing the most recent digest while a fresh one is prepared." : ""}
+                </p>
+              </div>
+            ) : (
+              <p className="mt-4 rounded-[20px] border border-white/[0.07] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-stone-500">
+                {digest?.message ??
+                  "The AI digest will appear here once fresh stories are available."}
+              </p>
+            )}
+          </div>
+        </section>
+
         <section className="surface-panel p-4 sm:p-5">
           <SectionHeader
             eyebrow="Top stories"
@@ -161,7 +245,7 @@ export function WorldNewsPage() {
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
               {topStories.map((item, index) => (
                 <div key={item.id} className={index === 0 ? "lg:col-span-2" : ""}>
-                  <NewsCard item={toCardItem(item)} compact={index !== 0} />
+                  <NewsCard item={toCardItem(item, aiSummaries?.[item.id])} compact={index !== 0} />
                 </div>
               ))}
             </div>
@@ -220,6 +304,7 @@ export function WorldNewsPage() {
           title="Ethiopia"
           description="Ethiopia-focused reporting stays in its own lane, using direct local and international publisher feeds."
           items={ethiopiaStories}
+          aiSummaries={aiSummaries}
           emptyLabel="No Ethiopia stories right now"
         />
         <WorldNewsLane
@@ -227,6 +312,7 @@ export function WorldNewsPage() {
           title="East Africa & the Horn"
           description="Regional coverage from Kenya, Somalia, Eritrea, Sudan, Uganda, Tanzania, Rwanda, Djibouti, and their neighbors."
           items={eastAfricaStories}
+          aiSummaries={aiSummaries}
           emptyLabel="No fresh East Africa stories right now"
         />
         <WorldNewsLane
@@ -234,6 +320,7 @@ export function WorldNewsPage() {
           title="Diaspora & Immigration"
           description="Habesha community stories and official immigration coverage that affect families living across borders."
           items={diasporaStories}
+          aiSummaries={aiSummaries}
           emptyLabel="No fresh diaspora stories right now"
         />
 

@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Clapperboard, Globe2, House, Mic2, UserCircle2 } from "lucide-react";
+import { Globe2, House, Mic2, PenSquare, UserCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/", label: "Home", icon: House },
   { href: "/world-news", label: "News", icon: Globe2 },
   { href: "/radio", label: "Radio", icon: Mic2 },
-  { href: "/shorts", label: "Shorts", icon: Clapperboard },
+  { href: "/create", label: "Create", icon: PenSquare },
   { href: "/profile", label: "Profile", icon: UserCircle2 }
 ];
 

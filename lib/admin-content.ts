@@ -4,8 +4,6 @@ import {
   slugify
 } from "@/lib/utils";
 import {
-  CuratedShortCategory,
-  CuratedShortItem,
   CuratedVideoCategory,
   CuratedVideoItem,
   DailyDebatePrompt,
@@ -13,18 +11,16 @@ import {
   LocalNewsItem
 } from "@/types";
 
-export type AdminContentKind = "videos" | "shorts" | "debates" | "editorial";
+export type AdminContentKind = "videos" | "debates" | "editorial";
 
 export type AdminContentItemMap = {
   videos: CuratedVideoItem;
-  shorts: CuratedShortItem;
   debates: DailyDebatePrompt;
   editorial: LocalNewsItem;
 };
 
 export const ADMIN_CONTENT_COLLECTIONS: Record<AdminContentKind, string> = {
   videos: "curatedVideos",
-  shorts: "curatedShorts",
   debates: "dailyDebates",
   editorial: "editorialHighlights"
 };
@@ -35,12 +31,6 @@ const VIDEO_CATEGORIES = new Set<CuratedVideoCategory>([
   "Culture",
   "Music",
   "Events"
-]);
-
-const SHORT_CATEGORIES = new Set<CuratedShortCategory>([
-  "Fan Cam",
-  "Quick Take",
-  "Culture Burst"
 ]);
 
 const DEBATE_CATEGORIES = new Set<DailyDebatePrompt["category"]>([
@@ -109,7 +99,7 @@ function createStableId(prefix: string, seed: string, existingId?: string) {
 }
 
 export function isAdminContentKind(value: string): value is AdminContentKind {
-  return value === "videos" || value === "shorts" || value === "debates" || value === "editorial";
+  return value === "videos" || value === "debates" || value === "editorial";
 }
 
 export function sortAdminItems<T extends { createdAt?: string; featured?: boolean }>(items: T[]) {
@@ -173,78 +163,6 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
     }
 
     return sanitizedVideo as AdminContentItemMap[K];
-  }
-
-  if (kind === "shorts") {
-    const title = readString(input.title);
-    const source = readString(input.source) || "Admin upload";
-    const summary = readString(input.summary);
-    const embedUrl = readString(input.embedUrl);
-    const videoUrl = readString(input.videoUrl);
-    const duration = readString(input.duration);
-    const playbackMode = readString(input.playbackMode) === "embed" ? "embed" : "file";
-    const vertical = typeof input.vertical === "boolean" ? input.vertical : true;
-
-    if (!title || !source || !summary || !duration) {
-      throw new Error("Shorts require title, source, summary, and duration.");
-    }
-
-    if (!videoUrl && !embedUrl) {
-      throw new Error("Shorts require an uploaded video URL or a valid short-form embed URL.");
-    }
-
-    if (!vertical) {
-      throw new Error("Shorts must be confirmed as vertical-friendly before publishing.");
-    }
-
-    const sanitizedShort: Record<string, unknown> = {
-      id: createStableId("short", title, readOptionalString(input.id)),
-      title,
-      category: ensureCategory(input.category, SHORT_CATEGORIES, "Quick Take"),
-      source,
-      summary,
-      duration,
-      playbackMode,
-      vertical,
-      createdAt: readString(input.createdAt) || now,
-      featured: readBoolean(input.featured)
-    };
-
-    const thumbnailURL = readString(input.thumbnailURL);
-    const hashtags = readHashtags(input.hashtags, 8);
-    const publishLabel = readOptionalString(input.publishLabel);
-    const storagePath = readOptionalString(input.storagePath);
-    const thumbnailStoragePath = readOptionalString(input.thumbnailStoragePath);
-
-    if (thumbnailURL) {
-      sanitizedShort.thumbnailURL = thumbnailURL;
-    }
-
-    if (videoUrl) {
-      sanitizedShort.videoUrl = videoUrl;
-    }
-
-    if (embedUrl) {
-      sanitizedShort.embedUrl = embedUrl;
-    }
-
-    if (hashtags.length) {
-      sanitizedShort.hashtags = hashtags;
-    }
-
-    if (publishLabel) {
-      sanitizedShort.publishLabel = publishLabel;
-    }
-
-    if (storagePath) {
-      sanitizedShort.storagePath = storagePath;
-    }
-
-    if (thumbnailStoragePath) {
-      sanitizedShort.thumbnailStoragePath = thumbnailStoragePath;
-    }
-
-    return sanitizedShort as AdminContentItemMap[K];
   }
 
   if (kind === "debates") {
@@ -327,10 +245,8 @@ export function createAdminDraftId(kind: AdminContentKind, seed: string) {
   const prefix =
     kind === "videos"
       ? "video"
-      : kind === "shorts"
-        ? "short"
-        : kind === "debates"
-          ? "debate"
-          : "highlight";
+      : kind === "debates"
+        ? "debate"
+        : "highlight";
   return `${prefix}_${normalized || "item"}`;
 }

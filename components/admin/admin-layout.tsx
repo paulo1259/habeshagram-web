@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { BarChart2, Clapperboard, Film, Flag, LayoutGrid, Newspaper, ShieldCheck, Sparkles } from "lucide-react";
+import { BarChart2, Film, Flag, LayoutGrid, Newspaper, ShieldCheck, Sparkles } from "lucide-react";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { AppShell } from "@/components/layout/app-shell";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -15,7 +15,6 @@ const items = [
   { href: "/admin", label: "Overview", icon: LayoutGrid },
   { href: "/admin/insights", label: "Insights", icon: BarChart2 },
   { href: "/admin/videos", label: "Curated Videos", icon: Film },
-  { href: "/admin/shorts", label: "Curated Shorts", icon: Clapperboard },
   { href: "/admin/debates", label: "Daily Debates", icon: Sparkles },
   { href: "/admin/editorial", label: "Editorial Highlights", icon: Newspaper },
   { href: "/admin/reports", label: "Reports", icon: Flag }

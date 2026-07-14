@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Bell, Bookmark, Clapperboard, Globe2, Mic2, PenSquare, Search } from "lucide-react";
+import { Bell, Bookmark, Globe2, Mic2, PenSquare, Search } from "lucide-react";
 import { useAppData } from "@/hooks/use-app-data";
 
 const iconLinkClass =
@@ -67,9 +67,6 @@ export function TopBar() {
           </Link>
           <Link href="/radio" aria-label="Radio" className={`hidden sm:inline-flex ${iconLinkClass}`}>
             <Mic2 className="h-4 w-4" />
-          </Link>
-          <Link href="/shorts" aria-label="Shorts" className={`hidden sm:inline-flex ${iconLinkClass}`}>
-            <Clapperboard className="h-4 w-4" />
           </Link>
           <Link href="/world-news" aria-label="World News" className={`hidden sm:inline-flex ${iconLinkClass}`}>
             <Globe2 className="h-4 w-4" />

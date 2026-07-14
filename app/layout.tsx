@@ -10,7 +10,7 @@ import { PersistentRadioPlayer } from "@/components/radio/persistent-radio-playe
 
 export const metadata: Metadata = {
   title: "HabeshaGram",
-  description: "The premium social home of the Habesha community — reels, live radio, East Africa news, and culture."
+  description: "The premium social home of the Habesha community — live radio, East Africa news, and culture."
 };
 
 export const viewport: Viewport = {
