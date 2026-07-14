@@ -1,4 +1,4 @@
-import { CuratedVideoItem, FootballTeam } from "@/types";
+import { CuratedVideoItem } from "@/types";
 
 export type CuratedVideoDiagnostics = {
   source: "firestore" | "empty" | "error";
@@ -7,7 +7,7 @@ export type CuratedVideoDiagnostics = {
   mappedDocs: number;
   rejectedDocs: Array<{ id: string; title?: string; reasons: string[] }>;
   items: CuratedVideoItem[];
-  returnedItems: Array<{ id: string; title: string; featured: boolean; createdAt: string; teamTag?: FootballTeam }>;
+  returnedItems: Array<{ id: string; title: string; featured: boolean; createdAt: string }>;
   error?: string;
 };
 
@@ -93,7 +93,6 @@ export function mapCuratedVideoData(
     videoUrl: (data.videoUrl || data.embedUrl) as string,
     embedUrl: data.embedUrl as string,
     duration: data.duration || "",
-    teamTag: data.teamTag,
     hashtags: Array.isArray(data.hashtags) ? data.hashtags : [],
     createdAt: normalizeCreatedAt(data.createdAt),
     publishLabel: data.publishLabel,

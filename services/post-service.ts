@@ -25,8 +25,7 @@ import { readState, writeState } from "@/services/local-store";
 import { createNotification } from "@/services/notification-service";
 import { getBreakingItems } from "@/services/news-service";
 import { uploadPostImage } from "@/services/storage-service";
-import { BreakingItem, CreatePostInput, FootballTeam, Post, User } from "@/types";
-import { footballTeams } from "@/services/football-hub-data";
+import { BreakingItem, CreatePostInput, Post, User } from "@/types";
 
 const FIRESTORE_TIMEOUT_MS = 5000;
 
@@ -88,8 +87,6 @@ function mapFirestorePost(
     userProfileImageURL: data.userProfileImageURL || "",
     text: data.text || "",
     imageURL: data.imageURL || "",
-    teamTag: data.teamTag,
-    matchTag: typeof data.matchTag === "string" ? data.matchTag : undefined,
     hashtags: Array.isArray(data.hashtags)
       ? data.hashtags.map((tag) => normalizeHashtag(String(tag))).filter(Boolean)
       : [],
@@ -112,17 +109,7 @@ const systemPostAuthor = {
 
 function getBreakingItemHashtags(item: BreakingItem) {
   const rawTags = [
-    item.team === "Manchester United"
-      ? "ggmu"
-      : item.team === "Arsenal"
-        ? "coyg"
-        : item.team === "Chelsea"
-          ? "cfc"
-          : item.team === "Manchester City"
-            ? "mcfc"
-            : "",
     "breaking",
-    "football",
     ...parseHashtags(`${item.headline} ${item.summary ?? ""}`)
   ];
 
@@ -142,8 +129,6 @@ export function mapBreakingItemToDiscussionPost(item: BreakingItem): Post {
     sourceLabel: item.source,
     sourceUrl: item.link ?? "",
     imageURL: "",
-    teamTag: item.team,
-    matchTag: item.team ? createDeterministicId("match", item.team) : undefined,
     hashtags,
     isSystem: true,
     createdAt: item.timestamp,
@@ -279,10 +264,6 @@ export async function getPostById(postId: string): Promise<Post | null> {
   }
 }
 
-export async function getPostsByTeam(team: FootballTeam): Promise<Post[]> {
-  const posts = await getPosts();
-  return posts.filter((post) => post.teamTag === team);
-}
 
 export async function getPostsByHashtag(tag: string): Promise<Post[]> {
   const normalizedTag = normalizeHashtag(tag);
@@ -400,10 +381,6 @@ export async function createPost(input: CreatePostInput, user: User): Promise<Po
     throw new Error("Text is required.");
   }
 
-  if (input.teamTag && !footballTeams.includes(input.teamTag)) {
-    throw new Error("Please choose one of the supported football teams.");
-  }
-
   const postId = createId("post");
   let imageURL = input.imageURL || "";
   const hashtags = parseHashtags(text);
@@ -427,7 +404,6 @@ export async function createPost(input: CreatePostInput, user: User): Promise<Po
     userProfileImageURL: user.profileImageURL,
     text,
     imageURL,
-    teamTag: input.teamTag || undefined,
     hashtags,
     createdAt: new Date().toISOString(),
     likeCount: 0,

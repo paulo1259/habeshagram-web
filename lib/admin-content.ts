@@ -10,7 +10,6 @@ import {
   CuratedVideoItem,
   DailyDebatePrompt,
   EditorialHighlightCategory,
-  FootballTeam,
   LocalNewsItem
 } from "@/types";
 
@@ -30,22 +29,15 @@ export const ADMIN_CONTENT_COLLECTIONS: Record<AdminContentKind, string> = {
   editorial: "editorialHighlights"
 };
 
-const FOOTBALL_TEAMS = new Set<FootballTeam>([
-  "Manchester United",
-  "Arsenal",
-  "Chelsea",
-  "Manchester City"
-]);
 
 const VIDEO_CATEGORIES = new Set<CuratedVideoCategory>([
-  "Football Moments",
-  "Fan Reactions",
+  "Community Moments",
   "Culture",
-  "Music"
+  "Music",
+  "Events"
 ]);
 
 const SHORT_CATEGORIES = new Set<CuratedShortCategory>([
-  "Matchday Clip",
   "Fan Cam",
   "Quick Take",
   "Culture Burst"
@@ -53,9 +45,8 @@ const SHORT_CATEGORIES = new Set<CuratedShortCategory>([
 
 const DEBATE_CATEGORIES = new Set<DailyDebatePrompt["category"]>([
   "Big Debate",
-  "Fan Base",
-  "Matchday",
-  "Community"
+  "Community",
+  "Culture"
 ]);
 
 const EDITORIAL_CATEGORIES = new Set<EditorialHighlightCategory>([
@@ -79,10 +70,6 @@ function readBoolean(value: unknown, fallback = false) {
   return typeof value === "boolean" ? value : fallback;
 }
 
-function readTeam(value: unknown) {
-  const next = readString(value) as FootballTeam;
-  return FOOTBALL_TEAMS.has(next) ? next : undefined;
-}
 
 function readHashtags(value: unknown, limit?: number) {
   if (Array.isArray(value)) {
@@ -155,7 +142,7 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
     const sanitizedVideo: Record<string, unknown> = {
       id: createStableId("video", title, readOptionalString(input.id)),
       title,
-      category: ensureCategory(input.category, VIDEO_CATEGORIES, "Football Moments"),
+      category: ensureCategory(input.category, VIDEO_CATEGORIES, "Community Moments"),
       source,
       summary,
       embedUrl,
@@ -166,7 +153,6 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
 
     const thumbnailURL = readString(input.thumbnailURL);
     const videoUrl = readString(input.videoUrl);
-    const teamTag = readTeam(input.teamTag);
     const hashtags = readHashtags(input.hashtags);
     const publishLabel = readOptionalString(input.publishLabel);
 
@@ -176,10 +162,6 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
 
     if (videoUrl) {
       sanitizedVideo.videoUrl = videoUrl;
-    }
-
-    if (teamTag) {
-      sanitizedVideo.teamTag = teamTag;
     }
 
     if (hashtags.length) {
@@ -218,7 +200,7 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
     const sanitizedShort: Record<string, unknown> = {
       id: createStableId("short", title, readOptionalString(input.id)),
       title,
-      category: ensureCategory(input.category, SHORT_CATEGORIES, "Matchday Clip"),
+      category: ensureCategory(input.category, SHORT_CATEGORIES, "Quick Take"),
       source,
       summary,
       duration,
@@ -229,7 +211,6 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
     };
 
     const thumbnailURL = readString(input.thumbnailURL);
-    const teamTag = readTeam(input.teamTag);
     const hashtags = readHashtags(input.hashtags, 8);
     const publishLabel = readOptionalString(input.publishLabel);
     const storagePath = readOptionalString(input.storagePath);
@@ -245,10 +226,6 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
 
     if (embedUrl) {
       sanitizedShort.embedUrl = embedUrl;
-    }
-
-    if (teamTag) {
-      sanitizedShort.teamTag = teamTag;
     }
 
     if (hashtags.length) {
@@ -290,12 +267,7 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
       createdAt: readString(input.createdAt) || now
     };
 
-    const teamTag = readTeam(input.teamTag);
     const publishLabel = readOptionalString(input.publishLabel);
-
-    if (teamTag) {
-      sanitizedDebate.teamTag = teamTag;
-    }
 
     if (hashtag) {
       sanitizedDebate.hashtag = normalizeHashtag(hashtag);
@@ -329,7 +301,6 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
   const imageURL = readString(input.imageURL);
   const link = readString(input.link);
   const publishLabel = readOptionalString(input.publishLabel);
-  const teamTag = readTeam(input.teamTag);
   const hashtags = readHashtags(input.hashtags);
 
   if (imageURL) {
@@ -342,10 +313,6 @@ export function sanitizeAdminItem<K extends AdminContentKind>(
 
   if (publishLabel) {
     sanitizedHighlight.publishLabel = publishLabel;
-  }
-
-  if (teamTag) {
-    sanitizedHighlight.teamTag = teamTag;
   }
 
   if (hashtags.length) {

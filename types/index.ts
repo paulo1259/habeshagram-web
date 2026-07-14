@@ -17,8 +17,6 @@ export type Post = {
   userProfileImageURL: string;
   text: string;
   imageURL: string;
-  teamTag?: FootballTeam;
-  matchTag?: string;
   hashtags?: string[];
   summary?: string;
   sourceLabel?: string;
@@ -54,7 +52,6 @@ export type CreatePostInput = {
   text: string;
   imageFile?: File | null;
   imageURL?: string;
-  teamTag?: FootballTeam;
 };
 
 export type RadioStation = {
@@ -90,18 +87,17 @@ export type LocalNewsItem = {
   featured?: boolean;
   createdAt?: string;
   publishLabel?: string;
-  teamTag?: FootballTeam;
   hashtags?: string[];
 };
 
-export type WorldNewsSectionKey = "top" | "us" | "ethiopia" | "immigration";
+export type WorldNewsSectionKey = "top" | "ethiopia" | "eastafrica" | "diaspora";
 
 export type WorldNewsItem = {
   id: string;
   headline: string;
   source: string;
   summary: string;
-  category: "Top stories" | "United States" | "Ethiopia" | "Immigration";
+  category: "Top stories" | "Ethiopia" | "East Africa" | "Diaspora & Immigration";
   imageURL: string;
   link: string;
   publishedAt: string;
@@ -115,19 +111,6 @@ export type FollowRelation = {
   createdAt: string;
 };
 
-export type FootballTeam = "Manchester United" | "Arsenal" | "Chelsea" | "Manchester City";
-
-export type FootballNewsItem = {
-  id: string;
-  headline: string;
-  source: string;
-  summary: string;
-  category: "Matchday" | "Transfer Buzz" | "Fan Reactions" | "Club News" | "Big Debate";
-  team: FootballTeam;
-  imageURL: string;
-  link: string;
-};
-
 export type BreakingBadge = "BREAKING" | "LIVE" | "JUST IN";
 
 export type BreakingItem = {
@@ -137,16 +120,14 @@ export type BreakingItem = {
   summary?: string;
   link?: string;
   timestamp: string;
-  category: "Football" | "Culture" | "Community" | "Events";
+  category: "News" | "Culture" | "Community" | "Events";
   badge: BreakingBadge;
-  team?: FootballTeam;
 };
 
 export type DailyDebatePrompt = {
   id: string;
   prompt: string;
-  category: "Big Debate" | "Fan Base" | "Matchday" | "Community";
-  teamTag?: FootballTeam;
+  category: "Big Debate" | "Community" | "Culture";
   hashtag?: string;
   suggestedText: string;
   featured?: boolean;
@@ -155,7 +136,7 @@ export type DailyDebatePrompt = {
   createdAt?: string;
 };
 
-export type CuratedVideoCategory = "Football Moments" | "Fan Reactions" | "Culture" | "Music";
+export type CuratedVideoCategory = "Community Moments" | "Culture" | "Music" | "Events";
 
 export type CuratedVideoItem = {
   id: string;
@@ -167,7 +148,6 @@ export type CuratedVideoItem = {
   videoUrl: string;
   embedUrl: string;
   duration: string;
-  teamTag?: FootballTeam;
   hashtags?: string[];
   createdAt: string;
   publishLabel?: string;
@@ -175,7 +155,6 @@ export type CuratedVideoItem = {
 };
 
 export type CuratedShortCategory =
-  | "Matchday Clip"
   | "Fan Cam"
   | "Quick Take"
   | "Culture Burst";
@@ -194,84 +173,10 @@ export type CuratedShortItem = {
   vertical: boolean;
   storagePath?: string;
   thumbnailStoragePath?: string;
-  teamTag?: FootballTeam;
   hashtags?: string[];
   createdAt: string;
   publishLabel?: string;
   featured?: boolean;
-};
-
-export type LiveMatchStatus = "LIVE" | "HT" | "FT" | "UPCOMING";
-
-export type LiveMatchEvent = {
-  id: string;
-  minute: string;
-  team: FootballTeam;
-  type: "goal" | "yellow" | "red";
-  player: string;
-  description: string;
-};
-
-export type LiveMatch = {
-  id: string;
-  homeTeam: FootballTeam;
-  awayTeam: FootballTeam;
-  homeScore: number;
-  awayScore: number;
-  status: LiveMatchStatus;
-  matchClock: string;
-  venue: string;
-  kickoffAt?: string;
-  timeline: LiveMatchEvent[];
-  heatSignal?: "Heating up" | "Big drama" | "Fan storm";
-};
-
-export type MatchAlertType = "goal" | "red-card" | "ft";
-
-export type GoalAlertItem = {
-  id: string;
-  matchId: string;
-  message: string;
-  minute?: string;
-  scorer?: string;
-  player?: string;
-  contextLabel?: string;
-  team?: FootballTeam;
-  type: MatchAlertType;
-};
-
-export type LeagueStandingRow = {
-  position: number;
-  team: string;
-  teamTag?: FootballTeam;
-  tracked?: boolean;
-  played: number;
-  points: number;
-  goalDifference: number;
-};
-
-export type MatchdayFixtureStatus = "upcoming" | "live" | "finished";
-
-export type MatchdayFixture = {
-  id: string;
-  homeTeam: FootballTeam;
-  awayTeam: FootballTeam;
-  kickoffAt: string;
-  venue: string;
-  status: MatchdayFixtureStatus;
-  homeScore?: number;
-  awayScore?: number;
-  featured?: boolean;
-  heatSignal?: "Heating up" | "Big drama" | "Fan storm";
-};
-
-export type MatchdayAlert = {
-  id: string;
-  badge: "GOAL" | "RED CARD" | "BREAKING";
-  headline: string;
-  detail: string;
-  timestamp: string;
-  team?: FootballTeam;
 };
 
 export type NotificationItem = {

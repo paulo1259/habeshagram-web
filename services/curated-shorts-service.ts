@@ -1,5 +1,5 @@
 import { getTimestampValue } from "@/lib/curated-video-utils";
-import { CuratedShortItem, FootballTeam } from "@/types";
+import { CuratedShortItem } from "@/types";
 
 type CuratedShortsResponse = {
   items: CuratedShortItem[];
@@ -51,10 +51,6 @@ export async function getCuratedShorts(): Promise<CuratedShortItem[]> {
   return shortsRequest;
 }
 
-export async function getCuratedShortsByTeam(team: FootballTeam) {
-  const items = await getCuratedShorts();
-  return items.filter((item) => item.teamTag === team);
-}
 
 export async function getCuratedShortById(id: string): Promise<CuratedShortItem | null> {
   if (shortByIdCache.has(id)) {

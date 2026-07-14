@@ -1,5 +1,6 @@
 import { FeedSkeleton } from "@/components/posts/feed-skeleton";
 import { PostCard } from "@/components/posts/post-card";
+import { Reveal } from "@/components/motion/reveal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Post } from "@/types";
 
@@ -18,9 +19,11 @@ export function FeedList({ posts, isLoading }: { posts: Post[]; isLoading: boole
   }
 
   return (
-    <div className="overflow-visible border-y border-brand-100/80 bg-white/94 sm:space-y-4 sm:border-0 sm:bg-transparent">
-      {posts.map((post) => (
-        <PostCard key={post.id} post={post} />
+    <div className="overflow-visible border-y border-white/[0.06] bg-card/60 sm:space-y-4 sm:border-0 sm:bg-transparent">
+      {posts.map((post, index) => (
+        <Reveal key={post.id} delay={Math.min(index, 4) * 60}>
+          <PostCard post={post} />
+        </Reveal>
       ))}
     </div>
   );

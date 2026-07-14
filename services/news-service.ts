@@ -1,6 +1,6 @@
 import { getEditorialLocalHighlights } from "@/services/editorial-content-service";
 import { getDailyDebatePromptById, getDailyDebatePrompts } from "@/services/daily-debate-service";
-import { BreakingItem, DailyDebatePrompt, FootballNewsItem, FootballTeam, LocalNewsItem } from "@/types";
+import { BreakingItem, DailyDebatePrompt, LocalNewsItem } from "@/types";
 
 const BREAKING_CACHE_MS = 45_000;
 const DEBATE_CACHE_MS = 60_000;
@@ -14,17 +14,8 @@ export async function getLocalNewsItems(): Promise<LocalNewsItem[]> {
   return getEditorialLocalHighlights();
 }
 
-export async function getFootballBuzzItems(): Promise<FootballNewsItem[]> {
-  return [];
-}
-
-export async function getFootballBuzzByTeam(team: FootballTeam): Promise<FootballNewsItem[]> {
-  const items = await getFootballBuzzItems();
-  return items.filter((item) => item.team === team);
-}
-
-export async function getBreakingItems(team?: FootballTeam): Promise<BreakingItem[]> {
-  const cacheKey = team ?? "all";
+export async function getBreakingItems(): Promise<BreakingItem[]> {
+  const cacheKey = "all";
   const cached = breakingItemsCache.get(cacheKey);
 
   if (cached && Date.now() - cached.fetchedAt < BREAKING_CACHE_MS) {
@@ -37,8 +28,7 @@ export async function getBreakingItems(team?: FootballTeam): Promise<BreakingIte
 
   const request = (async () => {
     try {
-      const query = team ? `?team=${encodeURIComponent(team)}` : "";
-      const response = await fetch(`/api/news/breaking${query}`, {
+      const response = await fetch("/api/news/breaking", {
         method: "GET",
         cache: "no-store"
       });
@@ -63,8 +53,8 @@ export async function getBreakingItems(team?: FootballTeam): Promise<BreakingIte
   return request;
 }
 
-export async function getDailyDebates(team?: FootballTeam): Promise<DailyDebatePrompt[]> {
-  const cacheKey = team ?? "all";
+export async function getDailyDebates(): Promise<DailyDebatePrompt[]> {
+  const cacheKey = "all";
   const cached = dailyDebatesCache.get(cacheKey);
 
   if (cached && Date.now() - cached.fetchedAt < DEBATE_CACHE_MS) {
@@ -75,7 +65,7 @@ export async function getDailyDebates(team?: FootballTeam): Promise<DailyDebateP
     return dailyDebatesRequests.get(cacheKey)!;
   }
 
-  const request = getDailyDebatePrompts(team)
+  const request = getDailyDebatePrompts()
     .then((items) => {
       dailyDebatesCache.set(cacheKey, { items, fetchedAt: Date.now() });
       return items;

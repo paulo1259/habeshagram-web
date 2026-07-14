@@ -1,5 +1,5 @@
 import { getTimestampValue, selectHomepageVideoHighlights } from "@/lib/curated-video-utils";
-import { CuratedVideoItem, FootballTeam } from "@/types";
+import { CuratedVideoItem } from "@/types";
 
 type CuratedVideosResponse = {
   items: CuratedVideoItem[];
@@ -51,10 +51,6 @@ export async function getCuratedVideos(): Promise<CuratedVideoItem[]> {
   return videosRequest;
 }
 
-export async function getCuratedVideosByTeam(team: FootballTeam) {
-  const videos = await getCuratedVideos();
-  return videos.filter((video) => video.teamTag === team);
-}
 
 export async function getCuratedVideoById(id: string): Promise<CuratedVideoItem | null> {
   if (videoByIdCache.has(id)) {
@@ -82,10 +78,6 @@ export async function getRelatedCuratedVideos(video: CuratedVideoItem, limit = 4
     .filter((item) => item.id !== video.id)
     .map((item) => {
       let score = 0;
-
-      if (video.teamTag && item.teamTag === video.teamTag) {
-        score += 4;
-      }
 
       if (item.category === video.category) {
         score += 3;

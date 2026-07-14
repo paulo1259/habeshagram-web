@@ -73,7 +73,7 @@ export function CommentSection({
           onChange={(event) => setText(event.target.value)}
           placeholder={canComment ? "Write a kind comment..." : "Log in to comment"}
           disabled={!canComment || isSubmitting}
-          className="min-w-0 flex-1 rounded-full border border-brand-100 bg-white px-4 py-2 text-sm outline-none ring-brand-300 focus:ring-2"
+          className="min-w-0 flex-1 rounded-full border border-brand-100 bg-card px-4 py-2 text-sm outline-none ring-brand-300 focus:ring-2"
         />
         <Button type="submit" disabled={!canComment || isSubmitting} className="px-4">
           {isSubmitting ? "Posting..." : "Post"}

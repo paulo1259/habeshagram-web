@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Globe2, Landmark, MapPinned, ScrollText } from "lucide-react";
+import { Globe2, MapPinned, UsersRound } from "lucide-react";
 import { NewsCard } from "@/components/discovery/news-card";
 import { AppShell } from "@/components/layout/app-shell";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -86,47 +86,47 @@ export function WorldNewsPage() {
   }, []);
 
   const topStories = payload?.topStories ?? [];
-  const usStories = payload?.us ?? [];
   const ethiopiaStories = payload?.ethiopia ?? [];
-  const immigrationStories = payload?.immigration ?? [];
+  const eastAfricaStories = payload?.eastafrica ?? [];
+  const diasporaStories = payload?.diaspora ?? [];
 
   return (
     <AppShell>
       <div className="page-stack">
-        <section className="page-hero border-b border-brand-100/80 bg-white/96 sm:border">
-          <div className="bg-gradient-to-br from-brand-500 via-orange-300 to-brand-200 px-4 py-5 sm:px-6 sm:py-6">
+        <section className="page-hero border-b border-brand-100/80 bg-card/96 sm:border">
+          <div className="bg-gradient-to-br from-brand-500 via-orange-400 to-orange-600 px-4 py-5 sm:px-6 sm:py-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-2xl">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-900/70">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-950/70">
                   World News
                 </p>
-                <h1 className="page-title mt-1 text-ink">
+                <h1 className="page-title mt-1 text-brand-950">
                   World News
                 </h1>
-                <p className="mt-3 text-sm leading-6 text-stone-700 sm:text-[15px]">
-                  A dedicated world-news lane for Ethiopian and diaspora readers, with distinct United States, Ethiopia, and immigration coverage instead of one noisy generic feed.
+                <p className="mt-3 text-sm leading-6 text-brand-950/80 sm:text-[15px]">
+                  Fast, Ethiopia-centered coverage with dedicated lanes for East Africa, the Horn, and Habesha diaspora communities.
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-2 sm:min-w-[17rem]">
-                <div className="rounded-[24px] bg-white/70 px-4 py-3 backdrop-blur">
+                <div className="rounded-[24px] bg-card/70 px-4 py-3 backdrop-blur">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">
                     Top stories
                   </p>
                   <p className="mt-2 text-xl font-black text-ink">{topStories.length}</p>
                 </div>
-                <div className="rounded-[24px] bg-white/70 px-4 py-3 backdrop-blur">
+                <div className="rounded-[24px] bg-card/70 px-4 py-3 backdrop-blur">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">
                     Lanes
                   </p>
                   <p className="mt-2 text-xl font-black text-ink">3</p>
                 </div>
-                <div className="col-span-2 rounded-[24px] bg-white/70 px-4 py-3 backdrop-blur">
+                <div className="col-span-2 rounded-[24px] bg-card/70 px-4 py-3 backdrop-blur">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">
                     Source strategy
                   </p>
                   <p className="mt-2 text-sm font-semibold text-ink">
-                    Trusted U.S. outlets, Ethiopia-focused reporting, and official immigration updates.
+                    Direct publisher RSS plus fast, free Ethiopia and East Africa search feeds.
                   </p>
                 </div>
               </div>
@@ -149,8 +149,8 @@ export function WorldNewsPage() {
         <section className="surface-panel p-4 sm:p-5">
           <SectionHeader
             eyebrow="Top stories"
-            title="The most relevant headlines for Habesha diaspora readers"
-            description="Top stories pull from the dedicated U.S., Ethiopia, and immigration lanes, then deduplicate overlapping coverage before surfacing the freshest items."
+            title="The freshest headlines from Ethiopia and the Horn"
+            description="Top stories pull from Ethiopia, East Africa, and diaspora lanes, then remove repeats and older coverage before surfacing the freshest relevant headlines."
           />
 
           {isLoading ? (
@@ -177,69 +177,69 @@ export function WorldNewsPage() {
           <section className="surface-card p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-50 text-brand-800">
-                <Landmark className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">
-                  United States
-                </p>
-                <p className="mt-1 text-sm text-stone-600">Trusted U.S. headlines that matter to diaspora readers.</p>
-              </div>
-            </div>
-          </section>
-          <section className="surface-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-50 text-orange-700">
                 <MapPinned className="h-5 w-5" />
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">
                   Ethiopia
                 </p>
-                <p className="mt-1 text-sm text-stone-600">Dedicated Ethiopia reporting stays visible as its own lane.</p>
+                <p className="mt-1 text-sm text-stone-600">Local reporting and trusted coverage centered on Ethiopia.</p>
+              </div>
+            </div>
+          </section>
+          <section className="surface-card p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-50 text-orange-700">
+                <Globe2 className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">
+                  East Africa
+                </p>
+                <p className="mt-1 text-sm text-stone-600">The Horn and neighboring countries stay visible in one regional lane.</p>
               </div>
             </div>
           </section>
           <section className="surface-card p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-100 text-brand-900">
-                <ScrollText className="h-5 w-5" />
+                <UsersRound className="h-5 w-5" />
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">
-                  Immigration
+                  Diaspora
                 </p>
-                <p className="mt-1 text-sm text-stone-600">Official and high-trust immigration updates stay separate from general politics.</p>
+                <p className="mt-1 text-sm text-stone-600">Community, immigration, and remittance stories for Habesha readers abroad.</p>
               </div>
             </div>
           </section>
         </div>
 
         <WorldNewsLane
-          eyebrow="United States"
-          title="United States"
-          description="A dedicated U.S. lane for diaspora readers who want the biggest American headlines without losing Ethiopia or immigration context."
-          items={usStories}
-          emptyLabel="No U.S. stories right now"
-        />
-        <WorldNewsLane
           eyebrow="Ethiopia"
           title="Ethiopia"
-          description="Ethiopia-focused reporting stays in its own lane so it does not get buried under broader world or immigration coverage."
+          description="Ethiopia-focused reporting stays in its own lane, using direct local and international publisher feeds."
           items={ethiopiaStories}
           emptyLabel="No Ethiopia stories right now"
         />
         <WorldNewsLane
-          eyebrow="Immigration"
-          title="Immigration"
-          description="Immigration updates stay clearly separated, prioritizing official and high-trust sources that matter to real family and paperwork decisions."
-          items={immigrationStories}
-          emptyLabel="No immigration updates right now"
+          eyebrow="East Africa"
+          title="East Africa & the Horn"
+          description="Regional coverage from Kenya, Somalia, Eritrea, Sudan, Uganda, Tanzania, Rwanda, Djibouti, and their neighbors."
+          items={eastAfricaStories}
+          emptyLabel="No fresh East Africa stories right now"
+        />
+        <WorldNewsLane
+          eyebrow="Diaspora"
+          title="Diaspora & Immigration"
+          description="Habesha community stories and official immigration coverage that affect families living across borders."
+          items={diasporaStories}
+          emptyLabel="No fresh diaspora stories right now"
         />
 
         <section className="surface-card bg-brand-50/40 px-4 py-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-brand-800 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-card text-brand-800 shadow-sm">
               <Globe2 className="h-4.5 w-4.5" />
             </div>
             <div>
@@ -247,7 +247,7 @@ export function WorldNewsPage() {
                 Source notes
               </p>
               <p className="mt-2 text-sm leading-6 text-stone-600">
-                This page uses layered source lanes rather than one generic news dump. Stories are deduplicated, ranked by freshness and relevance, and grouped so U.S., Ethiopia, and immigration coverage stay distinct.
+                This page uses free, keyless RSS sources from publishers and Google News search lanes. Stories older than 30 days are removed, overlaps are deduplicated, and every result must match its Ethiopia, East Africa, or diaspora lane.
               </p>
             </div>
           </div>

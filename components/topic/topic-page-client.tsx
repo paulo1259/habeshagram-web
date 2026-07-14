@@ -74,8 +74,8 @@ export function TopicPageClient({ initialTag }: { initialTag: string }) {
   return (
     <AppShell>
       <div className="space-y-5">
-        <section className="overflow-hidden border-b border-brand-100/80 bg-white/96 sm:rounded-[32px] sm:border sm:shadow-soft">
-          <div className="bg-gradient-to-br from-brand-600 via-orange-400 to-brand-300 px-4 py-5 text-white sm:px-6 sm:py-6">
+        <section className="overflow-hidden border-b border-brand-100/80 bg-card/96 sm:rounded-[32px] sm:border sm:shadow-soft">
+          <div className="bg-gradient-to-br from-red-600 via-orange-500 to-brand-500 px-4 py-5 text-white sm:px-6 sm:py-6">
             <Link
               href="/"
               className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-white/95 transition hover:bg-white/18"
@@ -105,7 +105,7 @@ export function TopicPageClient({ initialTag }: { initialTag: string }) {
               </div>
               <div className="space-y-3">
                 <div className="max-w-sm rounded-[24px] bg-white/12 px-4 py-3 text-sm leading-6 text-white/90 backdrop-blur">
-                  Hashtags help football talk, community updates, and city vibes stay discoverable in one clean social feed.
+                  Hashtags help news talk, community updates, and city vibes stay discoverable in one clean social feed.
                 </div>
                 <div className="rounded-[24px] bg-white/12 p-3 backdrop-blur">
                   <ShareActions

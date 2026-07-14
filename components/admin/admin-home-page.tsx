@@ -9,7 +9,7 @@ const cards = [
     href: "/admin/insights",
     title: "Product Insights",
     description:
-      "Live usage signals from the last 7 days — event breakdown, platform split, top reels, live rooms, and World Cup team activity.",
+      "Live usage signals from the last 7 days — event breakdown, platform split, top reels, and live rooms.",
     icon: BarChart2
   },
   {
@@ -63,7 +63,7 @@ export function AdminHomePage() {
             <Link
               key={card.href}
               href={card.href}
-              className="rounded-[30px] border border-brand-100 bg-white/96 p-5 shadow-soft transition hover:-translate-y-1 hover:border-brand-200"
+              className="rounded-[30px] border border-brand-100 bg-card/96 p-5 shadow-soft transition hover:-translate-y-1 hover:border-brand-200"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-brand-50 text-brand-800">
                 <Icon className="h-5 w-5" />

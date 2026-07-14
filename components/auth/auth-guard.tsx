@@ -17,7 +17,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
 
   if (!isReady) {
     return (
-      <div className="rounded-3xl border border-brand-100 bg-white/95 p-6 text-sm text-stone-600 shadow-soft">
+      <div className="rounded-3xl border border-brand-100 bg-card/95 p-6 text-sm text-stone-600 shadow-soft">
         Checking your session...
       </div>
     );
@@ -25,7 +25,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
 
   if (!currentUser) {
     return (
-      <div className="rounded-3xl border border-brand-100 bg-white/95 p-6 text-sm text-stone-600 shadow-soft">
+      <div className="rounded-3xl border border-brand-100 bg-card/95 p-6 text-sm text-stone-600 shadow-soft">
         {authMode === "unconfigured"
           ? "Firebase auth is not configured yet. Add your NEXT_PUBLIC_FIREBASE_* values to .env.local to unlock protected pages."
           : "Redirecting to login..."}

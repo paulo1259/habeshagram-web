@@ -25,14 +25,13 @@ export default function AdminVideosPage() {
         emptyDescription="Once you publish a video here, it will flow into the homepage highlight rail and any related team surfaces."
         initialValues={{
           title: "",
-          category: "Football Moments",
+          category: "Community Moments",
           source: "",
           summary: "",
           thumbnailURL: "",
           videoUrl: "",
           embedUrl: "",
           duration: "",
-          teamTag: "",
           hashtags: "",
           publishLabel: "",
           featured: false
@@ -44,7 +43,7 @@ export default function AdminVideosPage() {
             label: "Category",
             type: "select",
             options: [
-              { label: "Football Moments", value: "Football Moments" },
+              { label: "Community Moments", value: "Community Moments" },
               { label: "Fan Reactions", value: "Fan Reactions" },
               { label: "Culture", value: "Culture" },
               { label: "Music", value: "Music" }
@@ -70,15 +69,14 @@ export default function AdminVideosPage() {
             required: true
           },
           { name: "duration", label: "Duration", type: "text", placeholder: "3:14" },
-          { name: "teamTag", label: "Team tag", type: "select", options: teamOptions },
           {
             name: "hashtags",
             label: "Hashtags",
             type: "tags",
-            placeholder: "ggmu, matchday, habeshafans",
+            placeholder: "habesha, music, community",
             helpText: "Separate multiple hashtags with commas."
           },
-          { name: "publishLabel", label: "Publish label", type: "text", placeholder: "Tonight / 2h ago / Matchday" },
+          { name: "publishLabel", label: "Publish label", type: "text", placeholder: "Tonight / 2h ago / This week" },
           {
             name: "featured",
             label: "Feature this video",
@@ -90,9 +88,6 @@ export default function AdminVideosPage() {
         getItemSummary={(item) => item.summary}
         getBadges={(item) => {
           const badges = [item.category, item.source];
-          if (item.teamTag) {
-            badges.push(item.teamTag);
-          }
           if (item.featured) {
             badges.push("Featured");
           }

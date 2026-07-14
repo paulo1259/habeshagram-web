@@ -110,15 +110,18 @@ export function StartupSplash({ children }: { children: ReactNode }) {
         >
           <div
             className={cn(
-              "startup-splash-mark flex items-center gap-3 rounded-[28px] border border-white/12 bg-[#fffaf3] px-5 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:gap-4 sm:px-6 sm:py-5",
+              "startup-splash-mark flex items-center gap-3 rounded-[28px] border border-brand-500/20 bg-[#171310] px-5 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.65),0_0_50px_rgba(245,158,11,0.15)] sm:gap-4 sm:px-6 sm:py-5",
               splashCardClassName
             )}
             style={splashCardStyle}
           >
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-[22px] bg-gradient-to-br from-brand-500 to-orange-400 text-base font-black text-white shadow-soft sm:h-14 sm:w-14 sm:text-lg">
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-[22px] bg-gradient-to-br from-brand-500 to-orange-500 text-base font-black text-brand-950 shadow-glow sm:h-14 sm:w-14 sm:text-lg">
               H
             </span>
-            <span className="text-2xl font-black tracking-tight text-ink sm:text-[2rem]">HabeshaGram</span>
+            <span className="font-display text-2xl font-bold tracking-tight sm:text-[2rem]">
+              <span className="text-gold">Habesha</span>
+              <span className="text-ink">Gram</span>
+            </span>
           </div>
         </div>
       ) : null}

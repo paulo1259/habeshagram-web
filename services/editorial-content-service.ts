@@ -1,6 +1,6 @@
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { firebaseDb, isFirebaseConfigured } from "@/lib/firebase";
-import { CuratedVideoItem, DailyDebatePrompt, FootballTeam, LocalNewsItem } from "@/types";
+import { CuratedVideoItem, DailyDebatePrompt, LocalNewsItem } from "@/types";
 
 const FIRESTORE_TIMEOUT_MS = 4000;
 
@@ -52,7 +52,6 @@ function mapVideo(data: Partial<CuratedVideoItem>, id: string): CuratedVideoItem
     videoUrl: data.videoUrl || data.embedUrl,
     embedUrl: data.embedUrl,
     duration: data.duration || "",
-    teamTag: data.teamTag,
     hashtags: data.hashtags ?? [],
     createdAt: data.createdAt || new Date().toISOString(),
     publishLabel: data.publishLabel,
@@ -69,7 +68,6 @@ function mapDebate(data: Partial<DailyDebatePrompt>, id: string): DailyDebatePro
     id: data.id || id,
     prompt: data.prompt,
     category: data.category,
-    teamTag: data.teamTag,
     hashtag: typeof data.hashtag === "string" ? data.hashtag : undefined,
     suggestedText: data.suggestedText,
     featured: Boolean(data.featured),
@@ -95,7 +93,6 @@ function mapLocalItem(data: Partial<LocalNewsItem>, id: string): LocalNewsItem |
     featured: Boolean(data.featured),
     createdAt: data.createdAt || new Date().toISOString(),
     publishLabel: data.publishLabel,
-    teamTag: data.teamTag,
     hashtags: Array.isArray(data.hashtags) ? data.hashtags : []
   };
 }
@@ -121,10 +118,6 @@ export async function getEditorialVideos(): Promise<CuratedVideoItem[]> {
   }
 }
 
-export async function getEditorialVideosByTeam(team: FootballTeam) {
-  const items = await getEditorialVideos();
-  return items.filter((item) => item.teamTag === team);
-}
 
 export async function getEditorialVideoById(id: string): Promise<CuratedVideoItem | null> {
   if (!isFirebaseConfigured || !firebaseDb) {
@@ -154,10 +147,6 @@ export async function getRelatedEditorialVideos(video: CuratedVideoItem, limit =
     .map((item) => {
       let score = 0;
 
-      if (video.teamTag && item.teamTag === video.teamTag) {
-        score += 4;
-      }
-
       if (item.category === video.category) {
         score += 3;
       }
@@ -182,8 +171,8 @@ export async function getRelatedEditorialVideos(video: CuratedVideoItem, limit =
     .map(({ item }) => item);
 }
 
-function rotateDebates(items: DailyDebatePrompt[], team?: FootballTeam) {
-  const filtered = team ? items.filter((item) => item.teamTag === team || !item.teamTag) : items;
+function rotateDebates(items: DailyDebatePrompt[]) {
+  const filtered = items;
 
   if (!filtered.length) {
     return [];
@@ -192,10 +181,10 @@ function rotateDebates(items: DailyDebatePrompt[], team?: FootballTeam) {
   const daySeed = new Date().getUTCDate() + new Date().getUTCMonth() * 31;
   const startIndex = daySeed % filtered.length;
   const rotated = [...filtered.slice(startIndex), ...filtered.slice(0, startIndex)];
-  return rotated.slice(0, Math.min(team ? 3 : 4, rotated.length));
+  return rotated.slice(0, Math.min(4, rotated.length));
 }
 
-export async function getEditorialDailyDebates(team?: FootballTeam): Promise<DailyDebatePrompt[]> {
+export async function getEditorialDailyDebates(): Promise<DailyDebatePrompt[]> {
   if (!isFirebaseConfigured || !firebaseDb) {
     return [];
   }
@@ -210,7 +199,7 @@ export async function getEditorialDailyDebates(team?: FootballTeam): Promise<Dai
       .map((item) => mapDebate(item.data() as Partial<DailyDebatePrompt>, item.id))
       .filter((item): item is DailyDebatePrompt => Boolean(item));
 
-    return rotateDebates(items, team);
+    return rotateDebates(items);
   } catch {
     return [];
   }

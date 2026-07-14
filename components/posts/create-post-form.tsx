@@ -5,15 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ImagePlus, X } from "lucide-react";
 import { useAppData } from "@/hooks/use-app-data";
 import { Button } from "@/components/ui/button";
-import { teamHubConfigs } from "@/services/football-hub-data";
-import { FootballTeam } from "@/types";
-
-const teamAccentStyles: Record<FootballTeam, string> = {
-  "Manchester United": "border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100",
-  Arsenal: "border-rose-200 bg-rose-50 text-rose-700 hover:border-rose-300 hover:bg-rose-100",
-  Chelsea: "border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100",
-  "Manchester City": "border-sky-200 bg-sky-50 text-sky-700 hover:border-sky-300 hover:bg-sky-100"
-};
 
 export function CreatePostForm() {
   const router = useRouter();
@@ -21,7 +12,6 @@ export function CreatePostForm() {
   const { currentUser, createNewPost } = useAppData();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [text, setText] = useState("");
-  const [selectedTeam, setSelectedTeam] = useState<FootballTeam | "">("");
   const [imagePreview, setImagePreview] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,17 +27,9 @@ export function CreatePostForm() {
 
   useEffect(() => {
     const suggestedText = searchParams.get("text");
-    const suggestedTeam = searchParams.get("team");
 
     if (suggestedText && !text) {
       setText(suggestedText);
-    }
-
-    if (
-      suggestedTeam &&
-      Object.values(teamHubConfigs).some((teamConfig) => teamConfig.team === suggestedTeam)
-    ) {
-      setSelectedTeam(suggestedTeam as FootballTeam);
     }
   }, [searchParams, text]);
 
@@ -89,9 +71,8 @@ export function CreatePostForm() {
     try {
       setIsSubmitting(true);
       setErrorMessage("");
-      await createNewPost({ text, imageFile: selectedImage, teamTag: selectedTeam || undefined });
+      await createNewPost({ text, imageFile: selectedImage });
       setText("");
-      setSelectedTeam("");
       clearSelectedImage();
       router.replace("/");
     } catch (error) {
@@ -103,7 +84,7 @@ export function CreatePostForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="glass-card rounded-3xl border border-brand-100 bg-white/95 p-4 shadow-soft sm:p-5">
+    <form onSubmit={handleSubmit} className="glass-card rounded-3xl border border-brand-100 bg-card/95 p-4 shadow-soft sm:p-5">
       {!currentUser ? (
         <p className="mb-4 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-brand-900">
           Log in before creating a post.
@@ -114,55 +95,12 @@ export function CreatePostForm() {
         rows={5}
         value={text}
         onChange={(event) => setText(event.target.value)}
-        placeholder="What would you like to share with the community? Try #Habesha, #GGMU, or #Addis"
+        placeholder="What would you like to share with the community? Try #Habesha, #Addis, or #Asmara"
         className="w-full rounded-3xl border border-brand-100 bg-brand-50/50 p-4 text-sm leading-6 outline-none ring-brand-300 transition focus:ring-2"
       />
       <p className="mt-2 text-xs leading-5 text-stone-500">
         Hashtags in your text become clickable topic links automatically.
       </p>
-
-      <div className="mt-4 space-y-2">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">
-            Football team tag
-          </p>
-          {selectedTeam ? (
-            <button
-              type="button"
-              className="text-xs font-semibold text-stone-500 transition hover:text-stone-700"
-              onClick={() => setSelectedTeam("")}
-            >
-              Clear
-            </button>
-          ) : (
-            <p className="text-xs text-stone-400">Optional</p>
-          )}
-        </div>
-        <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
-          {Object.values(teamHubConfigs).map((teamConfig) => {
-            const active = selectedTeam === teamConfig.team;
-            return (
-              <button
-                key={teamConfig.slug}
-                type="button"
-                onClick={() => setSelectedTeam((current) => (current === teamConfig.team ? "" : teamConfig.team))}
-                className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-semibold transition ${
-                  active
-                    ? `${teamAccentStyles[teamConfig.team]} shadow-sm`
-                    : "border-brand-100 bg-white text-stone-600 hover:border-brand-200 hover:bg-brand-50"
-                }`}
-              >
-                <span
-                  className={`flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br ${teamConfig.badgeGradient} text-[11px] font-black text-white`}
-                >
-                  {teamConfig.badge}
-                </span>
-                {teamConfig.team}
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-brand-200 bg-brand-50/40 px-4 py-3 text-sm font-medium text-stone-700">
         <ImagePlus className="h-5 w-5 text-brand-700" />
@@ -179,7 +117,7 @@ export function CreatePostForm() {
       {imagePreview ? (
         <div className="mt-4 overflow-hidden rounded-3xl border border-brand-100 bg-brand-50/30">
           <img src={imagePreview} alt="Preview" className="max-h-[24rem] w-full object-cover" />
-          <div className="flex items-center justify-between gap-3 border-t border-brand-100 bg-white/90 px-4 py-3">
+          <div className="flex items-center justify-between gap-3 border-t border-brand-100 bg-card/90 px-4 py-3">
             <p className="min-w-0 truncate text-sm text-stone-600">
               {selectedImage?.name || "Selected image"}
             </p>

@@ -27,8 +27,8 @@ export function NewsCard({
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/20 to-transparent" />
         </div>
       ) : (
-        <div className="flex h-40 items-end bg-gradient-to-br from-brand-50 via-white to-brand-100/60 p-5">
-          <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-800 shadow-sm">
+        <div className="flex h-40 items-end bg-gradient-to-br from-brand-50 via-card to-brand-100/60 p-5">
+          <span className="rounded-full bg-card px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-800 shadow-sm">
             {item.category}
           </span>
         </div>

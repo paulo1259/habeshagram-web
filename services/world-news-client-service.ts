@@ -1,6 +1,6 @@
 import type { WorldNewsFeedPayload } from "@/services/world-news-service";
 
-const WORLD_NEWS_CACHE_MS = 60_000;
+const WORLD_NEWS_CACHE_MS = 30_000;
 
 let cachedPayload: WorldNewsFeedPayload | null = null;
 let cachedAt = 0;

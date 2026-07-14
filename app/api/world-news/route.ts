@@ -5,7 +5,9 @@ export const dynamic = "force-dynamic";
 
 let lastSuccessfulPayload: WorldNewsFeedPayload | null = null;
 let lastFetchedAt = 0;
-const CACHE_TTL_MS = 5 * 60 * 1000;
+
+// Short TTL so fresh stories surface within ~90 seconds of publication.
+const CACHE_TTL_MS = 90 * 1000;
 
 export async function GET() {
   const now = Date.now();
@@ -24,22 +26,22 @@ export async function GET() {
       return NextResponse.json({
         ...lastSuccessfulPayload,
         stale: true,
-        message: "Showing the most recent world-news snapshot while source feeds recover."
+        message: "Showing the most recent news snapshot while source feeds recover."
       } satisfies WorldNewsFeedPayload);
     }
 
     return NextResponse.json({
       topStories: [],
-      us: [],
       ethiopia: [],
-      immigration: [],
+      eastafrica: [],
+      diaspora: [],
       sourceLabels: [],
       fetchedAt: new Date().toISOString(),
       stale: true,
       message:
         error instanceof Error
-          ? `World News is temporarily unavailable. ${error.message}`
-          : "World News is temporarily unavailable."
+          ? `News is temporarily unavailable. ${error.message}`
+          : "News is temporarily unavailable."
     } satisfies WorldNewsFeedPayload);
   }
 }

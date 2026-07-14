@@ -86,7 +86,7 @@ export function AdminLayout({
     <AppShell>
       <AuthGuard>
         {status === "checking" ? (
-          <section className="rounded-[30px] border border-brand-100 bg-white/96 p-6 shadow-soft">
+          <section className="rounded-[30px] border border-brand-100 bg-card/96 p-6 shadow-soft">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">
               Admin
             </p>
@@ -99,7 +99,7 @@ export function AdminLayout({
           <EmptyState title="Admin access is locked" description={message} />
         ) : (
           <div className="space-y-5">
-            <section className="rounded-[32px] border border-brand-100 bg-white/96 p-5 shadow-soft sm:p-6">
+            <section className="rounded-[32px] border border-brand-100 bg-card/96 p-5 shadow-soft sm:p-6">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-brand-800">
@@ -110,7 +110,7 @@ export function AdminLayout({
                   <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">{description}</p>
                 </div>
 
-                <div className="rounded-[24px] bg-gradient-to-br from-brand-50 via-white to-orange-50 px-4 py-3 text-sm text-stone-600 shadow-sm">
+                <div className="rounded-[24px] bg-gradient-to-br from-brand-50 via-card to-orange-50 px-4 py-3 text-sm text-stone-600 shadow-sm">
                   Public reads stay open. Admin edits stay server-side.
                 </div>
               </div>
@@ -129,7 +129,7 @@ export function AdminLayout({
                         "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition",
                         active
                           ? "bg-brand-600 text-white shadow-soft"
-                          : "border border-brand-100 bg-white text-stone-600 hover:-translate-y-0.5 hover:border-brand-200 hover:text-ink"
+                          : "border border-brand-100 bg-card text-stone-600 hover:-translate-y-0.5 hover:border-brand-200 hover:text-ink"
                       )}
                     >
                       <Icon className="h-4 w-4" />

@@ -323,7 +323,7 @@ export default function NotificationsPage() {
               </div>
             </div>
           ) : groupedNotifications.length ? (
-            <section className="overflow-hidden rounded-[30px] border border-brand-100/80 bg-white/96 shadow-soft">
+            <section className="overflow-hidden rounded-[30px] border border-brand-100/80 bg-card/96 shadow-soft">
               {groupedNotifications.map((group) => {
                 const Icon = getNotificationIcon(group.type);
                 const relatedPost = group.targetPostId ? relatedPosts[group.targetPostId] : undefined;
@@ -334,7 +334,7 @@ export default function NotificationsPage() {
                     key={group.id}
                     href={getNotificationHref(group, relatedPost)}
                     className={`flex items-start gap-3 border-b border-brand-100/70 px-4 py-4 transition duration-200 last:border-b-0 hover:bg-brand-50/35 ${
-                      group.isRead ? "bg-white" : "bg-brand-50/30"
+                      group.isRead ? "bg-card" : "bg-brand-50/30"
                     }`}
                     onClick={() => void handleNotificationClick(group)}
                   >
@@ -345,7 +345,7 @@ export default function NotificationsPage() {
                         className="h-11 w-11"
                       />
                       {group.actors.length > 1 ? (
-                        <span className="absolute -bottom-1 -right-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-bold text-white shadow-sm">
+                        <span className="absolute -bottom-1 -right-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-bold text-brand-950 shadow-sm">
                           +{group.actors.length - 1}
                         </span>
                       ) : null}

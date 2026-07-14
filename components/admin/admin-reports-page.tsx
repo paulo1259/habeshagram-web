@@ -108,7 +108,7 @@ export function AdminReportsPage() {
         ) : null}
 
         {isLoading ? (
-          <div className="rounded-[28px] border border-brand-100 bg-white/96 p-6 text-sm text-stone-500 shadow-soft">
+          <div className="rounded-[28px] border border-brand-100 bg-card/96 p-6 text-sm text-stone-500 shadow-soft">
             Loading moderation reports...
           </div>
         ) : !reports.length ? (
@@ -121,7 +121,7 @@ export function AdminReportsPage() {
             {reports.map((report) => (
               <article
                 key={report.id}
-                className="rounded-[30px] border border-brand-100 bg-white/96 p-4 shadow-soft sm:p-5"
+                className="rounded-[30px] border border-brand-100 bg-card/96 p-4 shadow-soft sm:p-5"
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-3">
@@ -153,7 +153,7 @@ export function AdminReportsPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-[24px] bg-gradient-to-br from-brand-50 via-white to-orange-50 px-4 py-3 text-sm text-stone-600 shadow-sm">
+                  <div className="rounded-[24px] bg-gradient-to-br from-brand-50 via-card to-orange-50 px-4 py-3 text-sm text-stone-600 shadow-sm">
                     <div className="flex items-center gap-3">
                       <Avatar
                         username={report.reporterUsername}
@@ -179,7 +179,7 @@ export function AdminReportsPage() {
                       </p>
                     </div>
 
-                    <div className="rounded-[24px] border border-brand-100 bg-white p-4">
+                    <div className="rounded-[24px] border border-brand-100 bg-card p-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">
                         Post preview
                       </p>
@@ -223,7 +223,7 @@ export function AdminReportsPage() {
                       <p className="break-all">Post: {report.postId}</p>
                     </div>
 
-                    <div className="rounded-[22px] border border-dashed border-brand-200 bg-white px-4 py-3 text-xs leading-6 text-stone-500">
+                    <div className="rounded-[22px] border border-dashed border-brand-200 bg-card px-4 py-3 text-xs leading-6 text-stone-500">
                       <div className="inline-flex items-center gap-2 font-semibold uppercase tracking-[0.16em] text-brand-700">
                         <ShieldAlert className="h-3.5 w-3.5" />
                         Next step

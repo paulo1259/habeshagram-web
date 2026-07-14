@@ -7,8 +7,6 @@ import { recordSectionUsage } from "@/lib/personalization";
 
 const TRACKED_PAGE_LABELS: Record<string, string> = {
   "/": "homepage",
-  "/football": "football",
-  "/basketball": "basketball",
   "/radio": "radio",
   "/world-news": "world-news"
 };
@@ -44,7 +42,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    recordSectionUsage(label as "football" | "basketball" | "radio" | "world-news");
+    recordSectionUsage(label as "radio" | "world-news");
   }, [pathname]);
 
   return <>{children}</>;

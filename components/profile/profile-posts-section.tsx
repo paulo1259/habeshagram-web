@@ -83,11 +83,11 @@ export function ProfilePostsSection({
           <span className="rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-800">
             {posts.length} total posts
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-stone-600 shadow-sm">
+          <span className="inline-flex items-center gap-1 rounded-full bg-card px-3 py-1.5 text-xs font-semibold text-stone-600 shadow-sm">
             <ImageIcon className="h-3.5 w-3.5 text-brand-700" />
             {imagePostCount} with media
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-stone-600 shadow-sm">
+          <span className="inline-flex items-center gap-1 rounded-full bg-card px-3 py-1.5 text-xs font-semibold text-stone-600 shadow-sm">
             <MessageSquareText className="h-3.5 w-3.5 text-brand-700" />
             {textPostCount} text-first
           </span>

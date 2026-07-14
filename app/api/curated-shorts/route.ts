@@ -29,7 +29,6 @@ function buildDiagnostics(
       title: item.title,
       featured: Boolean(item.featured),
       createdAt: item.createdAt,
-      teamTag: item.teamTag,
       vertical: item.vertical
     })),
     error

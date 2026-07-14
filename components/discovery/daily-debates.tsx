@@ -8,21 +8,13 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
 import { ShareActions } from "@/components/ui/share-actions";
 import { getDailyDebates } from "@/services/news-service";
-import { DailyDebatePrompt, FootballTeam } from "@/types";
+import { DailyDebatePrompt } from "@/types";
 
-const teamQueryValue: Record<FootballTeam, string> = {
-  "Manchester United": "Manchester United",
-  Arsenal: "Arsenal",
-  Chelsea: "Chelsea",
-  "Manchester City": "Manchester City"
-};
 
 export function DailyDebates({
-  compact = false,
-  team
+  compact = false
 }: {
   compact?: boolean;
-  team?: FootballTeam;
 }) {
   const [prompts, setPrompts] = useState<DailyDebatePrompt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,7 +23,7 @@ export function DailyDebates({
     let isMounted = true;
 
     void (async () => {
-      const next = await getDailyDebates(team);
+      const next = await getDailyDebates();
       if (isMounted) {
         setPrompts(next);
         setIsLoading(false);
@@ -41,15 +33,15 @@ export function DailyDebates({
     return () => {
       isMounted = false;
     };
-  }, [team]);
+  }, []);
 
   const visiblePrompts = prompts.slice(0, compact ? 2 : 3);
 
   return (
-    <section className={`rounded-[30px] border border-brand-100/80 bg-white/96 shadow-soft ${compact ? "p-4" : "p-4 sm:p-5"}`}>
+    <section className={`rounded-[30px] border border-brand-100/80 bg-card/96 shadow-soft ${compact ? "p-4" : "p-4 sm:p-5"}`}>
       <SectionHeader
         eyebrow="Today's Debate"
-        title={team ? `${team} fans, what is your take?` : "Prompts built to start group chat arguments"}
+        title="Prompts built to start group chat arguments"
         description={
           compact
             ? "Quick prompts to turn scrolling into posting."
@@ -68,30 +60,21 @@ export function DailyDebates({
             ))
           : !visiblePrompts.length ? (
               <EmptyState
-                title={team ? `No ${team} debates today` : "No debates today"}
-                description={
-                  team
-                    ? `There is no active ${team} debate in the editorial schedule right now.`
-                    : "Fresh debate prompts will show up here once the editorial collection is updated."
-                }
+                title="No debates today"
+                description="Fresh debate prompts will show up here once the editorial collection is updated."
               />
             ) : visiblePrompts.map((item) => {
-              const href = item.teamTag
-                ? `/create?text=${encodeURIComponent(item.suggestedText)}&team=${encodeURIComponent(teamQueryValue[item.teamTag])}`
-                : `/create?text=${encodeURIComponent(item.suggestedText)}`;
+              const href = `/create?text=${encodeURIComponent(item.suggestedText)}`;
 
               return (
                 <article
                   key={item.id}
-                  className="rounded-[24px] border border-brand-100/80 bg-gradient-to-br from-brand-50/70 via-white to-orange-50/50 px-4 py-4"
+                  className="rounded-[24px] border border-brand-100/80 bg-gradient-to-br from-brand-50/70 via-card to-orange-50/50 px-4 py-4"
                 >
                   <div className="flex items-center gap-2 text-brand-800">
-                    <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] shadow-sm">
+                    <span className="rounded-full bg-card px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] shadow-sm">
                       {item.category}
                     </span>
-                    {item.teamTag ? (
-                      <span className="text-xs font-semibold text-stone-500">{item.teamTag}</span>
-                    ) : null}
                     {item.publishLabel ? (
                       <span className="text-xs text-stone-400">{item.publishLabel}</span>
                     ) : null}
@@ -104,12 +87,11 @@ export function DailyDebates({
                       href={href}
                       onClick={() =>
                         recordDebateEngagement({
-                          teamTag: item.teamTag,
                           hashtag: item.hashtag,
                           weight: 3
                         })
                       }
-                      className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-brand-600"
+                      className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-brand-950 transition hover:bg-brand-600"
                     >
                       <MessageSquareText className="h-3.5 w-3.5" />
                       Post your take
@@ -119,12 +101,11 @@ export function DailyDebates({
                         href={`/topic/${item.hashtag.toLowerCase()}`}
                         onClick={() =>
                           recordDebateEngagement({
-                            teamTag: item.teamTag,
                             hashtag: item.hashtag,
                             weight: 2
                           })
                         }
-                        className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-brand-800 ring-1 ring-brand-100 transition hover:bg-brand-50"
+                        className="inline-flex items-center gap-2 rounded-full bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-brand-800 ring-1 ring-brand-100 transition hover:bg-brand-50"
                       >
                         <Sparkles className="h-3.5 w-3.5" />
                         #{item.hashtag}

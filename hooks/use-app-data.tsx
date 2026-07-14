@@ -201,7 +201,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       trackEvent("post_created", {
         post_id: post.id,
         has_image: Boolean(post.imageURL),
-        team_tag: post.teamTag ?? null
       });
       recordPostEngagement(post, { weight: 2 });
       setDeletedPostIds((currentIds) => currentIds.filter((id) => id !== post.id));

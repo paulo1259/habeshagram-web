@@ -1,13 +1,7 @@
-import { FootballTeam, LiveMatch, Post } from "@/types";
+import { Post } from "@/types";
 
 type TrendingHashtag = {
   tag: string;
-  score: number;
-  postCount: number;
-};
-
-type TrendingTeam = {
-  team: FootballTeam;
   score: number;
   postCount: number;
 };
@@ -40,25 +34,6 @@ export function calculateTrendingHashtags(posts: Post[]): TrendingHashtag[] {
   return [...scores.values()].sort((a, b) => b.score - a.score).slice(0, 6);
 }
 
-export function calculateTrendingTeams(posts: Post[]): TrendingTeam[] {
-  const scores = new Map<FootballTeam, TrendingTeam>();
-
-  posts.forEach((post) => {
-    if (!post.teamTag) {
-      return;
-    }
-
-    const recency = getRecencyWeight(post.createdAt);
-    const current = scores.get(post.teamTag) ?? { team: post.teamTag, score: 0, postCount: 0 };
-    current.score += recency + post.likeCount * 0.5 + post.commentCount;
-    current.postCount += 1;
-    scores.set(post.teamTag, current);
-  });
-
-  // TODO: Replace with backend ranking when team activity needs to scale past client-side derivation.
-  return [...scores.values()].sort((a, b) => b.score - a.score).slice(0, 4);
-}
-
 export function calculateHotPosts(posts: Post[]): HotPost[] {
   return posts
     .map((post) => ({
@@ -67,19 +42,4 @@ export function calculateHotPosts(posts: Post[]): HotPost[] {
     }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 3);
-}
-
-export function findMostActiveMatch(posts: Post[], liveMatches: LiveMatch[] = []) {
-  const ranked = liveMatches
-    .map((match) => {
-      const teams = [match.homeTeam, match.awayTeam];
-      const reactionCount = posts.filter((post) => post.teamTag && teams.includes(post.teamTag)).length;
-      return {
-        match,
-        reactionCount
-      };
-    })
-    .sort((a, b) => b.reactionCount - a.reactionCount);
-
-  return ranked[0] ?? null;
 }

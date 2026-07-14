@@ -28,7 +28,7 @@ export function LocalNewsSection({
       className={
         compact
           ? "space-y-4"
-          : "space-y-4 border-b border-brand-100 bg-white/96 px-3 py-4 sm:rounded-[28px] sm:border sm:px-5 sm:py-5 sm:shadow-soft"
+          : "space-y-4 border-b border-brand-100 bg-card/96 px-3 py-4 sm:rounded-[28px] sm:border sm:px-5 sm:py-5 sm:shadow-soft"
       }
     >
       <SectionHeader
@@ -39,7 +39,7 @@ export function LocalNewsSection({
 
       <div className={compact ? "space-y-4" : "grid gap-4 lg:grid-cols-2"}>
         {isLoading ? (
-          <div className="rounded-[24px] border border-brand-100 bg-white/70 p-4 text-sm text-stone-500">
+          <div className="rounded-[24px] border border-brand-100 bg-card/70 p-4 text-sm text-stone-500">
             Loading local culture highlights...
           </div>
         ) : null}

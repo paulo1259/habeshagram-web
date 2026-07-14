@@ -22,7 +22,6 @@ import { logEvent } from "@/lib/analytics-events";
 import { recordSectionUsage, recordVideoEngagement } from "@/lib/personalization";
 import { cn, createId, formatRelativeTime } from "@/lib/utils";
 import { getCuratedShorts, sortShortsForFeed } from "@/services/curated-shorts-service";
-import { getTeamSlug } from "@/services/football-hub-data";
 import { CuratedShortItem } from "@/types";
 
 const SHORTS_MUTED_STORAGE_KEY = "habeshagram-shorts-muted";
@@ -139,7 +138,7 @@ function ShortsDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-stone-700 shadow-sm transition hover:bg-stone-50"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-card text-stone-700 shadow-sm transition hover:bg-stone-50"
           >
             <X className="h-4 w-4" />
           </button>
@@ -151,7 +150,7 @@ function ShortsDrawer({
               key={emoji}
               type="button"
               onClick={() => onReact(emoji)}
-              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-brand-100 bg-white px-4 py-2 text-sm font-semibold text-brand-900 shadow-sm transition hover:bg-brand-50"
+              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-brand-100 bg-card px-4 py-2 text-sm font-semibold text-brand-900 shadow-sm transition hover:bg-brand-50"
             >
               <span className="text-base">{emoji}</span>
               <span>{reactions.emojiCounts[emoji] ?? 0}</span>
@@ -159,7 +158,7 @@ function ShortsDrawer({
           ))}
         </div>
 
-        <div className="mt-5 rounded-[24px] border border-brand-100 bg-white px-4 py-3 shadow-sm">
+        <div className="mt-5 rounded-[24px] border border-brand-100 bg-card px-4 py-3 shadow-sm">
           <div className="flex items-center gap-2 text-brand-800">
             <Heart className={cn("h-4 w-4", reactions.liked && "fill-current")} />
             <p className="text-sm font-semibold text-ink">{reactions.likeCount} likes on this short</p>
@@ -183,7 +182,7 @@ function ShortsDrawer({
                 .slice()
                 .reverse()
                 .map((comment) => (
-                  <div key={comment.id} className="rounded-[20px] border border-brand-100 bg-white px-4 py-3 shadow-sm">
+                  <div key={comment.id} className="rounded-[20px] border border-brand-100 bg-card px-4 py-3 shadow-sm">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-ink">@{comment.username}</p>
                       <p className="text-xs text-stone-500">{formatRelativeTime(comment.createdAt)}</p>
@@ -192,13 +191,13 @@ function ShortsDrawer({
                   </div>
                 ))
             ) : (
-              <div className="rounded-[20px] border border-dashed border-brand-100 bg-white/80 px-4 py-4 text-sm text-stone-600">
+              <div className="rounded-[20px] border border-dashed border-brand-100 bg-card/80 px-4 py-4 text-sm text-stone-600">
                 No comments yet. Start the conversation without leaving the shorts feed.
               </div>
             )}
           </div>
 
-          <div className="rounded-[24px] border border-brand-100 bg-white p-3 shadow-sm">
+          <div className="rounded-[24px] border border-brand-100 bg-card p-3 shadow-sm">
             <textarea
               value={draftComment}
               onChange={(event) => onChangeDraft(event.target.value)}
@@ -210,7 +209,7 @@ function ShortsDrawer({
               <button
                 type="button"
                 onClick={onSubmitComment}
-                className="inline-flex min-h-10 items-center gap-2 rounded-full bg-gradient-to-r from-brand-500 to-orange-400 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:brightness-105"
+                className="inline-flex min-h-10 items-center gap-2 rounded-full bg-gradient-to-r from-brand-500 to-orange-400 px-4 py-2 text-sm font-semibold text-brand-950 shadow-soft transition hover:brightness-105"
               >
                 <MessageCircle className="h-4 w-4" />
                 Post comment
@@ -409,12 +408,10 @@ export function ShortsPage() {
       video_id: activeVideo.id,
       title: activeVideo.title,
       category: activeVideo.category,
-      team_tag: activeVideo.teamTag ?? null,
       surface: "shorts_feed"
     });
 
     recordVideoEngagement({
-      teamTag: activeVideo.teamTag,
       hashtags: activeVideo.hashtags,
       weight: 4
     });
@@ -752,15 +749,7 @@ export function ShortsPage() {
                       </p>
 
                       <div className="mt-4 flex flex-wrap items-center gap-2">
-                        {video.teamTag ? (
-                          <Link
-                            href={`/football/${getTeamSlug(video.teamTag)}`}
-                            className="pointer-events-auto rounded-full bg-white/12 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-xl transition hover:bg-white/18"
-                          >
-                            {video.teamTag}
-                          </Link>
-                        ) : null}
-                        {video.hashtags?.slice(0, 4).map((tag) => (
+                                                {video.hashtags?.slice(0, 4).map((tag) => (
                           <Link
                             key={tag}
                             href={`/topic/${tag}`}
@@ -775,7 +764,7 @@ export function ShortsPage() {
                         <button
                           type="button"
                           onClick={() => togglePlayback(video)}
-                          className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-soft transition hover:bg-white/92 active:scale-[0.98]"
+                          className="inline-flex min-h-10 items-center gap-2 rounded-full bg-card px-4 py-2 text-sm font-semibold text-ink shadow-soft transition hover:bg-card/92 active:scale-[0.98]"
                         >
                           {isPaused ? (
                             <Play className="h-4 w-4 fill-current" />
@@ -823,7 +812,7 @@ export function ShortsPage() {
                         <div className="relative">
                           <Heart className={cn("h-5 w-5", reactions.liked && "fill-white text-white")} />
                           {reactions.likeCount > 0 ? (
-                            <span className="absolute -right-3 -top-3 rounded-full bg-white/90 px-1.5 py-0.5 text-[10px] font-bold text-ink">
+                            <span className="absolute -right-3 -top-3 rounded-full bg-card/90 px-1.5 py-0.5 text-[10px] font-bold text-ink">
                               {reactions.likeCount}
                             </span>
                           ) : null}
@@ -837,7 +826,7 @@ export function ShortsPage() {
                         <div className="relative">
                           <MessageCircle className="h-5 w-5" />
                           {reactions.comments.length > 0 ? (
-                            <span className="absolute -right-3 -top-3 rounded-full bg-white/90 px-1.5 py-0.5 text-[10px] font-bold text-ink">
+                            <span className="absolute -right-3 -top-3 rounded-full bg-card/90 px-1.5 py-0.5 text-[10px] font-bold text-ink">
                               {reactions.comments.length}
                             </span>
                           ) : null}

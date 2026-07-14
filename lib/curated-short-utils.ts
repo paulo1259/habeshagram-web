@@ -1,4 +1,4 @@
-import { CuratedShortCategory, CuratedShortItem, FootballTeam } from "@/types";
+import { CuratedShortCategory, CuratedShortItem } from "@/types";
 import { getTimestampValue, normalizeCreatedAt } from "@/lib/curated-video-utils";
 
 export type CuratedShortDiagnostics = {
@@ -13,14 +13,12 @@ export type CuratedShortDiagnostics = {
     title: string;
     featured: boolean;
     createdAt: string;
-    teamTag?: FootballTeam;
     vertical: boolean;
   }>;
   error?: string;
 };
 
 const SHORT_CATEGORIES = new Set<CuratedShortCategory>([
-  "Matchday Clip",
   "Fan Cam",
   "Quick Take",
   "Culture Burst"
@@ -29,7 +27,7 @@ const SHORT_CATEGORIES = new Set<CuratedShortCategory>([
 function readCategory(value: unknown) {
   return typeof value === "string" && SHORT_CATEGORIES.has(value as CuratedShortCategory)
     ? (value as CuratedShortCategory)
-    : "Matchday Clip";
+    : "Quick Take";
 }
 
 function readDurationSeconds(value: unknown) {
@@ -124,7 +122,6 @@ export function mapCuratedShortData(
     storagePath: typeof data.storagePath === "string" ? data.storagePath : undefined,
     thumbnailStoragePath:
       typeof data.thumbnailStoragePath === "string" ? data.thumbnailStoragePath : undefined,
-    teamTag: data.teamTag,
     hashtags: Array.isArray(data.hashtags) ? data.hashtags : [],
     createdAt: normalizeCreatedAt(data.createdAt),
     publishLabel: data.publishLabel,

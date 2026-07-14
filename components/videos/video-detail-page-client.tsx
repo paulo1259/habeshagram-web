@@ -8,7 +8,6 @@ import { FeedList } from "@/components/posts/feed-list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
 import { ShareActions } from "@/components/ui/share-actions";
-import { getTeamSlug } from "@/services/football-hub-data";
 import {
   getCuratedVideoById,
   getRelatedCuratedVideos
@@ -20,10 +19,6 @@ function getRelatedPosts(posts: Post[], video: CuratedVideoItem) {
   return posts
     .map((post) => {
       let score = 0;
-
-      if (video.teamTag && post.teamTag === video.teamTag) {
-        score += 4;
-      }
 
       const overlap = (post.hashtags ?? []).filter((tag) => (video.hashtags ?? []).includes(tag)).length;
       score += overlap * 2;
@@ -98,7 +93,7 @@ export function VideoDetailPageClient({ videoId }: { videoId: string }) {
   if (!video) {
     return (
       <AppShell>
-        <div className="rounded-[28px] border border-brand-100 bg-white/96 p-6 text-sm text-stone-500 shadow-soft">
+        <div className="rounded-[28px] border border-brand-100 bg-card/96 p-6 text-sm text-stone-500 shadow-soft">
           Loading video highlight...
         </div>
       </AppShell>
@@ -108,8 +103,8 @@ export function VideoDetailPageClient({ videoId }: { videoId: string }) {
   return (
     <AppShell>
       <div className="space-y-5">
-        <section className="overflow-hidden border-b border-brand-100/80 bg-white/96 sm:rounded-[32px] sm:border sm:shadow-soft">
-          <div className="bg-gradient-to-br from-brand-600 via-orange-400 to-brand-300 px-4 py-5 text-white sm:px-6 sm:py-6">
+        <section className="overflow-hidden border-b border-brand-100/80 bg-card/96 sm:rounded-[32px] sm:border sm:shadow-soft">
+          <div className="bg-gradient-to-br from-red-600 via-orange-500 to-brand-500 px-4 py-5 text-white sm:px-6 sm:py-6">
             <Link
               href="/"
               className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-white/95 transition hover:bg-white/18"
@@ -168,14 +163,6 @@ export function VideoDetailPageClient({ videoId }: { videoId: string }) {
                 <Clock3 className="h-3.5 w-3.5" />
                 {video.publishLabel ?? new Date(video.createdAt).toLocaleDateString()}
               </span>
-              {video.teamTag ? (
-                <Link
-                  href={`/football/${getTeamSlug(video.teamTag)}`}
-                  className="rounded-full bg-white px-3 py-1.5 font-semibold text-brand-800 shadow-sm transition hover:-translate-y-0.5"
-                >
-                  {video.teamTag}
-                </Link>
-              ) : null}
             </div>
 
             {video.hashtags?.length ? (
@@ -206,12 +193,12 @@ export function VideoDetailPageClient({ videoId }: { videoId: string }) {
               <SectionHeader
                 eyebrow="Related Discussion"
                 title="Posts reacting to this moment"
-                description="We match discussion using the same team tags and hashtags already powering HabeshaGram discovery."
+                description="We match discussion using the same hashtags already powering HabeshaGram discovery."
               />
               {!isLoading && !relatedPosts.length ? (
                 <EmptyState
                   title="No related posts yet"
-                  description="Once the community starts posting with the same team tag or hashtags, the discussion will show up here."
+                  description="Once the community starts posting with the same hashtags, the discussion will show up here."
                 />
               ) : (
                 <FeedList posts={relatedPosts} isLoading={isLoading} />
@@ -220,17 +207,17 @@ export function VideoDetailPageClient({ videoId }: { videoId: string }) {
           </div>
 
           <div className="space-y-4">
-            <section className="rounded-[30px] border border-brand-100 bg-white/96 p-4 shadow-soft sm:p-5">
+            <section className="rounded-[30px] border border-brand-100 bg-card/96 p-4 shadow-soft sm:p-5">
               <SectionHeader
                 eyebrow="More to Watch"
                 title="Keep the energy going"
-                description="More curated clips chosen from the same football lane, category, or hashtag mood."
+                description="More curated clips chosen from the same category or hashtag mood."
               />
               <div className="mt-4 space-y-3">
                 {relatedVideos.map((item) => (
                   <article
                     key={item.id}
-                    className="rounded-[24px] border border-brand-100 bg-brand-50/40 p-3 transition hover:-translate-y-0.5 hover:border-brand-200 hover:bg-white"
+                    className="rounded-[24px] border border-brand-100 bg-brand-50/40 p-3 transition hover:-translate-y-0.5 hover:border-brand-200 hover:bg-card"
                   >
                     <Link href={`/videos/${item.id}`} className="group flex gap-3">
                       <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-[18px] bg-brand-100">
@@ -263,11 +250,11 @@ export function VideoDetailPageClient({ videoId }: { videoId: string }) {
               </div>
             </section>
 
-            <section className="rounded-[30px] border border-brand-100 bg-white/96 p-4 shadow-soft sm:p-5">
+            <section className="rounded-[30px] border border-brand-100 bg-card/96 p-4 shadow-soft sm:p-5">
               <SectionHeader
                 eyebrow="Discovery"
                 title="Where this video fits"
-                description="A quick way to jump deeper into the same conversation lanes around football, culture, and Habesha discovery."
+                description="A quick way to jump deeper into the same conversation lanes around culture, music, and Habesha discovery."
               />
               <div className="mt-4 space-y-3 text-sm text-stone-600">
                 <div className="flex items-start gap-3 rounded-[22px] bg-brand-50/70 px-4 py-3">
@@ -280,7 +267,7 @@ export function VideoDetailPageClient({ videoId }: { videoId: string }) {
                 </div>
                 <div className="flex items-start gap-3 rounded-[22px] bg-brand-100/50 px-4 py-3">
                   <Sparkles className="mt-0.5 h-4 w-4 text-brand-700" />
-                  <p>Team-tagged clips can route straight into football hubs, so video, fan talk, and matchday energy live in one system.</p>
+                  <p>Hashtag-tagged clips route straight into topic pages, so video and community talk live in one system.</p>
                 </div>
               </div>
             </section>

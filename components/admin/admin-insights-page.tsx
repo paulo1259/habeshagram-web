@@ -11,7 +11,7 @@ import { firebaseDb } from "@/lib/firebase";
 
 type AnalyticsEventName =
   | "app_open" | "home_view" | "reels_open" | "reel_play" | "reel_like"
-  | "radio_play" | "mma_hub_open" | "world_cup_hub_open" | "live_room_join"
+  | "radio_play" | "live_room_join"
   | "post_create" | "comment_create" | "follow_user" | "search_use";
 
 type Platform = "ios" | "android" | "web";
@@ -25,7 +25,6 @@ interface AnalyticsEvent {
     reelId?: string;
     roomId?: string;
     matchId?: string;
-    teamId?: string;
   };
 }
 
@@ -36,7 +35,6 @@ interface InsightsData {
   byPlatform: Array<{ platform: string; count: number }>;
   topReels: Array<{ reelId: string; plays: number }>;
   topRooms: Array<{ roomId: string; joins: number }>;
-  topTeams: Array<{ teamId: string; count: number }>;
   uniqueUsers: number;
 }
 
@@ -49,8 +47,6 @@ const EVENT_LABELS: Record<string, string> = {
   reel_play: "Reel Plays",
   reel_like: "Reel Likes",
   radio_play: "Radio Plays",
-  mma_hub_open: "MMA Hub Opens",
-  world_cup_hub_open: "World Cup Hub Opens",
   live_room_join: "Live Room Joins",
   post_create: "Posts Created",
   comment_create: "Comments Created",
@@ -81,7 +77,6 @@ async function fetchInsights(): Promise<InsightsData> {
   const byPlatformMap: Record<string, number> = {};
   const reelPlayMap: Record<string, number> = {};
   const roomJoinMap: Record<string, number> = {};
-  const teamMap: Record<string, number> = {};
   const userSet = new Set<string>();
 
   for (const doc of docs) {
@@ -106,9 +101,6 @@ async function fetchInsights(): Promise<InsightsData> {
     }
 
     // top teams
-    if (doc.metadata?.teamId) {
-      teamMap[doc.metadata.teamId] = (teamMap[doc.metadata.teamId] ?? 0) + 1;
-    }
   }
 
   const sortedDesc = (map: Record<string, number>) =>
@@ -122,9 +114,6 @@ async function fetchInsights(): Promise<InsightsData> {
   const topRooms = sortedDesc(roomJoinMap)
     .slice(0, 5)
     .map(([roomId, joins]) => ({ roomId, joins }));
-  const topTeams = sortedDesc(teamMap)
-    .slice(0, 5)
-    .map(([teamId, count]) => ({ teamId, count }));
 
   return {
     totalEvents: docs.length,
@@ -133,7 +122,6 @@ async function fetchInsights(): Promise<InsightsData> {
     byPlatform,
     topReels,
     topRooms,
-    topTeams,
     uniqueUsers: userSet.size,
   };
 }
@@ -142,7 +130,7 @@ async function fetchInsights(): Promise<InsightsData> {
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-[24px] border border-brand-100 bg-white/96 p-5 shadow-soft">
+    <div className="rounded-[24px] border border-brand-100 bg-card/96 p-5 shadow-soft">
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">
         {label}
       </p>
@@ -190,7 +178,7 @@ function InsightCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[28px] border border-brand-100 bg-white/96 p-5 shadow-soft">
+    <section className="rounded-[28px] border border-brand-100 bg-card/96 p-5 shadow-soft">
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">
         {eyebrow}
       </p>
@@ -244,7 +232,7 @@ export function AdminInsightsPage() {
       description={`Live usage signals from the last 7 days — no message content, audio, or location data collected. Events are written to Firestore analyticsEvents by the app and mobile clients.`}
     >
       {isLoading ? (
-        <section className="rounded-[28px] border border-brand-100 bg-white/96 p-6 shadow-soft">
+        <section className="rounded-[28px] border border-brand-100 bg-card/96 p-6 shadow-soft">
           <p className="text-sm text-stone-500">Loading analytics data…</p>
         </section>
       ) : error ? (
@@ -327,22 +315,8 @@ export function AdminInsightsPage() {
             </InsightCard>
           )}
 
-          {/* Top World Cup teams */}
-          {data.topTeams.length > 0 && (
-            <InsightCard eyebrow="World Cup" title="Top teams by fan activity">
-              {data.topTeams.map(({ teamId, count }) => (
-                <BarRow
-                  key={teamId}
-                  label={teamId}
-                  count={count}
-                  max={data.topTeams[0].count}
-                />
-              ))}
-            </InsightCard>
-          )}
-
           {data.totalEvents === 0 && (
-            <section className="rounded-[28px] border border-brand-100 bg-white/96 p-6 shadow-soft">
+            <section className="rounded-[28px] border border-brand-100 bg-card/96 p-6 shadow-soft">
               <div className="flex flex-col items-center gap-3 py-6 text-center">
                 <BarChart2 className="h-8 w-8 text-brand-300" />
                 <p className="text-lg font-black tracking-tight text-ink">No events yet</p>

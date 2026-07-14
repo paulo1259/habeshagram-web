@@ -13,13 +13,13 @@ export default function CreatePage() {
     <AppShell>
       <AuthGuard>
         <div className="space-y-4">
-          <section className="rounded-3xl border border-brand-100 bg-white/95 p-4 shadow-soft sm:p-5">
+          <section className="rounded-3xl border border-brand-100 bg-card/95 p-4 shadow-soft sm:p-5">
             <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">Create</p>
             <h1 className="mt-2 text-2xl font-black tracking-tight text-ink">Start a new post</h1>
             <p className="mt-2 text-sm leading-6 text-stone-600">
               Text is required. Adding an image is optional. New posts are saved to Firebase
-              Firestore, selected images are uploaded to Firebase Storage, and optional team or
-              topic tags can send the post straight into the matching conversation lane.
+              Firestore, selected images are uploaded to Firebase Storage, and hashtags route
+              the post straight into the matching topic lane.
             </p>
             {!currentUser ? (
               <p className="mt-4 text-sm text-brand-800">

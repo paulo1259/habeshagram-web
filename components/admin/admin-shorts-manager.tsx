@@ -28,18 +28,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
-import { CuratedShortItem, FootballTeam } from "@/types";
-
-const teamOptions = [
-  { label: "No team tag", value: "" },
-  { label: "Manchester United", value: "Manchester United" },
-  { label: "Arsenal", value: "Arsenal" },
-  { label: "Chelsea", value: "Chelsea" },
-  { label: "Manchester City", value: "Manchester City" }
-] as const;
+import { CuratedShortItem } from "@/types";
 
 const categoryOptions = [
-  { label: "Matchday Clip", value: "Matchday Clip" },
   { label: "Fan Cam", value: "Fan Cam" },
   { label: "Quick Take", value: "Quick Take" },
   { label: "Culture Burst", value: "Culture Burst" }
@@ -67,7 +58,6 @@ type ShortsFormState = {
   embedUrl: string;
   thumbnailURL: string;
   duration: string;
-  teamTag: string;
   publishLabel: string;
   featured: boolean;
   vertical: boolean;
@@ -100,13 +90,12 @@ function createInitialFormState(): ShortsFormState {
     id: createId("short"),
     title: "",
     summary: "",
-    category: "Matchday Clip",
+    category: "Quick Take",
     source: "Admin upload",
     videoUrl: "",
     embedUrl: "",
     thumbnailURL: "",
     duration: "",
-    teamTag: "",
     publishLabel: "",
     featured: false,
     vertical: true,
@@ -738,7 +727,6 @@ export function AdminShortsManager() {
         embedUrl: formState.embedUrl.trim(),
         duration: formState.duration.trim(),
         playbackMode: formState.embedUrl.trim() ? "embed" : formState.playbackMode,
-        teamTag: (formState.teamTag || undefined) as FootballTeam | undefined,
         hashtags,
         publishLabel: formState.publishLabel.trim() || undefined,
         vertical: formState.vertical,
@@ -815,7 +803,6 @@ export function AdminShortsManager() {
       embedUrl: item.embedUrl,
       thumbnailURL: item.thumbnailURL,
       duration: item.duration,
-      teamTag: item.teamTag ?? "",
       publishLabel: item.publishLabel ?? "",
       featured: Boolean(item.featured),
       vertical: item.vertical,
@@ -857,7 +844,7 @@ export function AdminShortsManager() {
         ) : null}
 
         {isLoading ? (
-          <div className="rounded-[28px] border border-brand-100 bg-white/96 p-6 text-sm text-stone-500 shadow-soft">
+          <div className="rounded-[28px] border border-brand-100 bg-card/96 p-6 text-sm text-stone-500 shadow-soft">
             Loading existing shorts...
           </div>
         ) : !items.length ? (
@@ -870,7 +857,7 @@ export function AdminShortsManager() {
             {items.map((item) => (
               <article
                 key={item.id}
-                className="rounded-[28px] border border-brand-100 bg-white/96 p-4 shadow-soft sm:p-5"
+                className="rounded-[28px] border border-brand-100 bg-card/96 p-4 shadow-soft sm:p-5"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
@@ -889,11 +876,6 @@ export function AdminShortsManager() {
                       <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-800">
                         {item.playbackMode === "file" ? "Uploaded file" : "External source"}
                       </span>
-                      {item.teamTag ? (
-                        <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-800">
-                          {item.teamTag}
-                        </span>
-                      ) : null}
                       {item.featured ? (
                         <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-800">
                           Featured
@@ -929,7 +911,7 @@ export function AdminShortsManager() {
         )}
       </section>
 
-      <section className="rounded-[30px] border border-brand-100 bg-white/96 p-4 shadow-soft sm:p-5">
+      <section className="rounded-[30px] border border-brand-100 bg-card/96 p-4 shadow-soft sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <SectionHeader
             eyebrow="Editor"
@@ -957,7 +939,7 @@ export function AdminShortsManager() {
         ) : null}
 
         <form className="mt-4 space-y-5" onSubmit={(event) => void handleSubmit(event)}>
-          <div className="rounded-[26px] border border-brand-100 bg-gradient-to-br from-brand-50/55 via-white to-orange-50/45 p-4 shadow-sm">
+          <div className="rounded-[26px] border border-brand-100 bg-gradient-to-br from-brand-50/55 via-card to-orange-50/45 p-4 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-ink">Upload your short video</p>
@@ -991,7 +973,7 @@ export function AdminShortsManager() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading || isSaving}
-              className="mt-4 block w-full rounded-[24px] border border-dashed border-brand-200 bg-white/85 px-4 py-8 text-left transition hover:border-brand-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
+              className="mt-4 block w-full rounded-[24px] border border-dashed border-brand-200 bg-card/85 px-4 py-8 text-left transition hover:border-brand-300 hover:bg-card disabled:cursor-not-allowed disabled:opacity-70"
             >
               <div className="flex flex-col items-center justify-center text-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-700 shadow-sm">
@@ -1009,7 +991,7 @@ export function AdminShortsManager() {
             <div className="mt-4 space-y-2 text-sm text-stone-600">
               <p>Supported formats: MP4, WebM, MOV, and M4V.</p>
               {detectedVideoMeta ? (
-                <p className="rounded-[18px] bg-white px-3 py-2 text-xs font-medium text-stone-700">
+                <p className="rounded-[18px] bg-card px-3 py-2 text-xs font-medium text-stone-700">
                   Detected {detectedVideoMeta.width}x{detectedVideoMeta.height} · {formatDuration(detectedVideoMeta.durationSeconds)}
                 </p>
               ) : null}
@@ -1087,21 +1069,6 @@ export function AdminShortsManager() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block space-y-2">
-                <span className="text-sm font-semibold text-ink">Team tag</span>
-                <select
-                  value={formState.teamTag}
-                  className="min-h-11 w-full rounded-[22px] border border-brand-100 bg-surface px-4 py-3 text-sm text-ink outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
-                  onChange={(event) => updateField("teamTag", event.target.value)}
-                >
-                  {teamOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
               <label className="block space-y-2">
                 <span className="text-sm font-semibold text-ink">Publish label</span>
                 <input
@@ -1184,7 +1151,7 @@ export function AdminShortsManager() {
                       type="text"
                       value={formState.videoUrl}
                       placeholder="https://..."
-                      className="min-h-11 w-full rounded-[22px] border border-brand-100 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+                      className="min-h-11 w-full rounded-[22px] border border-brand-100 bg-card px-4 py-3 text-sm text-ink outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
                       onChange={(event) => {
                         updateField("videoUrl", event.target.value);
                         if (event.target.value.trim()) {
@@ -1199,7 +1166,7 @@ export function AdminShortsManager() {
                       type="text"
                       value={formState.embedUrl}
                       placeholder="https://www.youtube.com/embed/..."
-                      className="min-h-11 w-full rounded-[22px] border border-brand-100 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+                      className="min-h-11 w-full rounded-[22px] border border-brand-100 bg-card px-4 py-3 text-sm text-ink outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
                       onChange={(event) => {
                         updateField("embedUrl", event.target.value);
                         if (event.target.value.trim()) {
@@ -1214,13 +1181,13 @@ export function AdminShortsManager() {
                       type="text"
                       value={formState.source}
                       placeholder="Admin upload / creator / newsroom"
-                      className="min-h-11 w-full rounded-[22px] border border-brand-100 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+                      className="min-h-11 w-full rounded-[22px] border border-brand-100 bg-card px-4 py-3 text-sm text-ink outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
                       onChange={(event) => updateField("source", event.target.value)}
                     />
                   </label>
                 </div>
               ) : (
-                <div className="rounded-[18px] bg-white px-3 py-3 text-xs leading-5 text-stone-600">
+                <div className="rounded-[18px] bg-card px-3 py-3 text-xs leading-5 text-stone-600">
                   External URLs are still supported, but they stay tucked away so upload remains the obvious primary action.
                 </div>
               )}
@@ -1294,7 +1261,7 @@ export function AdminShortsManager() {
             ref={statusRef}
             className={cn(
               "rounded-[24px] border px-4 py-3 text-sm shadow-sm transition",
-              flowStatus ? getStatusToneClass(flowStatus.tone) : "border-brand-100 bg-white text-stone-600"
+              flowStatus ? getStatusToneClass(flowStatus.tone) : "border-brand-100 bg-card text-stone-600"
             )}
           >
             {flowStatus ? (

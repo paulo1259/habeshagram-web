@@ -44,22 +44,20 @@ export function DebateDetailPage({ debateId }: { debateId: string }) {
   if (!debate) {
     return (
       <AppShell>
-        <div className="rounded-[28px] border border-brand-100 bg-white/96 p-6 text-sm text-stone-500 shadow-soft">
+        <div className="rounded-[28px] border border-brand-100 bg-card/96 p-6 text-sm text-stone-500 shadow-soft">
           Loading debate...
         </div>
       </AppShell>
     );
   }
 
-  const createHref = debate.teamTag
-    ? `/create?text=${encodeURIComponent(debate.suggestedText)}&team=${encodeURIComponent(debate.teamTag)}`
-    : `/create?text=${encodeURIComponent(debate.suggestedText)}`;
+  const createHref = `/create?text=${encodeURIComponent(debate.suggestedText)}`;
 
   return (
     <AppShell>
       <div className="space-y-5">
-        <section className="overflow-hidden border-b border-brand-100/80 bg-white/96 sm:rounded-[32px] sm:border sm:shadow-soft">
-          <div className="bg-gradient-to-br from-brand-600 via-orange-400 to-brand-300 px-4 py-5 text-white sm:px-6 sm:py-6">
+        <section className="overflow-hidden border-b border-brand-100/80 bg-card/96 sm:rounded-[32px] sm:border sm:shadow-soft">
+          <div className="bg-gradient-to-br from-red-600 via-orange-500 to-brand-500 px-4 py-5 text-white sm:px-6 sm:py-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-2xl">
                 <Link
@@ -75,7 +73,6 @@ export function DebateDetailPage({ debateId }: { debateId: string }) {
                 </h1>
                 <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
                   <span className="rounded-full bg-white/12 px-3 py-1.5">{debate.category}</span>
-                  {debate.teamTag ? <span className="rounded-full bg-white/12 px-3 py-1.5">{debate.teamTag}</span> : null}
                   {debate.publishLabel ? <span className="rounded-full bg-white/12 px-3 py-1.5">{debate.publishLabel}</span> : null}
                 </div>
               </div>
@@ -89,15 +86,15 @@ export function DebateDetailPage({ debateId }: { debateId: string }) {
           </div>
         </section>
 
-        <section className="rounded-[30px] border border-brand-100/80 bg-white/96 p-4 shadow-soft sm:p-5">
+        <section className="rounded-[30px] border border-brand-100/80 bg-card/96 p-4 shadow-soft sm:p-5">
           <div className="space-y-4">
-            <div className="rounded-[24px] border border-brand-100/80 bg-gradient-to-br from-brand-50/70 via-white to-orange-50/50 px-4 py-4">
+            <div className="rounded-[24px] border border-brand-100/80 bg-gradient-to-br from-brand-50/70 via-card to-orange-50/50 px-4 py-4">
               <p className="text-sm leading-7 text-stone-700">{debate.suggestedText}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href={createHref}
-                className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600"
+                className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-brand-950 shadow-soft transition hover:bg-brand-600"
               >
                 <MessageSquareText className="h-4 w-4" />
                 Post your take
@@ -105,7 +102,7 @@ export function DebateDetailPage({ debateId }: { debateId: string }) {
               {debate.hashtag ? (
                 <Link
                   href={`/topic/${debate.hashtag.toLowerCase()}`}
-                  className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-800 shadow-sm ring-1 ring-brand-100 transition hover:bg-brand-50"
+                  className="inline-flex items-center gap-2 rounded-full bg-card px-4 py-2 text-sm font-semibold text-brand-800 shadow-sm ring-1 ring-brand-100 transition hover:bg-brand-50"
                 >
                   <Sparkles className="h-4 w-4" />
                   #{debate.hashtag}

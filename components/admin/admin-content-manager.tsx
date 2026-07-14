@@ -235,7 +235,7 @@ export function AdminContentManager<K extends AdminContentKind>({
         ) : null}
 
         {isLoading ? (
-          <div className="rounded-[28px] border border-brand-100 bg-white/96 p-6 text-sm text-stone-500 shadow-soft">
+          <div className="rounded-[28px] border border-brand-100 bg-card/96 p-6 text-sm text-stone-500 shadow-soft">
             Loading existing items...
           </div>
         ) : !items.length ? (
@@ -245,7 +245,7 @@ export function AdminContentManager<K extends AdminContentKind>({
             {items.map((item) => (
               <article
                 key={item.id}
-                className="rounded-[28px] border border-brand-100 bg-white/96 p-4 shadow-soft sm:p-5"
+                className="rounded-[28px] border border-brand-100 bg-card/96 p-4 shadow-soft sm:p-5"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
@@ -301,7 +301,7 @@ export function AdminContentManager<K extends AdminContentKind>({
         )}
       </section>
 
-      <section className="rounded-[30px] border border-brand-100 bg-white/96 p-4 shadow-soft sm:p-5">
+      <section className="rounded-[30px] border border-brand-100 bg-card/96 p-4 shadow-soft sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <SectionHeader
             eyebrow="Editor"

@@ -1,6 +1,6 @@
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { firebaseDb, isFirebaseConfigured } from "@/lib/firebase";
-import { DailyDebatePrompt, FootballTeam } from "@/types";
+import { DailyDebatePrompt } from "@/types";
 
 const FIRESTORE_TIMEOUT_MS = 4000;
 const DAILY_DEBATES_COLLECTION = "dailyDebates";
@@ -35,7 +35,6 @@ function mapDebate(data: Partial<DailyDebatePrompt>, id: string): DailyDebatePro
     id: data.id || id,
     prompt: data.prompt,
     category: data.category,
-    teamTag: data.teamTag,
     hashtag: typeof data.hashtag === "string" ? data.hashtag : undefined,
     suggestedText: data.suggestedText,
     featured: Boolean(data.featured),
@@ -45,11 +44,8 @@ function mapDebate(data: Partial<DailyDebatePrompt>, id: string): DailyDebatePro
   };
 }
 
-function rotateDailyDebates(items: DailyDebatePrompt[], team?: FootballTeam) {
-  const activeItems = items.filter((item) => item.active !== false);
-  const filtered = team
-    ? activeItems.filter((item) => item.teamTag === team || !item.teamTag)
-    : activeItems;
+function rotateDailyDebates(items: DailyDebatePrompt[]) {
+  const filtered = items.filter((item) => item.active !== false);
 
   if (!filtered.length) {
     return [];
@@ -63,10 +59,10 @@ function rotateDailyDebates(items: DailyDebatePrompt[], team?: FootballTeam) {
   const startIndex = daySeed % ordered.length;
   const rotated = [...ordered.slice(startIndex), ...ordered.slice(0, startIndex)];
 
-  return rotated.slice(0, Math.min(team ? 3 : 4, rotated.length));
+  return rotated.slice(0, Math.min(4, rotated.length));
 }
 
-export async function getDailyDebatePrompts(team?: FootballTeam): Promise<DailyDebatePrompt[]> {
+export async function getDailyDebatePrompts(): Promise<DailyDebatePrompt[]> {
   if (!isFirebaseConfigured || !firebaseDb) {
     return [];
   }
@@ -81,7 +77,7 @@ export async function getDailyDebatePrompts(team?: FootballTeam): Promise<DailyD
       .map((item) => mapDebate(item.data() as Partial<DailyDebatePrompt>, item.id))
       .filter((item): item is DailyDebatePrompt => Boolean(item));
 
-    return rotateDailyDebates(items, team);
+    return rotateDailyDebates(items);
   } catch {
     return [];
   }

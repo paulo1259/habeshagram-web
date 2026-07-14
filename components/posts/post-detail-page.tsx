@@ -56,8 +56,8 @@ export function PostDetailPage({ postId }: { postId: string }) {
   return (
     <AppShell>
       <div className="space-y-5">
-        <section className="overflow-hidden border-b border-brand-100/80 bg-white/96 sm:rounded-[32px] sm:border sm:shadow-soft">
-          <div className="bg-gradient-to-br from-brand-600 via-orange-400 to-brand-300 px-4 py-5 text-white sm:px-6 sm:py-6">
+        <section className="overflow-hidden border-b border-brand-100/80 bg-card/96 sm:rounded-[32px] sm:border sm:shadow-soft">
+          <div className="bg-gradient-to-br from-red-600 via-orange-500 to-brand-500 px-4 py-5 text-white sm:px-6 sm:py-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-2xl">
                 <Link

@@ -63,10 +63,6 @@ function inferShareSection(path: string) {
     return "debates" as const;
   }
 
-  if (path.startsWith("/football")) {
-    return "football" as const;
-  }
-
   if (path.startsWith("/world-news")) {
     return "world-news" as const;
   }

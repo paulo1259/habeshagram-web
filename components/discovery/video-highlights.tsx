@@ -11,29 +11,19 @@ import { ShareActions } from "@/components/ui/share-actions";
 import { cn } from "@/lib/utils";
 import {
   getCuratedVideos,
-  getCuratedVideosByTeam,
   selectHomepageVideoHighlights
 } from "@/services/curated-video-service";
-import { getTeamSlug } from "@/services/football-hub-data";
-import { CuratedVideoCategory, CuratedVideoItem, FootballTeam } from "@/types";
+import { CuratedVideoCategory, CuratedVideoItem } from "@/types";
 
 const categoryStyles: Record<CuratedVideoCategory, string> = {
-  "Football Moments": "bg-red-50 text-red-700 border-red-100",
-  "Fan Reactions": "bg-orange-50 text-orange-700 border-orange-100",
+  "Community Moments": "bg-red-50 text-red-700 border-red-100",
   Culture: "bg-brand-50 text-brand-700 border-brand-100",
-  Music: "bg-amber-50 text-amber-700 border-amber-100"
-};
-
-const teamChipStyles: Record<FootballTeam, string> = {
-  "Manchester United": "bg-red-50 text-red-700 border-red-100",
-  Arsenal: "bg-rose-50 text-rose-700 border-rose-100",
-  Chelsea: "bg-blue-50 text-blue-700 border-blue-100",
-  "Manchester City": "bg-sky-50 text-sky-700 border-sky-100"
+  Music: "bg-amber-50 text-amber-700 border-amber-100",
+  Events: "bg-orange-50 text-orange-700 border-orange-100"
 };
 
 type VideoHighlightsProps = {
   compact?: boolean;
-  team?: FootballTeam;
   limit?: number;
 };
 
@@ -71,7 +61,7 @@ function InlineVideoPlayer({
         <div className="flex items-center gap-2">
           <Link
             href={`/videos/${video.id}`}
-            className="inline-flex min-h-9 items-center gap-1 rounded-full border border-brand-100 bg-white px-3 py-1.5 text-xs font-semibold text-brand-800 shadow-sm transition hover:bg-brand-50"
+            className="inline-flex min-h-9 items-center gap-1 rounded-full border border-brand-100 bg-card px-3 py-1.5 text-xs font-semibold text-brand-800 shadow-sm transition hover:bg-brand-50"
           >
             Full page
             <ExternalLink className="h-3.5 w-3.5" />
@@ -79,7 +69,7 @@ function InlineVideoPlayer({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-stone-600 shadow-sm transition hover:bg-brand-50 hover:text-brand-800"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-card text-stone-600 shadow-sm transition hover:bg-brand-50 hover:text-brand-800"
           >
             <X className="h-4 w-4" />
           </button>
@@ -89,7 +79,7 @@ function InlineVideoPlayer({
   );
 }
 
-export function VideoHighlights({ compact = false, team, limit }: VideoHighlightsProps) {
+export function VideoHighlights({ compact = false, limit }: VideoHighlightsProps) {
   const [videos, setVideos] = useState<CuratedVideoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
@@ -99,7 +89,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
 
     void (async () => {
       setIsLoading(true);
-      const base = team ? await getCuratedVideosByTeam(team) : await getCuratedVideos();
+      const base = await getCuratedVideos();
       if (!isMounted) {
         return;
       }
@@ -111,7 +101,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
     return () => {
       isMounted = false;
     };
-  }, [limit, team]);
+  }, [limit]);
 
   const visibleVideos = typeof limit === "number" ? videos.slice(0, limit) : videos;
   const homepageSelection = selectHomepageVideoHighlights(visibleVideos, compact ? limit ?? 3 : 6);
@@ -124,11 +114,9 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
       video_id: video.id,
       title: video.title,
       category: video.category,
-      team_tag: video.teamTag ?? null,
       surface
     });
     recordVideoEngagement({
-      teamTag: video.teamTag,
       hashtags: video.hashtags,
       weight: 3
     });
@@ -137,7 +125,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
   return (
     <section
       className={cn(
-        "relative overflow-hidden rounded-[30px] border border-brand-100 bg-white/96 p-4 shadow-soft sm:p-5",
+        "relative overflow-hidden rounded-[30px] border border-brand-100 bg-card/96 p-4 shadow-soft sm:p-5",
         compact && "rounded-[28px] p-4"
       )}
     >
@@ -147,11 +135,9 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
 
       <SectionHeader
         eyebrow="Video Highlights"
-        title={team ? `${team} clips worth replaying` : "Curated clips lighting up the timeline"}
+        title="Curated clips lighting up the timeline"
         description={
-          team
-            ? "Admin-picked match moments, fan reactions, and watch-again clips for this fan zone."
-            : "A premium mix of football moments, fan reactions, and Habesha culture clips without the cost of full user video uploads."
+          "A premium mix of community moments, music, and Habesha culture clips without the cost of full user video uploads."
         }
         action={
           !compact ? (
@@ -175,12 +161,8 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
       ) : !videos.length ? (
         <div className="mt-4">
           <EmptyState
-            title={team ? `No ${team} videos available` : "No videos available"}
-            description={
-              team
-                ? `There are no curated ${team} clips in Firestore right now.`
-                : "Curated video highlights will appear here once the curated videos collection has published clips."
-            }
+            title="No videos available"
+            description="Curated video highlights will appear here once the curated videos collection has published clips."
           />
         </div>
       ) : compact ? (
@@ -188,7 +170,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
           {supportingVideos.slice(0, limit ?? 3).map((video) => (
             <article
               key={video.id}
-              className="overflow-hidden rounded-[24px] border border-brand-100 bg-brand-50/40 transition hover:border-brand-200 hover:bg-white"
+              className="overflow-hidden rounded-[24px] border border-brand-100 bg-brand-50/40 transition hover:border-brand-200 hover:bg-card"
             >
               {activeVideoId === video.id ? (
                 <div className="p-3">
@@ -236,7 +218,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
       ) : (
         <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
           {featuredVideo ? (
-            <article className="overflow-hidden rounded-[28px] border border-brand-100 bg-gradient-to-br from-brand-50 via-white to-orange-50 shadow-soft ring-1 ring-orange-100/60">
+            <article className="overflow-hidden rounded-[28px] border border-brand-100 bg-gradient-to-br from-brand-50 via-card to-orange-50 shadow-soft ring-1 ring-orange-100/60">
               <div className="relative aspect-[16/10] overflow-hidden bg-black">
                 {activeVideoId === featuredVideo.id ? (
                   <iframe
@@ -269,7 +251,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                         {featuredVideo.category}
                       </span>
                       {featuredVideo.featured ? (
-                        <span className="rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink">
+                        <span className="rounded-full bg-card/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink">
                           Featured
                         </span>
                       ) : null}
@@ -283,7 +265,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                           {featuredVideo.title}
                         </h3>
                       </div>
-                      <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/92 text-brand-700 shadow-lg transition group-hover:scale-105">
+                      <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-card/92 text-brand-700 shadow-lg transition group-hover:scale-105">
                         <Play className="ml-1 h-5 w-5 fill-current" />
                       </span>
                     </div>
@@ -293,21 +275,11 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
               <div className="space-y-4 p-5">
                 <p className="text-sm leading-6 text-stone-600">{featuredVideo.summary}</p>
                 <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-stone-500">
-                  <span className="rounded-full bg-white px-3 py-1.5 shadow-sm">{featuredVideo.duration}</span>
-                  <span className="rounded-full bg-white px-3 py-1.5 shadow-sm">
+                  <span className="rounded-full bg-card px-3 py-1.5 shadow-sm">{featuredVideo.duration}</span>
+                  <span className="rounded-full bg-card px-3 py-1.5 shadow-sm">
                     {featuredVideo.publishLabel ?? "Fresh pick"}
                   </span>
-                  {featuredVideo.teamTag ? (
-                    <Link
-                      href={`/football/${getTeamSlug(featuredVideo.teamTag)}`}
-                      className={cn(
-                        "rounded-full border px-3 py-1.5 font-semibold transition hover:-translate-y-0.5",
-                        teamChipStyles[featuredVideo.teamTag]
-                      )}
-                    >
-                      {featuredVideo.teamTag}
-                    </Link>
-                  ) : null}
+                  
                 </div>
                 {featuredVideo.hashtags?.length ? (
                   <div className="flex flex-wrap gap-2">
@@ -327,7 +299,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                     <button
                       type="button"
                       onClick={() => setActiveVideoId(null)}
-                      className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-800 shadow-sm transition hover:bg-brand-50 active:scale-[0.98]"
+                      className="inline-flex min-h-10 items-center gap-2 rounded-full bg-card px-4 py-2 text-sm font-semibold text-brand-800 shadow-sm transition hover:bg-brand-50 active:scale-[0.98]"
                     >
                       <X className="h-4 w-4" />
                       Close player
@@ -336,7 +308,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                     <button
                       type="button"
                       onClick={() => handlePlayVideo(featuredVideo, "video_highlights_hero")}
-                      className="inline-flex min-h-10 items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600 active:scale-[0.98]"
+                      className="inline-flex min-h-10 items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-brand-950 shadow-soft transition hover:bg-brand-600 active:scale-[0.98]"
                     >
                       <Play className="h-4 w-4 fill-current" />
                       Play here
@@ -344,7 +316,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                   )}
                   <Link
                     href={`/videos/${featuredVideo.id}`}
-                    className="inline-flex min-h-10 items-center gap-2 rounded-full border border-brand-100 bg-white px-4 py-2 text-sm font-semibold text-brand-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-50"
+                    className="inline-flex min-h-10 items-center gap-2 rounded-full border border-brand-100 bg-card px-4 py-2 text-sm font-semibold text-brand-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-50"
                   >
                     Open detail
                     <ExternalLink className="h-3.5 w-3.5" />
@@ -363,7 +335,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
             {supportingVideos.slice(0, compact ? 3 : 5).map((video) => (
               <article
                 key={video.id}
-                className="group rounded-[26px] border border-brand-100 bg-white p-3 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-md"
+                className="group rounded-[26px] border border-brand-100 bg-card p-3 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-md"
               >
                 {activeVideoId === video.id ? (
                   <InlineVideoPlayer
@@ -410,17 +382,7 @@ export function VideoHighlights({ compact = false, team, limit }: VideoHighlight
                       <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{video.summary}</p>
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-stone-500">
                         <span>{video.publishLabel ?? "Watch now"}</span>
-                        {video.teamTag ? (
-                          <Link
-                            href={`/football/${getTeamSlug(video.teamTag)}`}
-                            className={cn(
-                              "rounded-full border px-2.5 py-1 font-semibold transition hover:-translate-y-0.5",
-                              teamChipStyles[video.teamTag]
-                            )}
-                          >
-                            {video.teamTag}
-                          </Link>
-                        ) : null}
+                        
                         <button
                           type="button"
                           onClick={() => handlePlayVideo(video, compact ? "video_highlights_compact" : "video_highlights_supporting")}

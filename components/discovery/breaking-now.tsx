@@ -6,9 +6,8 @@ import { BellRing, Radio, Siren } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
 import { formatDate, getBreakingDiscussionPostId } from "@/lib/utils";
-import { getTeamSlug } from "@/services/football-hub-data";
 import { getBreakingItems } from "@/services/news-service";
-import { BreakingItem, FootballTeam } from "@/types";
+import { BreakingItem } from "@/types";
 
 const badgeStyles: Record<BreakingItem["badge"], string> = {
   BREAKING: "bg-red-500 text-white",
@@ -16,19 +15,11 @@ const badgeStyles: Record<BreakingItem["badge"], string> = {
   "JUST IN": "bg-stone-900 text-white"
 };
 
-const teamAccent: Record<FootballTeam, string> = {
-  "Manchester United": "text-red-700 bg-red-50 border-red-100",
-  Arsenal: "text-rose-700 bg-rose-50 border-rose-100",
-  Chelsea: "text-blue-700 bg-blue-50 border-blue-100",
-  "Manchester City": "text-sky-700 bg-sky-50 border-sky-100"
-};
 
 export function BreakingNow({
-  compact = false,
-  team
+  compact = false
 }: {
   compact?: boolean;
-  team?: FootballTeam;
 }) {
   const [items, setItems] = useState<BreakingItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,7 +30,7 @@ export function BreakingNow({
 
     const loadBreakingItems = async () => {
       try {
-        const nextItems = await getBreakingItems(team);
+        const nextItems = await getBreakingItems();
 
         if (isMounted) {
           setItems(nextItems);
@@ -66,19 +57,19 @@ export function BreakingNow({
       isMounted = false;
       window.clearInterval(interval);
     };
-  }, [team]);
+  }, []);
 
   const visibleItems = items.slice(0, compact ? 3 : 4);
 
   return (
-    <section className={`rounded-[30px] border border-brand-100/80 bg-white/96 shadow-soft ${compact ? "p-4" : "p-4 sm:p-5"}`}>
+    <section className={`rounded-[30px] border border-brand-100/80 bg-card/96 shadow-soft ${compact ? "p-4" : "p-4 sm:p-5"}`}>
       <SectionHeader
         eyebrow="Breaking Now"
-        title={team ? `${team} urgency check` : "What just hit the timeline"}
+        title="What just hit the timeline"
         description={
           compact
             ? "Quick hits worth opening right now."
-            : "Urgent football headlines pulled from a live server-side feed and linked straight into HabeshaGram discussion."
+            : "Urgent East Africa headlines pulled from a live server-side feed and linked straight into HabeshaGram discussion."
         }
         action={
           !compact ? (
@@ -108,17 +99,13 @@ export function BreakingNow({
             ))
           : !visibleItems.length ? (
               <EmptyState
-                title={team ? `No ${team} breaking stories right now` : "No breaking football stories right now"}
-                description={
-                  team
-                    ? `We do not have a fresh ${team} headline at the moment. Check back soon for the next club update.`
-                    : "Breaking football updates will appear here when the live news feed has fresh headlines."
-                }
+                title="No breaking stories right now"
+                description="Breaking updates will appear here when the live news feed has fresh headlines."
               />
             ) : visibleItems.map((item, index) => (
               <article
                 key={item.id}
-                className="rounded-[24px] border border-brand-100/80 bg-gradient-to-r from-white via-white to-brand-50/45 px-4 py-4 transition hover:-translate-y-0.5 hover:shadow-sm"
+                className="rounded-[24px] border border-brand-100/80 bg-gradient-to-r from-card via-card to-brand-50/45 px-4 py-4 transition hover:-translate-y-0.5 hover:shadow-sm"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em] ${badgeStyles[item.badge]}`}>
@@ -145,19 +132,10 @@ export function BreakingNow({
                     <span className="rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-800">
                       {item.source}
                     </span>
-                    {item.team ? (
-                      <Link
-                        href={`/football/${getTeamSlug(item.team)}`}
-                        className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] transition hover:opacity-90 ${teamAccent[item.team]}`}
-                      >
-                        {item.team}
-                      </Link>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-orange-100 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-orange-700">
-                        <BellRing className="h-3.5 w-3.5" />
-                        Community
-                      </span>
-                    )}
+                    <span className="inline-flex items-center gap-1 rounded-full border border-orange-100 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-orange-700">
+                      <BellRing className="h-3.5 w-3.5" />
+                      {item.category}
+                    </span>
                   </div>
                   <Link
                     href={`/#post-${getBreakingDiscussionPostId(item.headline, item.source)}`}

@@ -1,7 +1,7 @@
 import { createDeterministicId } from "@/lib/utils";
-import { BreakingBadge, BreakingItem, FootballTeam } from "@/types";
+import { BreakingBadge, BreakingItem } from "@/types";
 
-const DEFAULT_BREAKING_NEWS_RSS_URL = "https://feeds.bbci.co.uk/sport/football/rss.xml";
+const DEFAULT_BREAKING_NEWS_RSS_URL = "https://feeds.bbci.co.uk/news/world/africa/rss.xml";
 
 type BreakingFeedPayload = {
   items: BreakingItem[];
@@ -19,19 +19,6 @@ type ParsedRssItem = {
   source: string;
 };
 
-const teamKeywords: Record<FootballTeam, string[]> = {
-  "Manchester United": ["manchester united", "man utd", "man united", "old trafford", "amorim", "rashford"],
-  Arsenal: ["arsenal", "gunners", "arteta", "emirates stadium", "saka"],
-  Chelsea: ["chelsea", "blues", "stamford bridge", "palmer", "maresca"],
-  "Manchester City": ["manchester city", "man city", "etihad", "guardiola", "haaland", "foden"]
-};
-
-const teamPriority: Record<FootballTeam, number> = {
-  "Manchester United": 4,
-  Arsenal: 3,
-  Chelsea: 2,
-  "Manchester City": 1
-};
 
 const badgeByAgeHours = (hours: number): BreakingBadge => {
   if (hours <= 2) {
@@ -67,27 +54,17 @@ function parseRssItems(xml: string): ParsedRssItem[] {
   const itemMatches = xml.match(/<item\b[\s\S]*?<\/item>/gi) ?? [];
 
   return itemMatches.map((item, index) => ({
-    title: getTagValue(item, "title") || `Football update ${index + 1}`,
+    title: getTagValue(item, "title") || `News update ${index + 1}`,
     link: getTagValue(item, "link"),
     pubDate: getTagValue(item, "pubDate"),
     description: getTagValue(item, "description"),
-    source: getTagValue(item, "source") || "BBC Sport"
+    source: getTagValue(item, "source") || "BBC Africa"
   }));
 }
 
-function detectTeam(text: string): FootballTeam | undefined {
-  const normalized = text.toLowerCase();
-
-  return (Object.entries(teamKeywords) as Array<[FootballTeam, string[]]>).find(([, keywords]) =>
-    keywords.some((keyword) => normalized.includes(keyword))
-  )?.[0];
-}
 
 function mapRssItemToBreakingItem(item: ParsedRssItem): BreakingItem | null {
-  const combined = `${item.title} ${item.description}`.trim();
-  const team = detectTeam(combined);
-
-  if (!team) {
+  if (!item.title || !item.link) {
     return null;
   }
 
@@ -101,9 +78,8 @@ function mapRssItemToBreakingItem(item: ParsedRssItem): BreakingItem | null {
     summary: item.description,
     link: item.link,
     timestamp: publishedAt.toISOString(),
-    category: "Football",
-    badge: badgeByAgeHours(hoursAgo),
-    team
+    category: "News",
+    badge: badgeByAgeHours(hoursAgo)
   };
 }
 
@@ -111,9 +87,8 @@ function rankBreakingItem(item: BreakingItem) {
   const publishedAt = new Date(item.timestamp).getTime();
   const ageHours = Math.max(0, (Date.now() - publishedAt) / 36e5);
   const freshnessScore = Math.max(0, 24 - ageHours);
-  const teamScore = item.team ? teamPriority[item.team] * 10 : 0;
   const badgeScore = item.badge === "BREAKING" ? 3 : item.badge === "JUST IN" ? 2 : 1;
-  return freshnessScore + teamScore + badgeScore;
+  return freshnessScore + badgeScore;
 }
 
 function normalizeFeedUrlList(raw: string | undefined) {

@@ -133,24 +133,24 @@ export function SearchPageClient({ initialQuery }: { initialQuery: string }) {
           </p>
           <h1 className="mt-1 text-2xl font-black tracking-tight text-ink">Find people and posts</h1>
           <p className="mt-2 text-sm leading-6 text-stone-600">
-            Search HabeshaGram by username, bio, post text, and football-related conversation.
+            Search HabeshaGram by username, bio, post text, and community conversation.
           </p>
 
           <form
             onSubmit={handleSearchSubmit}
-            className="mt-4 flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50/40 px-4 py-3 transition duration-200 focus-within:border-brand-200 focus-within:bg-white"
+            className="mt-4 flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50/40 px-4 py-3 transition duration-200 focus-within:border-brand-200 focus-within:bg-card"
           >
             <Search className="h-4 w-4 text-stone-400" />
             <input
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search people, posts, football, trends"
+              placeholder="Search people, posts, news, trends"
               className="w-full bg-transparent text-sm outline-none placeholder:text-stone-400"
             />
           </form>
 
-          <div className="mt-4 inline-flex rounded-full border border-brand-100 bg-white p-1 shadow-soft">
+          <div className="mt-4 inline-flex rounded-full border border-brand-100 bg-card p-1 shadow-soft">
             <button
               type="button"
               className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
@@ -183,7 +183,7 @@ export function SearchPageClient({ initialQuery }: { initialQuery: string }) {
         {!debouncedQuery.trim() ? (
           <EmptyState
             title="Start searching"
-            description="Try usernames, club names, football debates, or any post topic you want to discover."
+            description="Try usernames, hashtags, community debates, or any post topic you want to discover."
           />
         ) : isLoading ? (
           <div className="glass-card rounded-[30px] border border-brand-100/80 p-5 shadow-soft">
@@ -203,7 +203,7 @@ export function SearchPageClient({ initialQuery }: { initialQuery: string }) {
         ) : visibleActiveCount === 0 ? (
           <EmptyState
             title="No matches yet"
-            description="Try a broader username, football keyword, or post topic to find more results."
+            description="Try a broader username, keyword, or post topic to find more results."
           />
         ) : activeTab === "people" ? (
           <section className="space-y-3">

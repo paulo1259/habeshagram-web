@@ -8,7 +8,6 @@ const dailyDebates = [
     id: "debate-arsenal-complete-side",
     prompt: "Is Arsenal the most complete side in the league right now?",
     category: "Big Debate",
-    teamTag: "Arsenal",
     hashtag: "COYG",
     suggestedText: "My take on Arsenal right now: #COYG",
     featured: true,
@@ -20,7 +19,6 @@ const dailyDebates = [
     id: "debate-chelsea-rebuild-again",
     prompt: "Should Chelsea rebuild again, or finally trust what they already have?",
     category: "Big Debate",
-    teamTag: "Chelsea",
     hashtag: "CFC",
     suggestedText: "My Chelsea rebuild take: #CFC",
     active: true,
@@ -30,8 +28,7 @@ const dailyDebates = [
   {
     id: "debate-united-still-top-club",
     prompt: "Is Manchester United still a top club, or are fans living on history and hope?",
-    category: "Fan Base",
-    teamTag: "Manchester United",
+    category: "Community",
     hashtag: "GGMU",
     suggestedText: "My honest United take tonight: #GGMU",
     active: true,
@@ -41,8 +38,7 @@ const dailyDebates = [
   {
     id: "debate-city-standards-too-high",
     prompt: "Are Manchester City standards now so high that even comfortable wins feel underwhelming?",
-    category: "Matchday",
-    teamTag: "Manchester City",
+    category: "Community",
     hashtag: "MCFC",
     suggestedText: "City fans, here is my take: #MCFC",
     active: true,
@@ -51,10 +47,10 @@ const dailyDebates = [
   },
   {
     id: "debate-habesha-fanbase-loudest",
-    prompt: "Who has the loudest football fan base in the Habesha community right now?",
+    prompt: "Who has the loudest community fan base in the Habesha community right now?",
     category: "Community",
-    hashtag: "HabeshaFootball",
-    suggestedText: "Today's Habesha football debate: #HabeshaFootball",
+    hashtag: "HabeshaCommunity",
+    suggestedText: "Today's Habesha community debate: #HabeshaCommunity",
     active: true,
     publishLabel: "Today",
     createdAt: "2026-04-15T06:00:00.000Z"
@@ -65,7 +61,7 @@ const curatedVideos = [
   {
     id: "video_mu_last-minute-chaos",
     title: "United chaos in stoppage time gets the whole timeline screaming",
-    category: "Football Moments",
+    category: "Community Moments",
     source: "YouTube",
     summary:
       "A high-drama late goal clip that feels perfect for the Habesha matchday mood when group chats go wild.",
@@ -73,7 +69,6 @@ const curatedVideos = [
     videoUrl: "https://www.youtube.com/watch?v=ysz5S6PUM-U",
     embedUrl: "https://www.youtube.com/embed/ysz5S6PUM-U",
     duration: "2:18",
-    teamTag: "Manchester United",
     hashtags: ["ggmu", "matchday", "premierleague"],
     createdAt: "2026-04-15T09:30:00.000Z",
     publishLabel: "2h ago",
@@ -90,7 +85,6 @@ const curatedVideos = [
     videoUrl: "https://www.youtube.com/watch?v=jNQXAC9IVRw",
     embedUrl: "https://www.youtube.com/embed/jNQXAC9IVRw",
     duration: "3:42",
-    teamTag: "Arsenal",
     hashtags: ["coyg", "fanreactions", "london"],
     createdAt: "2026-04-15T08:10:00.000Z",
     publishLabel: "Today",
@@ -99,7 +93,7 @@ const curatedVideos = [
   {
     id: "video_chelsea-tactical-breakdown",
     title: "Chelsea moments that sparked the loudest debate this week",
-    category: "Football Moments",
+    category: "Community Moments",
     source: "YouTube",
     summary:
       "A tight highlight reel built around the biggest moments fans are already arguing about across the app.",
@@ -107,7 +101,6 @@ const curatedVideos = [
     videoUrl: "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
     embedUrl: "https://www.youtube.com/embed/aqz-KE-bpKQ",
     duration: "4:06",
-    teamTag: "Chelsea",
     hashtags: ["cfc", "bigdebate", "premierleague"],
     createdAt: "2026-04-14T20:15:00.000Z",
     publishLabel: "Last night"
@@ -115,7 +108,7 @@ const curatedVideos = [
   {
     id: "video_city-clinical-finish",
     title: "City finishing clinic with all the little details fans love",
-    category: "Football Moments",
+    category: "Community Moments",
     source: "YouTube",
     summary:
       "A polished clip for City supporters who want to replay the quality and for rivals who want to study it.",
@@ -123,8 +116,7 @@ const curatedVideos = [
     videoUrl: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
     embedUrl: "https://www.youtube.com/embed/ScMzIvxBSi4",
     duration: "2:54",
-    teamTag: "Manchester City",
-    hashtags: ["mcfc", "footballmoments", "titlecharge"],
+    hashtags: ["mcfc", "communitymoments", "titlecharge"],
     createdAt: "2026-04-14T18:30:00.000Z",
     publishLabel: "Yesterday"
   },
@@ -134,7 +126,7 @@ const curatedVideos = [
     category: "Culture",
     source: "YouTube",
     summary:
-      "A warm visual break from football that still feels perfectly on-brand for the HabeshaGram discovery mood.",
+      "A warm visual break from community that still feels perfectly on-brand for the HabeshaGram discovery mood.",
     thumbnailURL: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80",
     videoUrl: "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
     embedUrl: "https://www.youtube.com/embed/aqz-KE-bpKQ",
@@ -149,7 +141,7 @@ const curatedVideos = [
     category: "Music",
     source: "YouTube",
     summary:
-      "Curated music energy that keeps discovery broader than football without losing the app's warm, social feel.",
+      "Curated music energy that keeps discovery broader than community without losing the app's warm, social feel.",
     thumbnailURL: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=900&q=80",
     videoUrl: "https://www.youtube.com/watch?v=ysz5S6PUM-U",
     embedUrl: "https://www.youtube.com/embed/ysz5S6PUM-U",

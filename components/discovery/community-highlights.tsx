@@ -1,6 +1,6 @@
 export function CommunityHighlights() {
   return (
-    <section className="rounded-[28px] border border-brand-100 bg-white/96 p-5 shadow-soft">
+    <section className="rounded-[28px] border border-brand-100 bg-card/96 p-5 shadow-soft">
       <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-700">
         Community Highlights
       </h3>

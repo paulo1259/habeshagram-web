@@ -66,7 +66,7 @@ export function WhoToFollow() {
   }
 
   return (
-    <section className="rounded-[28px] border border-brand-100/80 bg-white/96 p-5 shadow-soft">
+    <section className="rounded-[28px] border border-brand-100/80 bg-card/96 p-5 shadow-soft">
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">
         Who To Follow
       </p>

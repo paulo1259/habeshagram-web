@@ -25,7 +25,7 @@ export function LiveShegerCard({
   return (
     <section
       className={cn(
-        "relative isolate overflow-hidden rounded-[28px] border border-brand-100 bg-white/96 shadow-soft",
+        "relative isolate overflow-hidden rounded-[28px] border border-brand-100 bg-card/96 shadow-soft",
         compact ? "p-4" : "p-5",
         className
       )}
@@ -49,9 +49,9 @@ export function LiveShegerCard({
       <p className="mt-3 text-sm leading-6 text-stone-600">{shegerStation.description}</p>
 
       <div className="mt-4 rounded-[22px] border border-brand-100 bg-stone-100 p-2">
-        <div className="relative overflow-hidden rounded-[18px] bg-white" style={{ height: compact ? 150 : 176 }}>
+        <div className="relative overflow-hidden rounded-[18px] bg-card" style={{ height: compact ? 150 : 176 }}>
           {isLoading ? (
-            <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 bg-white/92 text-sm text-stone-600">
+            <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 bg-card/92 text-sm text-stone-600">
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-200 border-t-brand-600" />
               Loading Sheger FM...
             </div>

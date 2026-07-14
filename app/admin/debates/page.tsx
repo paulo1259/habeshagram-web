@@ -26,7 +26,6 @@ export default function AdminDebatesPage() {
         initialValues={{
           prompt: "",
           category: "Big Debate",
-          teamTag: "",
           hashtag: "",
           suggestedText: "",
           featured: false,
@@ -49,12 +48,10 @@ export default function AdminDebatesPage() {
             options: [
               { label: "Big Debate", value: "Big Debate" },
               { label: "Fan Base", value: "Fan Base" },
-              { label: "Matchday", value: "Matchday" },
               { label: "Community", value: "Community" }
             ]
           },
-          { name: "teamTag", label: "Team tag", type: "select", options: teamOptions },
-          { name: "hashtag", label: "Hashtag", type: "text", placeholder: "ggmu" },
+          { name: "hashtag", label: "Hashtag", type: "text", placeholder: "buna" },
           {
             name: "suggestedText",
             label: "Suggested post text",
@@ -81,9 +78,6 @@ export default function AdminDebatesPage() {
         getItemSummary={(item) => item.suggestedText}
         getBadges={(item) => {
           const badges: string[] = [item.category];
-          if (item.teamTag) {
-            badges.push(item.teamTag);
-          }
           if (item.hashtag) {
             badges.push(`#${item.hashtag}`);
           }

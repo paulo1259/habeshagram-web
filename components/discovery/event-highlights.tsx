@@ -6,7 +6,7 @@ const events = [
 
 export function EventHighlights() {
   return (
-    <section className="rounded-[28px] border border-brand-100 bg-white/96 p-5 shadow-soft">
+    <section className="rounded-[28px] border border-brand-100 bg-card/96 p-5 shadow-soft">
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">
         Events
       </p>

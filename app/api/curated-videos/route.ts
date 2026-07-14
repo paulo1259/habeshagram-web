@@ -20,7 +20,6 @@ function buildDiagnostics(items: CuratedVideoItem[], totalDocs: number, rejected
       title: item.title,
       featured: Boolean(item.featured),
       createdAt: item.createdAt,
-      teamTag: item.teamTag
     })),
     error
   };

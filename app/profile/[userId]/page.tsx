@@ -151,7 +151,7 @@ export default function PublicProfilePage() {
                     <span className="rounded-full bg-brand-50 px-3 py-1 meta-label text-brand-800">
                       Community Profile
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-semibold text-stone-600 shadow-sm">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-card px-3 py-1 text-xs font-semibold text-stone-600 shadow-sm">
                       <Sparkles className="h-3.5 w-3.5 text-brand-700" />
                       {contributorLabel}
                     </span>
@@ -165,7 +165,7 @@ export default function PublicProfilePage() {
                   <h1 className="page-title mt-3 text-[2rem] sm:text-[2.2rem]">
                     @{profileUser.username}
                   </h1>
-                  <div className="surface-card mt-4 bg-gradient-to-r from-brand-50/70 via-white to-orange-50/50 p-4 shadow-sm">
+                  <div className="surface-card mt-4 bg-gradient-to-r from-brand-50/70 via-card to-orange-50/50 p-4 shadow-sm">
                     <p className="meta-label text-stone-500">About</p>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-700">{bioText}</p>
                   </div>
@@ -210,7 +210,7 @@ export default function PublicProfilePage() {
 
           <section className="surface-card bg-brand-50/35 px-4 py-4">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-brand-800 shadow-sm">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-card text-brand-800 shadow-sm">
                 <Users2 className="h-4.5 w-4.5" />
               </div>
               <div>

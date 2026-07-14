@@ -33,8 +33,6 @@ export type AnalyticsEventName =
   | "reel_play"
   | "reel_like"
   | "radio_play"
-  | "mma_hub_open"
-  | "world_cup_hub_open"
   | "live_room_join"
   | "post_create"
   | "comment_create"

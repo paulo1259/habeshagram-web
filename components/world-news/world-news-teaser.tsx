@@ -18,7 +18,7 @@ export function WorldNewsTeaser() {
       try {
         const payload = await getWorldNewsFeed();
         if (isMounted) {
-          setItems(payload.topStories.slice(0, 3));
+          setItems(payload.topStories.slice(0, 4));
         }
       } finally {
         if (isMounted) {
@@ -33,11 +33,11 @@ export function WorldNewsTeaser() {
   }, []);
 
   return (
-    <section className="overflow-hidden rounded-[30px] border border-brand-100/80 bg-white/96 p-4 shadow-soft sm:p-5">
+    <section className="overflow-hidden rounded-[30px] border border-brand-100/80 bg-card/96 p-4 shadow-soft sm:p-5">
       <SectionHeader
         eyebrow="World News"
-        title="A dedicated world-news lane for diaspora readers"
-        description="Top stories, United States, Ethiopia, and immigration updates now have a clearer home instead of competing with the main feed."
+        title="Ethiopia and East Africa, updated throughout the day"
+        description="Fast, free source lanes bring together Ethiopia, the Horn, East Africa, and diaspora stories without burying them in a generic world-news feed."
         action={
           <Link
             href="/world-news"
@@ -50,20 +50,20 @@ export function WorldNewsTeaser() {
       />
 
       <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_15rem]">
-        <div className="rounded-[26px] bg-gradient-to-r from-brand-500 via-orange-300 to-brand-200 px-4 py-4 text-ink sm:px-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-900/65">
+        <div className="rounded-[26px] bg-gradient-to-r from-brand-500 via-orange-300 to-orange-500 px-4 py-4 text-brand-950 sm:px-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-950/60">
             Curated lanes
           </p>
           <p className="mt-2 text-lg font-black tracking-tight">
-            United States, Ethiopia, and immigration in one clearer news destination.
+            Ethiopia, East Africa, and the diaspora in one focused news destination.
           </p>
-          <p className="mt-2 text-sm text-stone-700">
-            Use the dedicated World News page when you want cleaner, diaspora-relevant headlines without a generic news dump.
+          <p className="mt-2 text-sm text-brand-950/75">
+            Direct publisher feeds and fast RSS search lanes keep the page useful without a paid news API.
           </p>
           <div className="mt-4">
             <Link
               href="/world-news"
-              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-800 shadow-soft transition hover:bg-brand-50"
+              className="inline-flex items-center gap-2 rounded-full bg-card px-4 py-2 text-sm font-semibold text-brand-800 shadow-soft transition hover:bg-brand-50"
             >
               Open World News
               <ArrowRight className="h-4 w-4" />
@@ -77,7 +77,7 @@ export function WorldNewsTeaser() {
           </p>
           <div className="mt-3 space-y-3">
             {isLoading ? (
-              <div className="rounded-[20px] bg-white/90 px-4 py-4 text-sm text-stone-500">
+              <div className="rounded-[20px] bg-card/90 px-4 py-4 text-sm text-stone-500">
                 Loading headlines...
               </div>
             ) : items.length ? (
@@ -87,7 +87,7 @@ export function WorldNewsTeaser() {
                   href={item.link}
                   target="_blank"
                   rel="noreferrer"
-                  className="block rounded-[20px] bg-white/92 px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-sm"
+                  className="block rounded-[20px] bg-card/92 px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-sm"
                 >
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-700">
                     {item.category}
@@ -99,7 +99,7 @@ export function WorldNewsTeaser() {
                 </a>
               ))
             ) : (
-              <div className="rounded-[20px] bg-white/90 px-4 py-4 text-sm text-stone-500">
+              <div className="rounded-[20px] bg-card/90 px-4 py-4 text-sm text-stone-500">
                 Fresh headlines will appear here as soon as the world-news lanes update.
               </div>
             )}

@@ -9,16 +9,9 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ShareActions } from "@/components/ui/share-actions";
 import { CommentSection } from "@/components/posts/comment-section";
-import { getTeamSlug } from "@/services/football-hub-data";
 import { reportPost } from "@/services/report-service";
 import { Post, PostReportReason } from "@/types";
 
-const teamChipStyles = {
-  "Manchester United": "bg-red-50 text-red-700 hover:bg-red-100",
-  Arsenal: "bg-rose-50 text-rose-700 hover:bg-rose-100",
-  Chelsea: "bg-blue-50 text-blue-700 hover:bg-blue-100",
-  "Manchester City": "bg-sky-50 text-sky-700 hover:bg-sky-100"
-} as const;
 
 export function PostCard({ post }: { post: Post }) {
   const { currentUser, likePost, addPostComment, deleteOwnPost, savedPostIds, toggleSaved } = useAppData();
@@ -74,7 +67,7 @@ export function PostCard({ post }: { post: Post }) {
   return (
     <article
       id={`post-${post.id}`}
-      className="group border-b border-brand-100/80 bg-white/98 px-3 py-4 transition duration-200 hover:bg-brand-50/10 sm:rounded-[28px] sm:border sm:border-brand-100/80 sm:px-5 sm:py-5 sm:shadow-soft sm:hover:-translate-y-0.5 sm:hover:border-brand-200/90 sm:hover:shadow-[0_20px_34px_rgba(84,54,23,0.1)]"
+      className="group border-b border-brand-100/80 bg-card/98 px-3 py-4 transition duration-200 hover:bg-brand-50/10 sm:rounded-[28px] sm:border sm:border-brand-100/80 sm:px-5 sm:py-5 sm:shadow-soft sm:hover:-translate-y-0.5 sm:hover:border-brand-200/90 sm:hover:shadow-[0_22px_48px_rgba(0,0,0,0.55),0_0_24px_rgba(245,158,11,0.12)]"
     >
       <div className="flex items-start gap-3">
         {post.isSystem ? (
@@ -82,7 +75,7 @@ export function PostCard({ post }: { post: Post }) {
             <Avatar
               username={post.username}
               imageURL={post.userProfileImageURL}
-              className="h-10 w-10 ring-2 ring-brand-50 transition duration-200 group-hover:ring-brand-100"
+              className="h-10 w-10 ring-2 ring-brand-500/20 transition duration-200 group-hover:ring-brand-500/45"
             />
           </div>
         ) : (
@@ -90,7 +83,7 @@ export function PostCard({ post }: { post: Post }) {
             <Avatar
               username={post.username}
               imageURL={post.userProfileImageURL}
-              className="h-10 w-10 ring-2 ring-brand-50 transition duration-200 group-hover:ring-brand-100"
+              className="h-10 w-10 ring-2 ring-brand-500/20 transition duration-200 group-hover:ring-brand-500/45"
             />
           </Link>
         )}
@@ -107,17 +100,6 @@ export function PostCard({ post }: { post: Post }) {
                   @{post.username}
                 </Link>
               )}
-              {post.teamTag ? (
-                <>
-                  <span className="text-xs text-stone-300">&bull;</span>
-                  <Link
-                    href={`/football/${getTeamSlug(post.teamTag)}`}
-                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-sm transition ${teamChipStyles[post.teamTag]}`}
-                  >
-                    {post.teamTag}
-                  </Link>
-                </>
-              ) : null}
               <span className="text-xs text-stone-400">&bull;</span>
               <p className="shrink-0 text-xs font-medium text-stone-500">{formatDate(post.createdAt)}</p>
             </div>
@@ -137,7 +119,7 @@ export function PostCard({ post }: { post: Post }) {
               </button>
 
               {showActionMenu ? (
-                <div className="absolute right-0 top-11 z-30 min-w-[13rem] overflow-hidden rounded-[20px] border border-brand-100 bg-white p-2 shadow-xl">
+                <div className="absolute right-0 top-11 z-30 min-w-[13rem] overflow-hidden rounded-[20px] border border-brand-100 bg-card p-2 shadow-xl">
                   <ShareActions
                     path={`/posts/${post.id}`}
                     title={`@${post.username} on HabeshaGram`}
@@ -178,14 +160,14 @@ export function PostCard({ post }: { post: Post }) {
           </div>
 
           {post.isSystem ? (
-            <div className="mt-3 rounded-[22px] border border-brand-100 bg-gradient-to-r from-brand-50/70 via-white to-orange-50/55 px-4 py-3">
+            <div className="mt-3 rounded-[22px] border border-brand-100 bg-gradient-to-r from-brand-50/70 via-card to-orange-50/55 px-4 py-3">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1 rounded-full bg-red-500 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-white">
                   <Radio className="h-3.5 w-3.5" />
                   Breaking
                 </span>
                 {post.sourceLabel ? (
-                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-800 shadow-sm">
+                  <span className="rounded-full bg-card px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-800 shadow-sm">
                     {post.sourceLabel}
                   </span>
                 ) : null}
@@ -248,7 +230,7 @@ export function PostCard({ post }: { post: Post }) {
               }}
             >
               <Heart
-                className={`h-[18px] w-[18px] ${isLiked ? "fill-red-500 text-red-500" : ""}`}
+                className={`h-[18px] w-[18px] transition-transform duration-300 ${isLiked ? "animate-[heart-pop_450ms_cubic-bezier(0.34,1.56,0.64,1)] fill-red-500 text-red-500 drop-shadow-[0_0_6px_rgba(239,68,68,0.6)]" : ""}`}
               />
               <span className="min-w-4 text-left">{post.likeCount}</span>
             </Button>
@@ -283,7 +265,7 @@ export function PostCard({ post }: { post: Post }) {
             <div className="mt-3 rounded-[22px] border border-red-100 bg-red-50/80 px-4 py-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-red-600 shadow-sm">
+                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-card text-red-600 shadow-sm">
                     <AlertTriangle className="h-4 w-4" />
                   </div>
                   <div>
@@ -299,7 +281,7 @@ export function PostCard({ post }: { post: Post }) {
                   <Button
                     type="button"
                     variant="ghost"
-                    className="min-h-10 rounded-full px-4 text-sm text-red-700 hover:bg-white/90"
+                    className="min-h-10 rounded-full px-4 text-sm text-red-700 hover:bg-card/90"
                     disabled={isDeleting}
                     onClick={() => setShowDeleteConfirm(false)}
                   >
@@ -363,8 +345,8 @@ export function PostCard({ post }: { post: Post }) {
                       onClick={() => setReportReason(item.value)}
                       className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                         reportReason === item.value
-                          ? "border-brand-500 bg-brand-500 text-white"
-                          : "border-brand-100 bg-white text-stone-600 hover:border-brand-200 hover:bg-brand-50"
+                          ? "border-brand-500 bg-brand-500 text-brand-950"
+                          : "border-brand-100 bg-card text-stone-600 hover:border-brand-200 hover:bg-brand-50"
                       }`}
                     >
                       {item.label}
@@ -377,7 +359,7 @@ export function PostCard({ post }: { post: Post }) {
                   value={reportDetails}
                   onChange={(event) => setReportDetails(event.target.value)}
                   placeholder="Optional details"
-                  className="w-full rounded-2xl border border-brand-100 bg-white px-4 py-3 text-sm outline-none ring-brand-300 focus:ring-2"
+                  className="w-full rounded-2xl border border-brand-100 bg-card px-4 py-3 text-sm outline-none ring-brand-300 focus:ring-2"
                 />
 
                 <div className="flex flex-wrap justify-end gap-2">

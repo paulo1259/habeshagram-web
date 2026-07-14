@@ -32,7 +32,6 @@ export default function AdminEditorialPage() {
           link: "",
           featured: false,
           publishLabel: "",
-          teamTag: "",
           hashtags: ""
         }}
         fields={[
@@ -61,7 +60,6 @@ export default function AdminEditorialPage() {
           { name: "imageURL", label: "Image URL", type: "text", placeholder: "https://..." },
           { name: "link", label: "Link", type: "text", placeholder: "https://..." },
           { name: "publishLabel", label: "Publish label", type: "text", placeholder: "This week / Weekend plans" },
-          { name: "teamTag", label: "Optional team tag", type: "select", options: teamOptions },
           {
             name: "hashtags",
             label: "Hashtags",
@@ -80,9 +78,6 @@ export default function AdminEditorialPage() {
         getItemSummary={(item) => item.summary}
         getBadges={(item) => {
           const badges = [item.category, item.source];
-          if (item.teamTag) {
-            badges.push(item.teamTag);
-          }
           if (item.featured) {
             badges.push("Featured");
           }

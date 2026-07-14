@@ -7,7 +7,6 @@ import { AppShell } from "@/components/layout/app-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
 import { ShareActions } from "@/components/ui/share-actions";
-import { getTeamSlug } from "@/services/football-hub-data";
 import {
   getCuratedShortById,
   getCuratedShorts
@@ -114,7 +113,7 @@ export function ShortDetailPageClient({ shortId }: { shortId: string }) {
   if (!short) {
     return (
       <AppShell>
-        <div className="rounded-[28px] border border-brand-100 bg-white/96 p-6 text-sm text-stone-500 shadow-soft">
+        <div className="rounded-[28px] border border-brand-100 bg-card/96 p-6 text-sm text-stone-500 shadow-soft">
           Loading short...
         </div>
       </AppShell>
@@ -124,7 +123,7 @@ export function ShortDetailPageClient({ shortId }: { shortId: string }) {
   return (
     <AppShell>
       <div className="page-stack">
-        <section className="overflow-hidden border-b border-brand-100/80 bg-white/96 sm:rounded-[32px] sm:border sm:shadow-soft">
+        <section className="overflow-hidden border-b border-brand-100/80 bg-card/96 sm:rounded-[32px] sm:border sm:shadow-soft">
           <div className="bg-gradient-to-br from-stone-950 via-stone-900 to-brand-950 px-4 py-5 text-white sm:px-6 sm:py-6">
             <Link
               href="/shorts"
@@ -181,14 +180,6 @@ export function ShortDetailPageClient({ shortId }: { shortId: string }) {
               <span className="rounded-full bg-stone-100 px-3 py-1.5 font-medium text-stone-700">
                 {short.duration}
               </span>
-              {short.teamTag ? (
-                <Link
-                  href={`/football/${getTeamSlug(short.teamTag)}`}
-                  className="rounded-full bg-white px-3 py-1.5 font-semibold text-brand-800 shadow-sm transition hover:-translate-y-0.5"
-                >
-                  {short.teamTag}
-                </Link>
-              ) : null}
             </div>
 
             {short.hashtags?.length ? (
@@ -209,7 +200,7 @@ export function ShortDetailPageClient({ shortId }: { shortId: string }) {
           </div>
         </section>
 
-        <section className="rounded-[30px] border border-brand-100 bg-white/96 p-4 shadow-soft sm:p-5">
+        <section className="rounded-[30px] border border-brand-100 bg-card/96 p-4 shadow-soft sm:p-5">
           <SectionHeader
             eyebrow="More Shorts"
             title="Keep scrolling"
@@ -221,7 +212,7 @@ export function ShortDetailPageClient({ shortId }: { shortId: string }) {
               <Link
                 key={item.id}
                 href={`/shorts/${item.id}`}
-                className="rounded-[24px] border border-brand-100 bg-brand-50/35 p-3 transition hover:-translate-y-0.5 hover:border-brand-200 hover:bg-white"
+                className="rounded-[24px] border border-brand-100 bg-brand-50/35 p-3 transition hover:-translate-y-0.5 hover:border-brand-200 hover:bg-card"
               >
                 <div className="relative overflow-hidden rounded-[18px] bg-brand-100">
                   <div className="aspect-[9/16]">
@@ -251,7 +242,7 @@ export function ShortDetailPageClient({ shortId }: { shortId: string }) {
           <div className="mt-4">
             <Link
               href="/shorts"
-              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-brand-100 bg-white px-4 py-2 text-sm font-semibold text-brand-800 transition hover:bg-brand-50"
+              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-brand-100 bg-card px-4 py-2 text-sm font-semibold text-brand-800 transition hover:bg-brand-50"
             >
               Return to the feed
               <ExternalLink className="h-3.5 w-3.5" />

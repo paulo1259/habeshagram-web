@@ -10,13 +10,13 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
     <button
       ref={ref}
       className={cn(
-        "inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold tracking-[-0.01em] transition duration-150 ease-out focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-70",
+        "inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2.5 text-sm font-bold tracking-[-0.01em] transition duration-200 ease-out focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60",
         variant === "primary" &&
-          "bg-brand-500 text-white shadow-soft hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-md active:translate-y-0 active:scale-[0.985] disabled:bg-brand-300",
+          "bg-gradient-to-br from-brand-500 to-orange-500 text-brand-950 shadow-glow-sm hover:-translate-y-0.5 hover:shadow-glow hover:brightness-110 active:translate-y-0 active:scale-[0.985] disabled:from-brand-300 disabled:to-brand-300 disabled:shadow-none",
         variant === "ghost" &&
-          "bg-transparent text-ink hover:bg-brand-100/80 hover:text-brand-900 active:scale-[0.985]",
+          "bg-transparent text-stone-600 hover:bg-brand-50 hover:text-brand-700 active:scale-[0.985]",
         variant === "outline" &&
-          "border border-brand-200 bg-white/90 text-ink shadow-sm hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 hover:shadow-md active:translate-y-0 active:scale-[0.985]",
+          "border border-brand-200 bg-brand-50/50 text-brand-700 hover:-translate-y-0.5 hover:border-brand-400/50 hover:bg-brand-100 hover:shadow-glow-sm active:translate-y-0 active:scale-[0.985]",
         className
       )}
       {...props}
