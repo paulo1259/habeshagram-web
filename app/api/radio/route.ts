@@ -16,7 +16,9 @@ const stations = radioStations.map((station) => ({
 }));
 
 export async function GET() {
-  const featuredStation = stations.find((station) => station.id === "sheger-1021") ?? stations[0];
+  const featuredStationId = radioStations.find((station) => station.featured)?.id;
+  const featuredStation =
+    stations.find((station) => station.id === featuredStationId) ?? stations[0];
   const remainingStations = stations.filter((station) => station.id !== featuredStation.id);
 
   return NextResponse.json(

@@ -13,6 +13,45 @@ type DigestAiResponse = {
   stories: Array<{ id: string; whyItMatters: string }>;
 };
 
+const DIGEST_RESPONSE_SCHEMA: Record<string, unknown> = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    headline: {
+      type: "string",
+      description: "A neutral East Africa briefing headline with no more than nine words."
+    },
+    paragraphs: {
+      type: "array",
+      minItems: 2,
+      maxItems: 3,
+      items: {
+        type: "string",
+        description: "A short spoken-news paragraph with no more than 60 words."
+      }
+    },
+    stories: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          id: {
+            type: "string",
+            description: "An exact story id supplied in the prompt."
+          },
+          whyItMatters: {
+            type: "string",
+            description: "A neutral explanation of relevance to Habesha diaspora readers, no more than 28 words."
+          }
+        },
+        required: ["id", "whyItMatters"]
+      }
+    }
+  },
+  required: ["headline", "paragraphs", "stories"]
+};
+
 // A "daily" digest that refreshes a few times a day, and immediately when the
 // top-story mix changes meaningfully.
 const DIGEST_TTL_MS = 3 * 60 * 60 * 1000;
@@ -87,12 +126,20 @@ async function buildDigest(): Promise<WorldNewsDigestPayload> {
       "- headline: a short, punchy title for today's East Africa briefing (max 9 words, no date).",
       "- paragraphs: 2-3 short paragraphs (max 60 words each) that read as a spoken 60-second briefing covering the most important themes across the stories.",
       '- stories: for EVERY story id listed above, one "whyItMatters" line (max 28 words) explaining in plain language why this matters to Habesha diaspora readers. Keep the exact ids.'
-    ].join("\n")
+    ].join("\n"),
+    maxTokens: 2400,
+    responseSchema: DIGEST_RESPONSE_SCHEMA
   });
 
+  const validStoryIds = new Set(uniqueStories.map((story) => story.id));
   const storySummaries: Record<string, string> = {};
   (ai.stories ?? []).forEach((entry) => {
-    if (entry?.id && typeof entry.whyItMatters === "string" && entry.whyItMatters.trim()) {
+    if (
+      entry?.id &&
+      validStoryIds.has(entry.id) &&
+      typeof entry.whyItMatters === "string" &&
+      entry.whyItMatters.trim()
+    ) {
       storySummaries[entry.id] = entry.whyItMatters.trim();
     }
   });
@@ -102,7 +149,10 @@ async function buildDigest(): Promise<WorldNewsDigestPayload> {
     provider: getConfiguredAiProvider() ?? undefined,
     headline: typeof ai.headline === "string" ? ai.headline.trim() : "East Africa, briefly",
     paragraphs: Array.isArray(ai.paragraphs)
-      ? ai.paragraphs.filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
+      ? ai.paragraphs
+          .filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
+          .map((item) => item.trim())
+          .slice(0, 3)
       : [],
     storySummaries,
     storyCount: uniqueStories.length,

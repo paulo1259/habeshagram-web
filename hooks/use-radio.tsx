@@ -143,9 +143,15 @@ export function RadioProvider({ children }: { children: ReactNode }) {
 
       try {
         await audio.play();
-      } catch {
-        setStatus("paused");
-        setErrorMessage("Your browser blocked autoplay. Tap play once more to start the live stream.");
+      } catch (error) {
+        const autoplayWasBlocked =
+          error instanceof DOMException && error.name === "NotAllowedError";
+        setStatus(autoplayWasBlocked ? "paused" : "error");
+        setErrorMessage(
+          autoplayWasBlocked
+            ? "Your browser blocked playback. Tap play once more to start the live stream."
+            : "The live stream could not start. Try reconnecting or choose another station."
+        );
       }
     },
     [isMuted, volume]

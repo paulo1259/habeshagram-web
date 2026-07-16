@@ -83,38 +83,35 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
-FOOTBALL_DATA_API_KEY=
-FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY=
-FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST=free-api-live-football-data.p.rapidapi.com
-FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL=https://free-api-live-football-data.p.rapidapi.com
 BREAKING_NEWS_RSS_URL=
 BREAKING_NEWS_RSS_URLS=
 FIREBASE_SERVICE_ACCOUNT_KEY_BASE64=
 ADMIN_EMAIL_ALLOWLIST=
 ADMIN_UID_ALLOWLIST=
+LIVEKIT_API_KEY=
+LIVEKIT_API_SECRET=
+LIVEKIT_URL=
+ANTHROPIC_API_KEY=
+GEMINI_API_KEY=
+AI_MODEL=
 ```
 
 If these are blank, the app still starts, but authentication remains unavailable until you add real values and restart the dev server.
 
-`FOOTBALL_DATA_API_KEY` is server-only for the Premier League standings widget. Keep it in `.env.local` and in Vercel project environment variables, but do not prefix it with `NEXT_PUBLIC_`.
-`FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY` is server-only for the live match center. Keep it in `.env.local` and in Vercel project environment variables, but do not prefix it with `NEXT_PUBLIC_`.
-`FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST` is server-only and can usually stay at `free-api-live-football-data.p.rapidapi.com`.
-`FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL` is server-only and defaults to `https://free-api-live-football-data.p.rapidapi.com`.
-`BREAKING_NEWS_RSS_URL` is server-only and optional. If you leave it blank, HabeshaGram defaults to the BBC Sport football RSS feed.
+`BREAKING_NEWS_RSS_URL` is server-only and optional. If you leave it blank, HabeshaGram defaults to the BBC Africa RSS feed.
 `BREAKING_NEWS_RSS_URLS` is also server-only and optional. Use it when you want HabeshaGram to ingest multiple comma-separated RSS feeds in parallel, for example `https://feed-a.xml,https://feed-b.xml`. If both `BREAKING_NEWS_RSS_URLS` and `BREAKING_NEWS_RSS_URL` are set, the multi-feed value takes priority.
 `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` is admin-only for one-time content seeding. It should never be exposed to the browser or added to Vercel public env vars.
 `ADMIN_EMAIL_ALLOWLIST` and `ADMIN_UID_ALLOWLIST` are server-only allowlists for the internal admin workspace.
+`LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, and `LIVEKIT_URL` are server-only settings for live audio rooms.
+Configure either `ANTHROPIC_API_KEY` or `GEMINI_API_KEY` to enable the World News AI digest. `AI_MODEL` is optional and overrides the provider's default model.
 
-### football API setup
+### World News and AI digest
 
-For local development, add this exact line to `.env.local`:
+The Ethiopia, East Africa, and diaspora news lanes use free, keyless RSS feeds and need no provider token. To enable the optional AI digest locally, add one provider key to `.env.local`:
 
 ```env
-FOOTBALL_DATA_API_KEY=YOUR_FOOTBALL_DATA_TOKEN
-FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY=YOUR_RAPIDAPI_KEY
-FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST=free-api-live-football-data.p.rapidapi.com
-FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL=https://free-api-live-football-data.p.rapidapi.com
-BREAKING_NEWS_RSS_URLS=https://feeds.bbci.co.uk/sport/football/rss.xml,https://news.google.com/rss/search?q=Arsenal+OR+Chelsea+OR+Manchester+United+OR+Manchester+City+football&hl=en-US&gl=US&ceid=US:en
+GEMINI_API_KEY=YOUR_GEMINI_KEY
+# or ANTHROPIC_API_KEY=YOUR_ANTHROPIC_KEY
 ```
 
 ### One-time Firestore content seed
@@ -208,27 +205,22 @@ For Vercel:
 
 1. Open your project in Vercel
 2. Go to `Project Settings > Environment Variables`
-3. Add `FOOTBALL_DATA_API_KEY`
-4. Paste your football-data.org token as the value
-5. Add `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY`
-6. Paste your RapidAPI key as the value
-7. Add `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST`
-8. Set it to `free-api-live-football-data.p.rapidapi.com`
-9. Add `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL`
-10. Set it to `https://free-api-live-football-data.p.rapidapi.com`
-11. Add `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` if you want the internal admin workspace to function on Vercel
-12. Add `ADMIN_EMAIL_ALLOWLIST` and/or `ADMIN_UID_ALLOWLIST` for your approved admins
-13. Save them for the environments you want, usually:
+3. Add the six `NEXT_PUBLIC_FIREBASE_*` values
+4. Add `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` if you want the internal admin workspace to function on Vercel
+5. Add `ADMIN_EMAIL_ALLOWLIST` and/or `ADMIN_UID_ALLOWLIST` for your approved admins
+6. Add either `GEMINI_API_KEY` or `ANTHROPIC_API_KEY` to enable the World News digest
+7. Add the three `LIVEKIT_*` values only if live rooms are enabled
+8. Save them for the environments you want, usually:
    - `Production`
    - `Preview`
    - `Development`
-14. Redeploy after saving the variables so the server routes can read the new tokens
+9. Redeploy after saving the variables so server routes can read the new values
 
 Important:
 
-- do not rename it to `NEXT_PUBLIC_FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY`
-- do not place the token in client components
-- the browser should only call `/api/football/live` and `/api/football/standings`, never the upstream providers directly
+- keep AI, LiveKit, Firebase Admin, and admin-allowlist values server-only
+- never prefix those secrets with `NEXT_PUBLIC_`
+- the browser should call the internal API routes, never the upstream AI provider directly
 
 ## Firebase Setup
 
@@ -308,41 +300,14 @@ The app uploads files to:
 
 Your Storage rules should allow authenticated users to write only inside their own uid path and allow public reads for rendered media.
 
-### Live Football Data
+### World News, breaking news, and radio
 
-HabeshaGram's football stack uses the previous split providers through internal Next.js route handlers:
+- `/api/world-news` combines direct publisher RSS with focused Google News RSS searches for Ethiopia, East Africa, and Habesha diaspora coverage.
+- `/api/world-news/digest` creates a cached AI briefing from the current lane stories when an AI provider is configured.
+- `/api/news/breaking` defaults to BBC Africa RSS and accepts optional `BREAKING_NEWS_RSS_URL` or `BREAKING_NEWS_RSS_URLS` overrides.
+- `/api/radio` exposes the curated station directory used by web and mobile clients.
 
-- server route: `app/api/football/live/route.ts`
-- standings route: `app/api/football/standings/route.ts`
-- live match env vars:
-  - `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY`
-  - `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_HOST`
-  - `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_BASE_URL`
-- standings env var:
-  - `FOOTBALL_DATA_API_KEY`
-- live coverage endpoints:
-  - `/football-current-live`
-  - `/football-scheduled-events`
-  - `/football-matches`
-- standings endpoint:
-  - `https://api.football-data.org/v4/competitions/PL/standings`
-- current provider focus: Premier League fixtures and tracked-club table coverage involving Manchester United, Arsenal, Chelsea, and Manchester City
-
-The app keeps both provider keys on the server, polls the local live route from the browser every 15 seconds on the live page, and falls back to the last successful real response or a clean empty response if either upstream service is unavailable.
-
-If `FREE_API_LIVE_FOOTBALL_DATA_RAPIDAPI_KEY` is missing or blank, `app/api/football/live/route.ts` returns a friendly empty response instead of crashing the live page. If `FOOTBALL_DATA_API_KEY` is missing or blank, `app/api/football/standings/route.ts` returns an empty standings response with a clear message instead of rendering fake table data.
-
-### Breaking Football News
-
-HabeshaGram's Breaking Now section can read live football stories through an internal Next.js route:
-
-- server route: `app/api/news/breaking/route.ts`
-- default provider: BBC Sport football RSS
-- optional override env vars:
-  - `BREAKING_NEWS_RSS_URL`
-  - `BREAKING_NEWS_RSS_URLS`
-
-The route ingests RSS on the server, filters for Manchester United, Arsenal, Chelsea, and Manchester City relevance, caches the last successful payload in memory, and otherwise returns a clear empty/unavailable state instead of fake stories. If you provide `BREAKING_NEWS_RSS_URLS`, it fetches those feeds in parallel and deduplicates overlapping stories before ranking them.
+The news services reject old stories, deduplicate overlaps, preserve the last successful snapshot where possible, and return honest empty states instead of fabricated headlines. Direct radio streams use the app-level audio player; stations without a verified direct stream use a persistent provider widget.
 
 ### Reporting / Moderation MVP
 
@@ -395,8 +360,8 @@ Before inviting real users, run through this short checklist:
 3. Edit profile and upload a profile image
 4. Create a text-only post
 5. Create a post with an image
-6. Create a team-tagged football post
-7. Create a hashtagged post like `#Habesha` or `#GGMU`
+6. Create a hashtagged post like `#Habesha` or `#EastAfrica`
+7. Open World News and confirm all three lanes load current stories
 8. Like, comment, save, and report a post from another account
 9. Follow another user and confirm counts update
 10. Open notifications and confirm unread count clears
@@ -404,8 +369,10 @@ Before inviting real users, run through this short checklist:
     - `/saved`
     - `/search`
     - `/topic/habesha`
-    - one football hub page
-12. Verify mobile layout on a narrow screen before launch
+    - `/world-news`
+    - `/radio`
+12. Start a direct radio stream, navigate to another page, and confirm playback continues
+13. Verify mobile layout on a narrow screen before launch
 
 ### Deployment sanity check
 
@@ -471,7 +438,6 @@ Each editorial highlight includes:
 - `link`
 - `featured`
 - `publishLabel`
-- `teamTag`
 - `hashtags`
 
 These are now best managed through `/admin/editorial` instead of editing Firestore documents manually.
@@ -480,8 +446,11 @@ These are now best managed through `/admin/editorial` instead of editing Firesto
 
 The discovery sections use reusable components:
 
-- `components/discovery/radio-station-card.tsx`
-- `components/discovery/radio-carousel.tsx`
+- `components/radio/radio-page.tsx`
+- `components/radio/radio-teaser.tsx`
+- `components/radio/persistent-radio-player.tsx`
+- `components/world-news/world-news-page.tsx`
+- `components/world-news/world-news-teaser.tsx`
 - `components/discovery/news-card.tsx`
 - `components/discovery/local-news-section.tsx`
 - `components/discovery/community-highlights.tsx`

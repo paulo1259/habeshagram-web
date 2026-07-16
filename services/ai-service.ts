@@ -14,6 +14,7 @@ type GenerateInput = {
   system: string;
   prompt: string;
   maxTokens?: number;
+  responseSchema?: Record<string, unknown>;
 };
 
 export type AiProvider = "anthropic" | "gemini";
@@ -73,8 +74,24 @@ async function generateWithAnthropic({ system, prompt, maxTokens = 1500 }: Gener
   return text;
 }
 
-async function generateWithGemini({ system, prompt, maxTokens = 1500 }: GenerateInput, modelOverride?: string) {
+async function generateWithGemini(
+  { system, prompt, maxTokens = 1500, responseSchema }: GenerateInput,
+  modelOverride?: string
+) {
   const model = modelOverride || process.env.AI_MODEL?.trim() || "gemini-3.5-flash";
+  const generationConfig: Record<string, unknown> = {
+    maxOutputTokens: maxTokens
+  };
+
+  if (model.startsWith("gemini-3")) {
+    generationConfig.thinkingConfig = { thinkingLevel: "low" };
+  }
+
+  if (responseSchema) {
+    generationConfig.responseMimeType = "application/json";
+    generationConfig.responseJsonSchema = responseSchema;
+  }
+
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     {
@@ -86,7 +103,7 @@ async function generateWithGemini({ system, prompt, maxTokens = 1500 }: Generate
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
         contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: maxTokens }
+        generationConfig
       }),
       cache: "no-store"
     }

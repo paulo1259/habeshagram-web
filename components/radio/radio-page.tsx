@@ -195,7 +195,7 @@ export function RadioPage() {
             <SectionHeader
               eyebrow="Featured Station"
               title={`${featuredStation.name} leads the live lineup`}
-              description="Open the provider player once and it stays available in the persistent radio dock while you browse the app."
+              description="Start the featured station once and it stays available in the persistent radio dock while you browse the app."
             />
             <RadioStationCard station={featuredStation} />
           </section>
