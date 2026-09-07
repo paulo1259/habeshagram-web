@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
+import { siteDescription, siteName, siteTagline, siteUrl } from "@/lib/site";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AppDataProvider } from "@/hooks/use-app-data";
@@ -9,11 +10,66 @@ import { RadioProvider } from "@/hooks/use-radio";
 import { PersistentRadioPlayer } from "@/components/radio/persistent-radio-player";
 
 export const metadata: Metadata = {
-  title: "HabeshaGram",
-  description: "The premium social home of the Habesha community — live radio, East Africa news, and culture."
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: `${siteName} — ${siteTagline}`,
+    template: `%s · ${siteName}`
+  },
+  description: siteDescription,
+  applicationName: siteName,
+  category: "social",
+  keywords: [
+    "Habesha",
+    "Ethiopian community",
+    "Eritrean community",
+    "Ethiopian radio",
+    "East Africa news",
+    "Habesha diaspora",
+    "Amharic",
+    "Tigrinya",
+    "Addis Ababa"
+  ],
+  alternates: {
+    canonical: "/"
+  },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName,
+    title: `${siteName} — ${siteTagline}`,
+    description: siteDescription,
+    locale: "en_US"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${siteName} — ${siteTagline}`,
+    description: siteDescription
+  },
+  appleWebApp: {
+    capable: true,
+    title: siteName,
+    statusBarStyle: "black-translucent"
+  },
+  formatDetection: {
+    telephone: false
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1
+    }
+  }
 };
 
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  colorScheme: "dark",
   themeColor: "#0b0908"
 };
 
