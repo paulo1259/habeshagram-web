@@ -1,7 +1,7 @@
 /**
  * lib/analytics-events.ts
  *
- * Product event logger for HabeshaGram web.
+ * Product event logger for Zema web.
  *
  * This used to write into a Firestore `analyticsEvents` collection that the
  * admin insights page read back. Both are gone, so events now go to PostHog

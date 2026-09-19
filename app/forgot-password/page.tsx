@@ -67,7 +67,7 @@ export default function ForgotPasswordPage() {
         </form>
 
         <p className="mt-4 text-xs leading-5 text-stone-500">
-          For privacy, HabeshaGram won't confirm whether a specific email has an account before sending this request.
+          For privacy, Zema won't confirm whether a specific email has an account before sending this request.
         </p>
 
         <div className="mt-6 flex items-center justify-between text-sm text-stone-600">

@@ -142,7 +142,7 @@ export function RadioPage() {
         <section className="page-hero bg-card/96">
           <div className="bg-gradient-to-br from-brand-500 via-orange-400 to-orange-600 px-4 py-5 text-brand-950 sm:px-6 sm:py-6">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-950/70">
-              HabeshaGram Radio
+              Zema Radio
             </p>
             <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-2xl">

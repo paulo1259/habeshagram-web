@@ -10,9 +10,9 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#0b0908",
-    theme_color: "#0b0908",
-    categories: ["social", "news", "music", "entertainment"],
+    background_color: "#07070c",
+    theme_color: "#07070c",
+    categories: ["news", "music", "entertainment"],
     icons: [
       {
         src: "/icon-192.png",
@@ -34,9 +34,8 @@ export default function manifest(): MetadataRoute.Manifest {
       }
     ],
     shortcuts: [
-      { name: "World News", url: "/world-news" },
       { name: "Radio", url: "/radio" },
-      { name: "Create a post", url: "/create" }
+      { name: "World News", url: "/world-news" }
     ]
   };
 }

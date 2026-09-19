@@ -43,7 +43,7 @@ export function RadioTeaser({ compact = false }: { compact?: boolean }) {
 
       <p className="mt-3 text-sm leading-6 text-stone-600">
         {compact
-          ? "Start a live stream and keep listening while you browse the rest of HabeshaGram."
+          ? "Start a live stream and keep listening while you browse the rest of Zema."
           : "Radio now has a persistent global player with background playback, station switching, volume, reconnect, and device media controls."}
       </p>
 

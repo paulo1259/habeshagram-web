@@ -1,5 +1,5 @@
 /**
- * Canonical origin for HabeshaGram.
+ * Canonical origin for Zema.
  *
  * Order of precedence:
  *  1. `NEXT_PUBLIC_SITE_URL` — an explicit override always wins
@@ -38,12 +38,12 @@ function resolveSiteUrl(): string {
 
 export const siteUrl = resolveSiteUrl();
 
-export const siteName = "HabeshaGram";
+export const siteName = "Zema";
 
-export const siteTagline = "The social home of the Habesha community";
+export const siteTagline = "Every station. One frequency.";
 
 export const siteDescription =
-  "HabeshaGram is the social home of the Ethiopian and Eritrean community — live radio, East Africa news, culture, and the people you follow, all in one place.";
+  "Zema streams live Ethiopian and Eritrean radio alongside the East Africa stories worth knowing about today — one uninterrupted signal, wherever you are.";
 
 export function absoluteUrl(path = "/"): string {
   return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "Ethiopia, East Africa, and Habesha diaspora headlines, refreshed from trusted feeds with an optional AI briefing.",
   alternates: { canonical: "/world-news" },
   openGraph: {
-    title: "World News · HabeshaGram",
+    title: "World News · Zema",
     description:
       "Ethiopia, East Africa, and Habesha diaspora headlines, refreshed from trusted feeds with an optional AI briefing.",
     url: "/world-news"

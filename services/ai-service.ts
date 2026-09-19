@@ -1,7 +1,7 @@
 import "server-only";
 
 /**
- * Minimal, dependency-free AI text generation for HabeshaGram.
+ * Minimal, dependency-free AI text generation for Zema.
  *
  * Provider is auto-detected from environment variables:
  *  - ANTHROPIC_API_KEY  → Claude (claude-haiku-4-5) — highest quality per dollar

@@ -55,10 +55,10 @@ export default function SignupPage() {
     <main className="min-h-screen bg-surface bg-warm px-4 py-10">
       <div className="glass-card mx-auto max-w-md rounded-[2rem] border border-brand-100 p-6 shadow-soft">
         <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">Sign up</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Join HabeshaGram</h1>
+        <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Join Zema</h1>
         <p className="mt-2 text-sm text-stone-600">
           {authMode === "supabase"
-            ? "Create your account and set up your HabeshaGram profile."
+            ? "Create your account and set up your Zema profile."
             : "Sign-in is not configured yet. Add your NEXT_PUBLIC_SUPABASE_* values to .env.local and restart the dev server."}
         </p>
 

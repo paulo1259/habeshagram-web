@@ -69,7 +69,7 @@ export function BreakingNow({
         description={
           compact
             ? "Quick hits worth opening right now."
-            : "Urgent East Africa headlines pulled from a live server-side feed and linked straight into HabeshaGram discussion."
+            : "Urgent East Africa headlines pulled from a live server-side feed and linked straight into Zema discussion."
         }
         action={
           !compact ? (

@@ -275,7 +275,7 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: station.name,
       artist: `${station.frequency} · ${station.city}`,
-      album: "HabeshaGram Live Radio"
+      album: "Zema Live Radio"
     });
 
     const handlers: Array<[MediaSessionAction, MediaSessionActionHandler | null]> = [

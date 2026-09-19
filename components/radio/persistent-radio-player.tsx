@@ -191,7 +191,7 @@ export function PersistentRadioPlayer() {
                 allow="autoplay; encrypted-media"
               />
               <p className="mt-2 text-xs leading-5 text-stone-500">
-                Start playback inside the provider controls. This player stays mounted while you move around HabeshaGram.
+                Start playback inside the provider controls. This player stays mounted while you move around Zema.
               </p>
             </div>
           ) : (
