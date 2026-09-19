@@ -4,11 +4,11 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useAppData } from "@/hooks/use-app-data";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, currentUser, authMode, isReady } = useAppData();
+  const { login, currentUser, authMode, isReady } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -41,9 +41,9 @@ export default function LoginPage() {
         <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">Login</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Welcome back</h1>
         <p className="mt-2 text-sm text-stone-600">
-          {authMode === "firebase"
+          {authMode === "supabase"
             ? "Sign in with your email and password."
-            : "Firebase auth is not configured yet. Add your NEXT_PUBLIC_FIREBASE_* values to .env.local, restart the dev server, then sign in here."}
+            : "Sign-in is not configured yet. Add your NEXT_PUBLIC_SUPABASE_* values to .env.local and restart the dev server."}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -76,7 +76,7 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-4 text-xs leading-5 text-stone-500">
-          Soft launch note: make sure Firebase Authentication is enabled and your current domain is in Authorized domains before inviting testers.
+          Soft launch note: confirm email sign-in is enabled in Supabase Auth and this domain is listed under the allowed redirect URLs before inviting testers.
         </p>
 
         <div className="mt-6 flex items-center justify-between text-sm text-stone-600">

@@ -3,15 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Globe2, House, Mic2, PenSquare, UserCircle2 } from "lucide-react";
+import { Globe2, House, Mic2, UserCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/", label: "Home", icon: House },
   { href: "/world-news", label: "News", icon: Globe2 },
   { href: "/radio", label: "Radio", icon: Mic2 },
-  { href: "/create", label: "Create", icon: PenSquare },
-  { href: "/profile", label: "Profile", icon: UserCircle2 }
+  { href: "/login", label: "Account", icon: UserCircle2 }
 ];
 
 export function MobileBottomNav() {
@@ -41,10 +40,7 @@ export function MobileBottomNav() {
                 />
               ) : null}
               <Icon
-                className={cn(
-                  "relative h-5 w-5",
-                  active && "drop-shadow-[0_0_8px_rgba(245,158,11,0.7)]"
-                )}
+                className={cn("relative h-5 w-5", active && "drop-shadow-[0_0_8px_rgba(245,158,11,0.7)]")}
               />
               <span className="relative">{item.label}</span>
             </Link>

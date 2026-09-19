@@ -17,22 +17,18 @@ import {
   subscribeToUserSession,
   updateProfileDetails
 } from "@/services/auth-service";
-import { isFirebaseConfigured } from "@/lib/firebase";
+import { isSupabaseConfigured } from "@/lib/supabase";
 import { User } from "@/types";
 
 type AuthContextValue = {
   currentUser: User | null;
   isReady: boolean;
-  authMode: "firebase" | "unconfigured";
+  authMode: "supabase" | "unconfigured";
   login: (email: string, password: string) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   signup: (input: { username: string; email: string; password: string; bio?: string }) => Promise<void>;
   logout: () => Promise<void>;
-  updateProfile: (input: {
-    username: string;
-    bio: string;
-    imageFile?: File | null;
-  }) => Promise<void>;
+  updateProfile: (input: { username: string; bio: string }) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -72,19 +68,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCurrentUser(null);
   }, []);
 
-  const updateProfile = useCallback(
-    async (input: { username: string; bio: string; imageFile?: File | null }) => {
-      const user = await updateProfileDetails(input);
-      setCurrentUser(user);
-    },
-    []
-  );
+  const updateProfile = useCallback(async (input: { username: string; bio: string }) => {
+    const user = await updateProfileDetails(input);
+    setCurrentUser(user);
+  }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       currentUser,
       isReady,
-      authMode: isFirebaseConfigured ? "firebase" : "unconfigured",
+      authMode: isSupabaseConfigured ? "supabase" : "unconfigured",
       login,
       sendPasswordReset,
       signup,

@@ -7,18 +7,11 @@ type Route = {
   priority: number;
 };
 
-/**
- * Static public routes only.
- *
- * Posts, profiles, and topic pages are user-generated and would need a
- * Firestore read at build time, so they are intentionally left out until
- * there is a trusted server-side listing to page through.
- */
+/** Every public route the site has. */
 const routes: Route[] = [
   { path: "/", changeFrequency: "hourly", priority: 1 },
   { path: "/world-news", changeFrequency: "hourly", priority: 0.9 },
   { path: "/radio", changeFrequency: "daily", priority: 0.8 },
-  { path: "/search", changeFrequency: "weekly", priority: 0.5 },
   { path: "/login", changeFrequency: "yearly", priority: 0.3 },
   { path: "/signup", changeFrequency: "yearly", priority: 0.3 }
 ];

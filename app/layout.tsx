@@ -4,7 +4,6 @@ import "./globals.css";
 import { siteDescription, siteName, siteTagline, siteUrl } from "@/lib/site";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { AuthProvider } from "@/hooks/use-auth";
-import { AppDataProvider } from "@/hooks/use-app-data";
 import { AppStartupShell } from "@/components/layout/app-startup-shell";
 import { RadioProvider } from "@/hooks/use-radio";
 import { PersistentRadioPlayer } from "@/components/radio/persistent-radio-player";
@@ -86,14 +85,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="min-h-screen bg-surface text-ink antialiased">
         <AuthProvider>
-          <AppDataProvider>
             <AnalyticsProvider>
               <RadioProvider>
                 <AppStartupShell>{children}</AppStartupShell>
                 <PersistentRadioPlayer />
               </RadioProvider>
             </AnalyticsProvider>
-          </AppDataProvider>
         </AuthProvider>
       </body>
     </html>

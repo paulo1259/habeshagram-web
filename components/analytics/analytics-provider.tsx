@@ -3,7 +3,6 @@
 import { useEffect, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { POSTHOG_KEY, initAnalytics, trackEvent } from "@/lib/analytics";
-import { recordSectionUsage } from "@/lib/personalization";
 
 const TRACKED_PAGE_LABELS: Record<string, string> = {
   "/": "homepage",
@@ -42,7 +41,6 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    recordSectionUsage(label as "radio" | "world-news");
   }, [pathname]);
 
   return <>{children}</>;

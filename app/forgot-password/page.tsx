@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useAppData } from "@/hooks/use-app-data";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function ForgotPasswordPage() {
-  const { authMode, sendPasswordReset } = useAppData();
+  const { authMode, sendPasswordReset } = useAuth();
   const [email, setEmail] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -38,9 +38,9 @@ export default function ForgotPasswordPage() {
         <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">Password reset</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Reset your password</h1>
         <p className="mt-2 text-sm text-stone-600">
-          {authMode === "firebase"
+          {authMode === "supabase"
             ? "Enter the email you signed up with and we'll send a reset link."
-            : "Firebase auth is not configured yet. Add your NEXT_PUBLIC_FIREBASE_* values to .env.local, restart the dev server, and then use password reset here."}
+            : "Sign-in is not configured yet. Add your NEXT_PUBLIC_SUPABASE_* values to .env.local and restart the dev server."}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">

@@ -1,18 +1,9 @@
-import { getEditorialLocalHighlights } from "@/services/editorial-content-service";
-import { getDailyDebatePromptById, getDailyDebatePrompts } from "@/services/daily-debate-service";
-import { BreakingItem, DailyDebatePrompt, LocalNewsItem } from "@/types";
+import { BreakingItem } from "@/types";
 
 const BREAKING_CACHE_MS = 45_000;
-const DEBATE_CACHE_MS = 60_000;
 
 const breakingItemsCache = new Map<string, { items: BreakingItem[]; fetchedAt: number }>();
 const breakingItemsRequests = new Map<string, Promise<BreakingItem[]>>();
-const dailyDebatesCache = new Map<string, { items: DailyDebatePrompt[]; fetchedAt: number }>();
-const dailyDebatesRequests = new Map<string, Promise<DailyDebatePrompt[]>>();
-
-export async function getLocalNewsItems(): Promise<LocalNewsItem[]> {
-  return getEditorialLocalHighlights();
-}
 
 export async function getBreakingItems(): Promise<BreakingItem[]> {
   const cacheKey = "all";
@@ -51,33 +42,4 @@ export async function getBreakingItems(): Promise<BreakingItem[]> {
   breakingItemsRequests.set(cacheKey, request);
 
   return request;
-}
-
-export async function getDailyDebates(): Promise<DailyDebatePrompt[]> {
-  const cacheKey = "all";
-  const cached = dailyDebatesCache.get(cacheKey);
-
-  if (cached && Date.now() - cached.fetchedAt < DEBATE_CACHE_MS) {
-    return cached.items;
-  }
-
-  if (dailyDebatesRequests.has(cacheKey)) {
-    return dailyDebatesRequests.get(cacheKey)!;
-  }
-
-  const request = getDailyDebatePrompts()
-    .then((items) => {
-      dailyDebatesCache.set(cacheKey, { items, fetchedAt: Date.now() });
-      return items;
-    })
-    .finally(() => {
-      dailyDebatesRequests.delete(cacheKey);
-    });
-
-  dailyDebatesRequests.set(cacheKey, request);
-  return request;
-}
-
-export async function getDailyDebateById(id: string): Promise<DailyDebatePrompt | null> {
-  return getDailyDebatePromptById(id);
 }

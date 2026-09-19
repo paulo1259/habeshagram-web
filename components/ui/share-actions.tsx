@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Copy, Share2 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
-import { recordSectionUsage } from "@/lib/personalization";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -54,21 +53,6 @@ async function copyText(value: string) {
   }
 }
 
-function inferShareSection(path: string) {
-  if (path.startsWith("/videos/")) {
-    return "videos" as const;
-  }
-
-  if (path.startsWith("/debates/")) {
-    return "debates" as const;
-  }
-
-  if (path.startsWith("/world-news")) {
-    return "world-news" as const;
-  }
-
-  return null;
-}
 
 export function ShareActions({
   path,
@@ -110,10 +94,6 @@ export function ShareActions({
         path,
         title
       });
-      const section = inferShareSection(path);
-      if (section) {
-        recordSectionUsage(section, 2);
-      }
       setFeedback("Link copied");
     } catch {
       setFeedback("");
@@ -135,10 +115,6 @@ export function ShareActions({
         path,
         title
       });
-      const section = inferShareSection(path);
-      if (section) {
-        recordSectionUsage(section, 2);
-      }
       await navigator.share({
         title,
         text,

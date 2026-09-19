@@ -1,20 +1,6 @@
-import {
-  ActionCodeSettings,
-  browserLocalPersistence,
-  createUserWithEmailAndPassword,
-  type User as FirebaseUser,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  setPersistence,
-  signInWithEmailAndPassword,
-  signOut,
-  updateProfile as updateFirebaseAuthProfile
-} from "firebase/auth";
-import { firebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
-import { setCurrentUserId, upsertStoredUser } from "@/services/local-store";
-import { uploadProfileImage } from "@/services/storage-service";
-import { createUserDocument, getUserDocument, updateUserDocument } from "@/services/user-service";
-import { User } from "@/types";
+import type { Session, User as SupabaseUser } from "@supabase/supabase-js";
+import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import type { User } from "@/types";
 
 type SignupInput = {
   username: string;
@@ -23,129 +9,118 @@ type SignupInput = {
   bio?: string;
 };
 
-function getFallbackBio(bio?: string) {
-  return bio?.trim() || "Happy to be part of the Habesha community.";
+const DEFAULT_BIO = "Happy to be part of the Habesha community.";
+
+function getConfigError() {
+  return "Sign-in is not configured yet. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local and restart the dev server.";
 }
 
-function createFallbackUser(input: {
-  id: string;
-  email: string;
-  username?: string;
-  bio?: string;
-}): User {
+function requireClient() {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error(getConfigError());
+  }
+
+  return supabase;
+}
+
+/**
+ * Supabase returns auth identity; the public profile row is created by the
+ * `handle_new_user` trigger. We read the profile when we can, and fall back to
+ * auth metadata so a slow or missing profile row never blocks a valid session.
+ */
+function fallbackUser(authUser: SupabaseUser): User {
+  const email = authUser.email ?? "";
+  const metadataUsername =
+    typeof authUser.user_metadata?.username === "string" ? authUser.user_metadata.username : "";
+
   return {
-    id: input.id,
-    username: input.username?.trim() || input.email.split("@")[0] || "habesha_user",
-    email: input.email.trim().toLowerCase(),
+    id: authUser.id,
+    username: metadataUsername.trim() || email.split("@")[0] || "habesha_user",
+    bio: DEFAULT_BIO,
     profileImageURL: "",
-    bio: getFallbackBio(input.bio),
-    createdAt: new Date().toISOString(),
-    followerCount: 0,
-    followingCount: 0
+    createdAt: authUser.created_at ?? new Date().toISOString()
   };
 }
 
-function mapFirebaseAuthUser(authUser: FirebaseUser): User {
-  return createFallbackUser({
-    id: authUser.uid,
-    email: authUser.email || "",
-    username: authUser.displayName || authUser.email?.split("@")[0]
-  });
-}
+async function loadProfile(authUser: SupabaseUser): Promise<User> {
+  const client = requireClient();
 
-function getFirebaseConfigError() {
-  return "Firebase authentication is not configured. Add your NEXT_PUBLIC_FIREBASE_* values to .env.local and restart the dev server.";
+  const { data, error } = await client
+    .from("profiles")
+    .select("id, username, bio, avatar_url, created_at")
+    .eq("id", authUser.id)
+    .maybeSingle();
+
+  if (error || !data) {
+    return fallbackUser(authUser);
+  }
+
+  return {
+    id: data.id,
+    username: data.username,
+    bio: data.bio || DEFAULT_BIO,
+    profileImageURL: data.avatar_url || "",
+    createdAt: data.created_at
+  };
 }
 
 function mapAuthError(error: unknown) {
-  const code = typeof error === "object" && error && "code" in error ? String(error.code) : "";
+  const message = error instanceof Error ? error.message : "";
 
-  switch (code) {
-    case "auth/email-already-in-use":
-      return "An account with that email already exists.";
-    case "auth/invalid-email":
-      return "Please enter a valid email address.";
-    case "auth/weak-password":
-      return "Use a stronger password with at least 6 characters.";
-    case "auth/invalid-credential":
-    case "auth/wrong-password":
-    case "auth/user-not-found":
-      return "Incorrect email or password.";
-    case "auth/too-many-requests":
-      return "Too many attempts were made. Please wait a bit and try again.";
-    default:
-      return error instanceof Error ? error.message : "Authentication failed.";
-  }
-}
-
-async function ensureAuthIsReady() {
-  if (!isFirebaseConfigured || !firebaseAuth) {
-    throw new Error(getFirebaseConfigError());
+  if (/invalid login credentials/i.test(message)) {
+    return "Incorrect email or password.";
   }
 
-  await setPersistence(firebaseAuth, browserLocalPersistence);
-}
-
-async function ensureFirebaseUserProfile(input: {
-  id: string;
-  email: string;
-  username?: string;
-  bio?: string;
-}): Promise<User> {
-  const fallbackUser = createFallbackUser(input);
-
-  try {
-    const existing = await getUserDocument(input.id);
-    if (existing) {
-      upsertStoredUser(existing);
-      return existing;
-    }
-
-    await createUserDocument(fallbackUser);
-  } catch {
-    // Firestore profile reads/writes should not block a valid Firebase auth session.
+  if (/already registered|already been registered/i.test(message)) {
+    return "An account with that email already exists.";
   }
 
-  upsertStoredUser(fallbackUser);
-  return fallbackUser;
+  if (/password should be at least/i.test(message)) {
+    return "Use a stronger password with at least 6 characters.";
+  }
+
+  if (/rate limit|too many/i.test(message)) {
+    return "Too many attempts were made. Please wait a bit and try again.";
+  }
+
+  return message || "Authentication failed.";
 }
 
 export async function getCurrentUser(): Promise<User | null> {
-  if (!isFirebaseConfigured || !firebaseAuth?.currentUser) {
+  if (!isSupabaseConfigured || !supabase) {
     return null;
   }
 
-  const authUser = firebaseAuth.currentUser;
-  return ensureFirebaseUserProfile(mapFirebaseAuthUser(authUser));
+  const { data } = await supabase.auth.getUser();
+  return data.user ? loadProfile(data.user) : null;
 }
 
 export function subscribeToUserSession(callback: (user: User | null) => void) {
-  if (!isFirebaseConfigured || !firebaseAuth) {
+  if (!isSupabaseConfigured || !supabase) {
     callback(null);
     return () => undefined;
   }
 
-  return onAuthStateChanged(firebaseAuth, async (authUser) => {
-    if (!authUser || !authUser.email) {
+  const client = supabase;
+
+  const handle = (session: Session | null) => {
+    if (!session?.user) {
       callback(null);
       return;
     }
 
-    const fallbackUser = mapFirebaseAuthUser(authUser);
-    callback(fallbackUser);
+    // Emit the cheap value first so the UI is never blocked on a round trip.
+    callback(fallbackUser(session.user));
+    void loadProfile(session.user).then(callback).catch(() => undefined);
+  };
 
-    try {
-      const user = await ensureFirebaseUserProfile({
-        id: fallbackUser.id,
-        email: fallbackUser.email,
-        username: fallbackUser.username,
-        bio: fallbackUser.bio
-      });
-      callback(user);
-    } catch {
-      callback(fallbackUser);
-    }
-  });
+  void client.auth.getSession().then(({ data }) => handle(data.session));
+
+  const {
+    data: { subscription }
+  } = client.auth.onAuthStateChange((_event, session) => handle(session));
+
+  return () => subscription.unsubscribe();
 }
 
 export async function loginUser(email: string, password: string): Promise<User> {
@@ -153,26 +128,18 @@ export async function loginUser(email: string, password: string): Promise<User> 
     throw new Error("Password is required.");
   }
 
-  try {
-    await ensureAuthIsReady();
-    const credential = await signInWithEmailAndPassword(
-      firebaseAuth!,
-      email.trim().toLowerCase(),
-      password
-    );
-    const fallbackUser = mapFirebaseAuthUser(credential.user);
+  const client = requireClient();
 
-    void ensureFirebaseUserProfile({
-      id: fallbackUser.id,
-      email: fallbackUser.email,
-      username: fallbackUser.username,
-      bio: fallbackUser.bio
-    });
+  const { data, error } = await client.auth.signInWithPassword({
+    email: email.trim().toLowerCase(),
+    password
+  });
 
-    return fallbackUser;
-  } catch (error) {
+  if (error || !data.user) {
     throw new Error(mapAuthError(error));
   }
+
+  return loadProfile(data.user);
 }
 
 export async function signupUser(input: SignupInput): Promise<User> {
@@ -180,27 +147,22 @@ export async function signupUser(input: SignupInput): Promise<User> {
     throw new Error("Password is required.");
   }
 
-  try {
-    await ensureAuthIsReady();
-    const credential = await createUserWithEmailAndPassword(
-      firebaseAuth!,
-      input.email.trim().toLowerCase(),
-      input.password
-    );
+  const client = requireClient();
 
-    const user = createFallbackUser({
-      id: credential.user.uid,
-      username: input.username.trim(),
-      email: input.email.trim().toLowerCase(),
-      bio: input.bio
-    });
+  const { data, error } = await client.auth.signUp({
+    email: input.email.trim().toLowerCase(),
+    password: input.password,
+    options: {
+      // Read by the handle_new_user trigger to seed profiles.username.
+      data: { username: input.username.trim() }
+    }
+  });
 
-    await createUserDocument(user);
-    upsertStoredUser(user);
-    return user;
-  } catch (error) {
+  if (error || !data.user) {
     throw new Error(mapAuthError(error));
   }
+
+  return loadProfile(data.user);
 }
 
 export async function requestPasswordReset(email: string): Promise<void> {
@@ -210,84 +172,64 @@ export async function requestPasswordReset(email: string): Promise<void> {
     throw new Error("Email is required.");
   }
 
-  try {
-    await ensureAuthIsReady();
+  const client = requireClient();
 
-    const actionCodeSettings: ActionCodeSettings | undefined =
-      typeof window !== "undefined"
-        ? {
-            url: `${window.location.origin}/login`,
-            handleCodeInApp: false
-          }
-        : undefined;
+  const { error } = await client.auth.resetPasswordForEmail(normalizedEmail, {
+    redirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined
+  });
 
-    await sendPasswordResetEmail(firebaseAuth!, normalizedEmail, actionCodeSettings);
-  } catch (error) {
+  if (error) {
     throw new Error(mapAuthError(error));
   }
 }
 
 export async function logoutUser() {
-  if (firebaseAuth) {
-    await signOut(firebaseAuth);
+  if (!isSupabaseConfigured || !supabase) {
+    return;
   }
 
-  setCurrentUserId(null);
+  await supabase.auth.signOut();
 }
 
 export async function updateProfileDetails(input: {
   username: string;
   bio: string;
-  imageFile?: File | null;
 }): Promise<User> {
-  if (!isFirebaseConfigured || !firebaseAuth?.currentUser) {
-    throw new Error(getFirebaseConfigError());
+  const client = requireClient();
+
+  const { data: authData } = await client.auth.getUser();
+
+  if (!authData.user) {
+    throw new Error("Please log in first.");
   }
 
-  const authUser = firebaseAuth.currentUser;
-  const existingProfile =
-    (await getUserDocument(authUser.uid)) ||
-    createFallbackUser({
-      id: authUser.uid,
-      email: authUser.email || "",
-      username: authUser.displayName || authUser.email?.split("@")[0]
-    });
-
   const username = input.username.trim();
-  const bio = input.bio.trim() || getFallbackBio();
 
   if (!username) {
     throw new Error("Username is required.");
   }
 
-  let profileImageURL = existingProfile.profileImageURL || "";
+  const { data, error } = await client
+    .from("profiles")
+    .update({ username, bio: input.bio.trim() || DEFAULT_BIO })
+    .eq("id", authData.user.id)
+    .select("id, username, bio, avatar_url, created_at")
+    .single();
 
-  if (input.imageFile) {
-    profileImageURL = await uploadProfileImage({
-      file: input.imageFile,
-      userId: authUser.uid
-    });
+  if (error || !data) {
+    // A unique violation on lower(username) is the common case here.
+    if (error && /duplicate key|unique/i.test(error.message)) {
+      throw new Error("That username is already taken.");
+    }
+
+    throw new Error(error?.message || "Unable to update your profile.");
   }
 
-  try {
-    await updateFirebaseAuthProfile(authUser, {
-      displayName: username,
-      photoURL: profileImageURL || null
-    });
-  } catch {
-    // Firestore remains the primary profile source for the app.
-  }
-
-  const nextUser: User = {
-    ...existingProfile,
-    id: authUser.uid,
-    email: authUser.email || existingProfile.email,
-    username,
-    bio,
-    profileImageURL,
-    createdAt: existingProfile.createdAt || new Date().toISOString()
+  return {
+    id: data.id,
+    username: data.username,
+    bio: data.bio || DEFAULT_BIO,
+    profileImageURL: data.avatar_url || "",
+    createdAt: data.created_at
   };
-
-  await updateUserDocument(nextUser);
-  return nextUser;
 }

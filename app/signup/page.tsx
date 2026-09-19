@@ -4,11 +4,11 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useAppData } from "@/hooks/use-app-data";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signup, currentUser, authMode, isReady } = useAppData();
+  const { signup, currentUser, authMode, isReady } = useAuth();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,9 +57,9 @@ export default function SignupPage() {
         <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">Sign up</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Join HabeshaGram</h1>
         <p className="mt-2 text-sm text-stone-600">
-          {authMode === "firebase"
+          {authMode === "supabase"
             ? "Create your account and set up your HabeshaGram profile."
-            : "Firebase auth is not configured yet. Add your NEXT_PUBLIC_FIREBASE_* values to .env.local, restart the dev server, and then create your account."}
+            : "Sign-in is not configured yet. Add your NEXT_PUBLIC_SUPABASE_* values to .env.local and restart the dev server."}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
