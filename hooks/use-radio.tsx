@@ -46,7 +46,8 @@ type RadioContextValue = {
 };
 
 const RadioContext = createContext<RadioContextValue | null>(null);
-const RADIO_VOLUME_KEY = "habeshagram-radio-volume";
+const RADIO_VOLUME_KEY = "zema-radio-volume";
+const LEGACY_RADIO_VOLUME_KEY = "habeshagram-radio-volume";
 
 function getPlaybackMode(station: RadioStation | null) {
   if (station?.playbackMode === "stream" && station.streamUrl.trim()) {
@@ -91,8 +92,14 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   }, [status]);
 
   useEffect(() => {
-    const savedVolume = Number(window.localStorage.getItem(RADIO_VOLUME_KEY));
-    if (Number.isFinite(savedVolume) && savedVolume >= 0 && savedVolume <= 1) {
+    // Fall back to the pre-rename key so anyone who set a volume under the old
+    // brand keeps it, then let the next save write it under the new key.
+    const raw =
+      window.localStorage.getItem(RADIO_VOLUME_KEY) ??
+      window.localStorage.getItem(LEGACY_RADIO_VOLUME_KEY);
+    const savedVolume = Number(raw);
+
+    if (raw !== null && Number.isFinite(savedVolume) && savedVolume >= 0 && savedVolume <= 1) {
       setVolumeState(savedVolume);
     }
   }, []);
