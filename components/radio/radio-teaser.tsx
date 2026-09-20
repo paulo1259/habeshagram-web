@@ -10,7 +10,7 @@ import { logEvent } from "@/lib/analytics-events";
 export function RadioTeaser({ compact = false }: { compact?: boolean }) {
   const featuredStation = radioStations.find((station) => station.featured) ?? radioStations[0];
   const quickPlayStation = radioStations.find(
-    (station) => station.playbackMode === "stream" && station.streamUrl
+    (station) => station.streamUrl
   );
   const { station: activeStation, isPlaying, playStation, togglePlayback } = useRadio();
 

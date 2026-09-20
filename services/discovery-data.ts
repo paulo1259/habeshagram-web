@@ -1,5 +1,16 @@
 import { RadioStation } from "@/types";
 
+/**
+ * Every station is a direct Zeno.fm stream.
+ *
+ * Three of these (Sheger, Wengel, Voice of Grace) used to be `widget` mode,
+ * rendering a provider iframe instead of playing through the app's own audio
+ * element — which meant no volume control, no sleep timer, no Media Session
+ * and no lock-screen controls for half the lineup. Their mount IDs were
+ * resolved from the Zeno player pages so they now run through the same path
+ * as the rest. `embedUrl` is kept only as a human-readable provider link.
+ */
+
 export const radioStations: RadioStation[] = [
   {
     id: "sheger-1021",
@@ -8,9 +19,9 @@ export const radioStations: RadioStation[] = [
     city: "Addis Ababa",
     description: "News, talk, and entertainment",
     provider: "Zeno.fm",
-    playbackMode: "widget",
+    playbackMode: "stream",
     embedUrl: "https://zeno.fm/player/sheger-fm",
-    streamUrl: "",
+    streamUrl: "https://stream.zeno.fm/kr5k02vagt5tv",
     featured: false,
     status: "live",
     tags: ["News", "Talk", "Entertainment"]
@@ -50,9 +61,9 @@ export const radioStations: RadioStation[] = [
     city: "Addis Ababa, Ethiopia",
     description: "Religious radio with Amharic and English programming from Addis Ababa.",
     provider: "Zeno.fm",
-    playbackMode: "widget",
+    playbackMode: "stream",
     embedUrl: "https://zeno.fm/player/wengelfm",
-    streamUrl: "",
+    streamUrl: "https://stream.zeno.fm/wsat39ewmd0uv",
     featured: false,
     status: "live",
     tags: ["Religious", "Ethiopia", "Amharic", "English"]
@@ -78,9 +89,9 @@ export const radioStations: RadioStation[] = [
     city: "Ethiopia",
     description: "Christian teaching, prayer, worship song",
     provider: "Zeno.fm",
-    playbackMode: "widget",
+    playbackMode: "stream",
     embedUrl: "https://zeno.fm/player/Thevoiceofgraceradio",
-    streamUrl: "",
+    streamUrl: "https://stream.zeno.fm/bbnz36ojnrktv",
     featured: false,
     status: "live",
     tags: ["Religious", "Ethiopia", "Amharic", "Christian"]

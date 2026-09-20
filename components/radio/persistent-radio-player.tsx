@@ -58,6 +58,7 @@ export function PersistentRadioPlayer() {
     volume,
     isMuted,
     errorMessage,
+    nowPlaying,
     togglePlayback,
     playPrevious,
     playNext,
@@ -105,14 +106,13 @@ export function PersistentRadioPlayer() {
 
   const sleepRemainingMinutes = sleepAt ? Math.max(0, Math.ceil((sleepAt - Date.now()) / 60_000)) : null;
 
-  const isWidget = station.playbackMode === "widget" && Boolean(station.embedUrl.trim());
   const statusLabel =
     status === "playing"
       ? "Live now"
       : status === "loading"
         ? "Connecting..."
-        : status === "widget"
-          ? "Provider player ready"
+        : status === "reconnecting"
+          ? "Reconnecting..."
           : status === "error"
             ? "Connection issue"
             : "Paused";
@@ -122,22 +122,25 @@ export function PersistentRadioPlayer() {
       aria-label="Persistent radio player"
       className="fixed bottom-[6.4rem] left-3 right-3 z-50 mx-auto max-w-xl lg:bottom-4 lg:left-auto lg:right-4 lg:mx-0 lg:w-[34rem]"
     >
-      <div className="overflow-hidden rounded-[26px] border border-brand-500/25 bg-[#171310]/98 shadow-[0_22px_70px_rgba(0,0,0,0.72),0_0_30px_rgba(245,158,11,0.12)] backdrop-blur-2xl">
+      <div className="overflow-hidden rounded-[26px] border border-brand-500/25 bg-card/98 shadow-[0_22px_70px_rgba(0,0,0,0.72),0_0_30px_rgba(69,224,200,0.14)] backdrop-blur-2xl">
         <div className="flex items-center gap-2.5 px-3 py-3 sm:px-4">
           <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-orange-500 text-brand-950 shadow-glow-sm">
             <Radio className="h-4.5 w-4.5" />
-            {status === "playing" || status === "widget" ? (
-              <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full border-2 border-[#171310] bg-emerald-500" />
+            {status === "playing" ? (
+              <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full border-2 border-card bg-emerald-500" />
             ) : null}
           </div>
 
           <div className="min-w-0 flex-1">
             <span className="flex items-center gap-2">
-              <p className="truncate text-sm font-bold text-ink">{station.name}</p>
+              <p className="truncate text-sm font-bold text-ink">
+                {nowPlaying || station.name}
+              </p>
               <EqualizerBars active={isPlaying} />
             </span>
-            <p className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-700">
-              {statusLabel} · {station.frequency}
+            <p className="truncate font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-brand-700">
+              {nowPlaying ? `${station.name} · ` : ""}
+              {statusLabel}
               {isPlaying || status === "paused" ? ` · ${formatElapsed(elapsedSeconds)}` : ""}
               {sleepRemainingMinutes ? ` · sleep ${sleepRemainingMinutes}m` : ""}
             </p>
@@ -147,16 +150,14 @@ export function PersistentRadioPlayer() {
             <SkipBack className="h-4 w-4" />
           </button>
 
-          {!isWidget ? (
-            <button
-              type="button"
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-orange-500 text-brand-950 shadow-glow-sm transition hover:scale-105"
-              onClick={() => void togglePlayback()}
-              aria-label={isPlaying ? "Pause radio" : "Play radio"}
-            >
-              {isPlaying ? <Pause className="h-4.5 w-4.5 fill-current" /> : <Play className="ml-0.5 h-4.5 w-4.5 fill-current" />}
-            </button>
-          ) : null}
+          <button
+            type="button"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-orange-500 text-brand-950 shadow-glow-sm transition hover:scale-105"
+            onClick={() => void togglePlayback()}
+            aria-label={isPlaying ? "Pause radio" : "Play radio"}
+          >
+            {isPlaying ? <Pause className="h-4.5 w-4.5 fill-current" /> : <Play className="ml-0.5 h-4.5 w-4.5 fill-current" />}
+          </button>
 
           <button type="button" className={controlClass} onClick={() => void playNext()} aria-label="Next station">
             <SkipForward className="h-4 w-4" />
@@ -182,19 +183,6 @@ export function PersistentRadioPlayer() {
             isExpanded ? "max-h-[22rem] opacity-100" : "max-h-0 overflow-hidden border-transparent opacity-0"
           )}
         >
-          {isWidget ? (
-            <div className="p-3 sm:p-4">
-              <iframe
-                title={`${station.name} persistent live player`}
-                src={station.embedUrl}
-                className="h-[190px] w-full rounded-[18px] border-0 bg-card"
-                allow="autoplay; encrypted-media"
-              />
-              <p className="mt-2 text-xs leading-5 text-stone-500">
-                Start playback inside the provider controls. This player stays mounted while you move around Zema.
-              </p>
-            </div>
-          ) : (
             <div className="space-y-3 px-4 pb-4 pt-3">
               <div className="flex items-center gap-3">
                 <button type="button" className={controlClass} onClick={toggleMute} aria-label={isMuted ? "Unmute radio" : "Mute radio"}>
@@ -258,10 +246,11 @@ export function PersistentRadioPlayer() {
                 </div>
               </div>
               <p className="text-xs leading-5 text-stone-500">
-                Playback keeps running in the background — across pages, minimized windows, and with lock-screen or keyboard media controls where your browser supports them. Set a sleep timer to stop automatically.
+                Playback keeps running in the background — across pages, minimized windows, and with
+                lock-screen or keyboard media controls where your browser supports them. Set a sleep
+                timer to stop automatically.
               </p>
             </div>
-          )}
         </div>
 
         {errorMessage ? (

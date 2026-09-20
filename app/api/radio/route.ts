@@ -12,7 +12,7 @@ const stations = radioStations.map((station) => ({
   playbackMode: station.playbackMode,
   streamUrl: station.streamUrl,
   embedUrl: station.embedUrl,
-  backgroundPlayback: station.playbackMode === "stream" && Boolean(station.streamUrl)
+  backgroundPlayback: Boolean(station.streamUrl)
 }));
 
 export async function GET() {

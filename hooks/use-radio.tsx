@@ -11,6 +11,7 @@ import {
   type ReactNode
 } from "react";
 import { radioStations } from "@/services/discovery-data";
+import { subscribeToNowPlaying } from "@/services/now-playing-service";
 import type { RadioStation } from "@/types";
 
 export type RadioPlaybackStatus =
@@ -18,7 +19,7 @@ export type RadioPlaybackStatus =
   | "loading"
   | "playing"
   | "paused"
-  | "widget"
+  | "reconnecting"
   | "error";
 
 type RadioContextValue = {
@@ -29,6 +30,8 @@ type RadioContextValue = {
   volume: number;
   isMuted: boolean;
   errorMessage: string;
+  /** Current track title from the station's metadata feed, or "" when unknown. */
+  nowPlaying: string;
   /** Epoch ms when the sleep timer stops playback, or null when off. */
   sleepAt: number | null;
   /** Seconds of continuous listening in the current session. */
@@ -49,17 +52,16 @@ const RadioContext = createContext<RadioContextValue | null>(null);
 const RADIO_VOLUME_KEY = "zema-radio-volume";
 const LEGACY_RADIO_VOLUME_KEY = "habeshagram-radio-volume";
 
+/**
+ * Every station now streams directly; `embedUrl` survives only as a provider
+ * link. A station without a stream URL is simply unplayable.
+ */
 function getPlaybackMode(station: RadioStation | null) {
-  if (station?.playbackMode === "stream" && station.streamUrl.trim()) {
-    return "stream" as const;
-  }
-
-  if (station?.embedUrl.trim()) {
-    return "widget" as const;
-  }
-
-  return "unavailable" as const;
+  return station?.streamUrl.trim() ? ("stream" as const) : ("unavailable" as const);
 }
+
+/** Backoff between automatic reconnect attempts after a stream drops. */
+const RECONNECT_DELAYS_MS = [2000, 5000, 12000];
 
 export function RadioProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -72,7 +74,11 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   const [errorMessage, setErrorMessage] = useState("");
   const [sleepAt, setSleepAt] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [nowPlaying, setNowPlaying] = useState("");
   const sleepTimeoutRef = useRef<number | null>(null);
+  const reconnectTimeoutRef = useRef<number | null>(null);
+  const reconnectAttemptRef = useRef(0);
+  const wasPlayingRef = useRef(false);
 
   useEffect(() => {
     stationRef.current = station;
@@ -120,15 +126,14 @@ export function RadioProvider({ children }: { children: ReactNode }) {
       const mode = getPlaybackMode(nextStation);
       setErrorMessage("");
       setElapsedSeconds(0);
+      setNowPlaying("");
+      reconnectAttemptRef.current = 0;
+      if (reconnectTimeoutRef.current) {
+        window.clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
       setStation(nextStation);
       stationRef.current = nextStation;
-
-      if (mode === "widget") {
-        audio?.pause();
-        setStatus("widget");
-        setExpanded(true);
-        return;
-      }
 
       if (mode !== "stream" || !audio) {
         audio?.pause();
@@ -172,11 +177,6 @@ export function RadioProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (getPlaybackMode(activeStation) === "widget") {
-      setExpanded(true);
-      return;
-    }
-
     if (!audio) {
       return;
     }
@@ -198,9 +198,7 @@ export function RadioProvider({ children }: { children: ReactNode }) {
 
   const moveStation = useCallback(
     async (direction: -1 | 1) => {
-      const available = radioStations.filter(
-        (item) => item.streamUrl.trim() || item.embedUrl.trim()
-      );
+      const available = radioStations.filter((item) => item.streamUrl.trim());
       if (!available.length) {
         return;
       }
@@ -253,6 +251,12 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   const closePlayer = useCallback(() => {
     const audio = audioRef.current;
     audio?.pause();
+    reconnectAttemptRef.current = 0;
+    if (reconnectTimeoutRef.current) {
+      window.clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    setNowPlaying("");
     if (sleepTimeoutRef.current) {
       window.clearTimeout(sleepTimeoutRef.current);
       sleepTimeoutRef.current = null;
@@ -270,6 +274,71 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     setErrorMessage("");
   }, []);
 
+  /**
+   * Live streams drop for all sorts of reasons -- a dozy encoder, a phone
+   * changing network. Previously any drop surfaced an error and waited for a
+   * manual retry, which is the wrong default for background listening. Retry
+   * automatically a few times first, and only give up loudly after that.
+   */
+  const handleStreamError = useCallback(() => {
+    const audio = audioRef.current;
+    const activeStation = stationRef.current;
+
+    if (!audio || !activeStation || !wasPlayingRef.current) {
+      setStatus("error");
+      setErrorMessage("The station stream could not be reached. Try another station.");
+      return;
+    }
+
+    const attempt = reconnectAttemptRef.current;
+
+    if (attempt >= RECONNECT_DELAYS_MS.length) {
+      reconnectAttemptRef.current = 0;
+      wasPlayingRef.current = false;
+      setStatus("error");
+      setErrorMessage("The stream kept dropping. It may be off air — try again or pick another station.");
+      return;
+    }
+
+    reconnectAttemptRef.current = attempt + 1;
+    setStatus("reconnecting");
+    setErrorMessage("");
+
+    reconnectTimeoutRef.current = window.setTimeout(() => {
+      reconnectTimeoutRef.current = null;
+      const current = stationRef.current;
+      if (!current || !audioRef.current) {
+        return;
+      }
+
+      // Cache-bust so a proxy does not hand back the dead connection.
+      audioRef.current.src = `${current.streamUrl}${current.streamUrl.includes("?") ? "&" : "?"}r=${Date.now()}`;
+      audioRef.current.load();
+      void audioRef.current.play().catch(() => handleStreamError());
+    }, RECONNECT_DELAYS_MS[attempt]);
+  }, []);
+
+  // Track titles for the station currently loaded, closed out on change.
+  useEffect(() => {
+    setNowPlaying("");
+
+    if (!station || getPlaybackMode(station) !== "stream") {
+      return;
+    }
+
+    const handle = subscribeToNowPlaying(station.streamUrl, setNowPlaying);
+    return () => handle.close();
+  }, [station]);
+
+  useEffect(
+    () => () => {
+      if (reconnectTimeoutRef.current) {
+        window.clearTimeout(reconnectTimeoutRef.current);
+      }
+    },
+    []
+  );
+
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) {
       return;
@@ -279,10 +348,15 @@ export function RadioProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Lock screen shows the track when we know it, the station when we do not.
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: station.name,
-      artist: `${station.frequency} · ${station.city}`,
-      album: "Zema Live Radio"
+      title: nowPlaying || station.name,
+      artist: nowPlaying ? station.name : `${station.frequency} · ${station.city}`,
+      album: "Zema Live Radio",
+      artwork: [
+        { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        { src: "/icon-512.png", sizes: "512x512", type: "image/png" }
+      ]
     });
 
     const handlers: Array<[MediaSessionAction, MediaSessionActionHandler | null]> = [
@@ -309,7 +383,7 @@ export function RadioProvider({ children }: { children: ReactNode }) {
         }
       });
     };
-  }, [playNext, playPrevious, station, togglePlayback]);
+  }, [nowPlaying, playNext, playPrevious, station, togglePlayback]);
 
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) {
@@ -318,7 +392,7 @@ export function RadioProvider({ children }: { children: ReactNode }) {
 
     if (status === "playing") {
       navigator.mediaSession.playbackState = "playing";
-    } else if (status === "paused" || status === "error") {
+    } else if (status === "paused" || status === "error" || status === "reconnecting") {
       navigator.mediaSession.playbackState = "paused";
     } else {
       navigator.mediaSession.playbackState = "none";
@@ -334,6 +408,7 @@ export function RadioProvider({ children }: { children: ReactNode }) {
       volume,
       isMuted,
       errorMessage,
+      nowPlaying,
       sleepAt,
       elapsedSeconds,
       setSleepTimer,
@@ -352,6 +427,7 @@ export function RadioProvider({ children }: { children: ReactNode }) {
       closePlayer,
       elapsedSeconds,
       errorMessage,
+      nowPlaying,
       setSleepTimer,
       sleepAt,
       isExpanded,
@@ -379,18 +455,22 @@ export function RadioProvider({ children }: { children: ReactNode }) {
         onLoadStart={() => setStatus("loading")}
         onWaiting={() => setStatus("loading")}
         onPlaying={() => {
+          reconnectAttemptRef.current = 0;
+          wasPlayingRef.current = true;
           setStatus("playing");
           setErrorMessage("");
         }}
         onPause={() => {
-          if (stationRef.current && getPlaybackMode(stationRef.current) === "stream") {
+          if (reconnectTimeoutRef.current) {
+            return;
+          }
+          if (stationRef.current) {
+            wasPlayingRef.current = false;
             setStatus("paused");
           }
         }}
-        onError={() => {
-          setStatus("error");
-          setErrorMessage("The station stream disconnected. Try reconnecting or choose another station.");
-        }}
+        onStalled={handleStreamError}
+        onError={handleStreamError}
       />
     </RadioContext.Provider>
   );

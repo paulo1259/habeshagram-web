@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AudioLines, ChevronRight, Headphones, Pause, Play, Radio, Waves } from "lucide-react";
+import { AudioLines, ChevronRight, Pause, Play, Radio, Waves } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/section-header";
@@ -17,12 +17,10 @@ function RadioStationCard({ station }: { station: RadioStation }) {
     status,
     isPlaying,
     playStation,
-    togglePlayback,
-    setExpanded
+    togglePlayback
   } = useRadio();
   const isActive = activeStation?.id === station.id;
-  const supportsBackground = station.playbackMode === "stream" && Boolean(station.streamUrl.trim());
-  const usesWidget = Boolean(station.embedUrl.trim()) && !supportsBackground;
+  const supportsBackground = Boolean(station.streamUrl.trim());
 
   async function handlePlay() {
     if (isActive && supportsBackground) {
@@ -30,28 +28,19 @@ function RadioStationCard({ station }: { station: RadioStation }) {
       return;
     }
 
-    if (isActive && usesWidget) {
-      setExpanded(true);
-      return;
-    }
-
     logEvent("radio_play");
     await playStation(station);
   }
 
-  const buttonLabel = isActive
-    ? supportsBackground
+  const buttonLabel = !supportsBackground
+    ? "Unavailable"
+    : isActive
       ? isPlaying
         ? "Pause"
-        : status === "loading"
+        : status === "loading" || status === "reconnecting"
           ? "Connecting"
           : "Resume"
-      : "Open player"
-    : supportsBackground
-      ? "Play in background"
-      : usesWidget
-        ? "Open live player"
-        : "Unavailable";
+      : "Play in background";
 
   return (
     <article
@@ -95,7 +84,7 @@ function RadioStationCard({ station }: { station: RadioStation }) {
         <Button
           type="button"
           className="rounded-full"
-          disabled={!supportsBackground && !usesWidget}
+          disabled={!supportsBackground}
           onClick={() => void handlePlay()}
         >
           {isActive && supportsBackground && isPlaying ? (
@@ -112,11 +101,6 @@ function RadioStationCard({ station }: { station: RadioStation }) {
               <AudioLines className="h-4 w-4 text-brand-700" />
               Persists across pages and supports device media controls.
             </>
-          ) : usesWidget ? (
-            <>
-              <Headphones className="h-4 w-4 text-brand-700" />
-              Provider widget stays mounted in the global player.
-            </>
           ) : (
             <>
               <Radio className="h-4 w-4 text-stone-400" />
@@ -132,8 +116,8 @@ function RadioStationCard({ station }: { station: RadioStation }) {
 export function RadioPage() {
   const featuredStation = radioStations.find((station) => station.featured) ?? radioStations[0];
   const remainingStations = radioStations.filter((station) => station.id !== featuredStation?.id);
-  const backgroundStationCount = radioStations.filter(
-    (station) => station.playbackMode === "stream" && station.streamUrl.trim()
+  const backgroundStationCount = radioStations.filter((station) =>
+    station.streamUrl.trim()
   ).length;
 
   return (
@@ -174,7 +158,7 @@ export function RadioPage() {
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Persistent playback</p>
                     <p className="mt-2 text-sm leading-6 text-stone-700">
-                      The global player lives above the bottom navigation. Direct streams support play, pause, volume, station switching, reconnection, and Media Session controls. Provider widgets remain mounted while you navigate.
+                      The global player lives above the bottom navigation. Every station streams directly, so play, pause, volume, station switching, the sleep timer and lock-screen media controls work the same everywhere. Dropped connections reconnect on their own.
                     </p>
                   </div>
                 </div>
