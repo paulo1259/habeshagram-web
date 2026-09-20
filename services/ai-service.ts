@@ -3,11 +3,15 @@ import "server-only";
 /**
  * Minimal, dependency-free AI text generation for Zema.
  *
- * Provider is auto-detected from environment variables:
- *  - ANTHROPIC_API_KEY  → Claude (claude-haiku-4-5) — highest quality per dollar
- *  - GEMINI_API_KEY     → Google Gemini (gemini-2.5-flash) — has a free tier
+ * Provider is auto-detected from environment variables, in this order:
+ *  - ANTHROPIC_API_KEY  → Claude
+ *  - OPENAI_API_KEY     → OpenAI
+ *  - GEMINI_API_KEY     → Google Gemini (has a free tier)
  *
- * Both are called through plain REST so no SDK dependency is needed.
+ * Set exactly one unless you specifically want the order above to decide.
+ * `AI_MODEL` overrides the default model for whichever provider is active.
+ *
+ * All three are called through plain REST so no SDK dependency is needed.
  */
 
 type GenerateInput = {
@@ -17,11 +21,15 @@ type GenerateInput = {
   responseSchema?: Record<string, unknown>;
 };
 
-export type AiProvider = "anthropic" | "gemini";
+export type AiProvider = "anthropic" | "openai" | "gemini";
 
 export function getConfiguredAiProvider(): AiProvider | null {
   if (process.env.ANTHROPIC_API_KEY?.trim()) {
     return "anthropic";
+  }
+
+  if (process.env.OPENAI_API_KEY?.trim()) {
+    return "openai";
   }
 
   if (process.env.GEMINI_API_KEY?.trim()) {
@@ -69,6 +77,107 @@ async function generateWithAnthropic({ system, prompt, maxTokens = 1500 }: Gener
 
   if (!text) {
     throw new Error("Anthropic returned an empty response.");
+  }
+
+  return text;
+}
+
+/**
+ * OpenAI strict structured outputs reject a few JSON Schema keywords that are
+ * fine elsewhere — `minItems` / `maxItems` among them. The digest schema uses
+ * both, so strip anything unsupported before sending rather than maintaining a
+ * second copy of the schema.
+ */
+const OPENAI_UNSUPPORTED_SCHEMA_KEYS = new Set([
+  "minItems",
+  "maxItems",
+  "minLength",
+  "maxLength",
+  "minimum",
+  "maximum",
+  "pattern",
+  "format",
+  "default"
+]);
+
+function sanitizeSchemaForOpenAi(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(sanitizeSchemaForOpenAi);
+  }
+
+  if (value && typeof value === "object") {
+    const source = value as Record<string, unknown>;
+    const result: Record<string, unknown> = {};
+
+    for (const [key, item] of Object.entries(source)) {
+      if (OPENAI_UNSUPPORTED_SCHEMA_KEYS.has(key)) {
+        continue;
+      }
+      result[key] = sanitizeSchemaForOpenAi(item);
+    }
+
+    // strict mode requires every property to be listed in `required`.
+    if (result.type === "object" && result.properties && typeof result.properties === "object") {
+      result.additionalProperties = false;
+      result.required = Object.keys(result.properties as Record<string, unknown>);
+    }
+
+    return result;
+  }
+
+  return value;
+}
+
+async function generateWithOpenAi({ system, prompt, maxTokens = 1500, responseSchema }: GenerateInput) {
+  const body: Record<string, unknown> = {
+    model: process.env.AI_MODEL?.trim() || "gpt-6-astra",
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: prompt }
+    ],
+    max_completion_tokens: maxTokens
+  };
+
+  if (responseSchema) {
+    body.response_format = {
+      type: "json_schema",
+      json_schema: {
+        name: "zema_response",
+        strict: true,
+        schema: sanitizeSchemaForOpenAi(responseSchema)
+      }
+    };
+  }
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`
+    },
+    body: JSON.stringify(body),
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`OpenAI request failed with ${response.status}. ${detail.slice(0, 200)}`);
+  }
+
+  const payload = (await response.json()) as {
+    choices?: Array<{ message?: { content?: string; refusal?: string } }>;
+  };
+
+  const choice = payload.choices?.[0]?.message;
+
+  if (choice?.refusal) {
+    throw new Error(`OpenAI declined the request. ${choice.refusal.slice(0, 200)}`);
+  }
+
+  const text = choice?.content?.trim();
+
+  if (!text) {
+    throw new Error("OpenAI returned an empty response.");
   }
 
   return text;
@@ -145,7 +254,7 @@ export async function generateAiText(input: GenerateInput): Promise<string> {
 
   if (!provider) {
     throw new Error(
-      "No AI provider configured. Set ANTHROPIC_API_KEY or GEMINI_API_KEY in .env.local."
+      "No AI provider configured. Set ANTHROPIC_API_KEY, OPENAI_API_KEY or GEMINI_API_KEY in .env.local."
     );
   }
 
@@ -173,6 +282,10 @@ export async function generateAiText(input: GenerateInput): Promise<string> {
     try {
       if (provider === "anthropic") {
         return await generateWithAnthropic(input);
+      }
+
+      if (provider === "openai") {
+        return await generateWithOpenAi(input);
       }
 
       return await generateWithGemini(input, attempt.model);

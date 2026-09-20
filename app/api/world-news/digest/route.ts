@@ -110,7 +110,7 @@ async function buildDigest(): Promise<WorldNewsDigestPayload> {
 
   const ai = await generateAiJson<DigestAiResponse>({
     system: [
-      "You are the news editor for Zema, a social app for the Ethiopian and Eritrean diaspora.",
+      "You are the news editor for Zema, a radio and news app for the Ethiopian and Eritrean diaspora.",
       "You write warm, clear, neutral news briefings centered on Ethiopia and East Africa.",
       "Never invent facts that are not in the provided stories. Never editorialize on politics.",
       "Respond with STRICT JSON only — no markdown, no code fences, no commentary."
@@ -172,7 +172,7 @@ export async function GET() {
     return NextResponse.json({
       aiConfigured: false,
       message:
-        "AI digest is not configured yet. Add ANTHROPIC_API_KEY or GEMINI_API_KEY to .env.local and restart the dev server."
+        "AI digest is not configured yet. Add ANTHROPIC_API_KEY, OPENAI_API_KEY or GEMINI_API_KEY and redeploy."
     } satisfies WorldNewsDigestPayload);
   }
 
