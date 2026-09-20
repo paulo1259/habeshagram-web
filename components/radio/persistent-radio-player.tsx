@@ -208,7 +208,7 @@ export function PersistentRadioPlayer() {
                   step="0.05"
                   value={isMuted ? 0 : volume}
                   onChange={(event) => setVolume(Number(event.target.value))}
-                  className="h-1.5 flex-1 cursor-pointer accent-amber-500"
+                  className="h-1.5 flex-1 cursor-pointer accent-brand-500"
                 />
                 <span className="w-10 text-right text-xs font-semibold text-stone-500">
                   {Math.round((isMuted ? 0 : volume) * 100)}%
