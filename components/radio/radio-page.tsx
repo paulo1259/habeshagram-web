@@ -13,6 +13,7 @@ import {
   VolumeX
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
+import { useStationHealth } from "@/hooks/use-station-health";
 import { useRadio } from "@/hooks/use-radio";
 import { cn } from "@/lib/utils";
 import { radioStations } from "@/services/discovery-data";
@@ -87,6 +88,7 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
     setSleepTimer,
     retry
   } = useRadio();
+  const { healthOf } = useStationHealth();
 
   const featured = radioStations.find((item) => item.featured) ?? radioStations[0];
   // On a station page the hero is about that station even if another one is
@@ -105,8 +107,13 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
       )
     : SLEEP_OPTIONS[0];
 
+  const shownHealth = healthOf(shown.id);
   const badge = !isCurrent
-    ? { label: "Ready", tone: "bg-white/[0.06] text-stone-500", dot: "bg-stone-400" }
+    ? shownHealth === "online"
+      ? { label: "On air", tone: "bg-emerald-500/[0.12] text-emerald-700", dot: "bg-emerald-500" }
+      : shownHealth === "offline"
+        ? { label: "Off air", tone: "bg-white/[0.06] text-stone-500", dot: "bg-stone-400" }
+        : { label: "Ready", tone: "bg-white/[0.06] text-stone-500", dot: "bg-stone-400" }
     : status === "playing"
       ? { label: "Live", tone: "bg-red-500/[0.14] text-red-700", dot: "bg-red-600 animate-pulse" }
       : status === "loading" || status === "reconnecting"
@@ -226,7 +233,11 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
 
         {errorMessage && isCurrent ? (
           <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3">
-            <p className="text-sm text-stone-500">{errorMessage}</p>
+            <p className="text-sm text-stone-500">
+              {shownHealth === "offline"
+                ? `${shown.name} looks off air right now. It usually comes back on its own — try again later or pick another station.`
+                : errorMessage}
+            </p>
             <button
               type="button"
               onClick={() => void retry()}
@@ -276,6 +287,9 @@ export function StationCard({ station }: { station: RadioStation }) {
   const isActive = active?.id === station.id;
   const isLive = isActive && isPlaying;
   const isBusy = isActive && (status === "loading" || status === "reconnecting");
+  const { healthOf } = useStationHealth();
+  const health = healthOf(station.id);
+  const isOffAir = !isActive && health === "offline";
 
   return (
     <article
@@ -283,7 +297,8 @@ export function StationCard({ station }: { station: RadioStation }) {
         "group relative rounded-[22px] border p-5 transition duration-200",
         isActive
           ? "border-brand-500/40 bg-brand-500/[0.06]"
-          : "border-white/[0.08] bg-white/[0.025] hover:-translate-y-0.5 hover:border-white/[0.14]"
+          : "border-white/[0.08] bg-white/[0.025] hover:-translate-y-0.5 hover:border-white/[0.14]",
+        isOffAir && "opacity-60"
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -329,10 +344,14 @@ export function StationCard({ station }: { station: RadioStation }) {
         <span
           className={cn(
             "shrink-0 font-mono text-[10px] uppercase tracking-[0.12em]",
-            isLive ? "text-brand-700" : isBusy ? "text-brand-600" : "text-stone-400"
+            "inline-flex items-center gap-1.5",
+            isLive ? "text-brand-700" : isBusy ? "text-brand-600" : health === "online" ? "text-emerald-700" : "text-stone-400"
           )}
         >
-          {isLive ? "On air" : isBusy ? "Tuning" : categoryOf(station)}
+          {!isLive && !isBusy && health ? (
+            <span className={cn("h-1.5 w-1.5 rounded-full", health === "online" ? "bg-emerald-500" : "bg-stone-500")} />
+          ) : null}
+          {isLive ? "Playing" : isBusy ? "Tuning" : health === "online" ? "On air" : health === "offline" ? "Off air" : categoryOf(station)}
         </span>
       </div>
     </article>

@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { ArrowRight, Globe2, Play } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Reveal } from "@/components/motion/reveal";
 import { RadioTeaser } from "@/components/radio/radio-teaser";
 import { WorldNewsTeaser } from "@/components/world-news/world-news-teaser";
 import { useAuth } from "@/hooks/use-auth";
+import { useStationHealth } from "@/hooks/use-station-health";
 import { logEvent } from "@/lib/analytics-events";
 import { radioStations } from "@/services/discovery-data";
 
@@ -27,10 +28,9 @@ export default function HomePage() {
     logEvent("home_view", currentUser?.id);
   }, [currentUser?.id]);
 
-  const liveCount = useMemo(
-    () => radioStations.filter((station) => station.status === "live").length,
-    []
-  );
+  const { onAirCount } = useStationHealth();
+  const liveLabel =
+    onAirCount === null ? `${radioStations.length} stations` : `${onAirCount} of ${radioStations.length} stations on air`;
 
   return (
     <AppShell>
@@ -44,7 +44,7 @@ export default function HomePage() {
             <p className="inline-flex animate-fade-in items-center gap-2.5 rounded-full border border-brand-500/30 bg-brand-500/[0.07] px-3.5 py-1.5">
               <span className="h-[7px] w-[7px] rounded-full bg-brand-500 shadow-glow-sm" />
               <span className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-brand-600">
-                {liveCount} stations on air
+                {liveLabel}
               </span>
             </p>
 
