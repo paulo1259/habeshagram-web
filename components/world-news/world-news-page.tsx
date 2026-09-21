@@ -20,7 +20,7 @@ const LANES: Array<{ key: LaneKey; label: string; tone: string; blurb: string }>
   { key: "diaspora", label: "Diaspora", tone: "#f0a868", blurb: "Community, immigration and remittance stories for readers abroad." }
 ];
 
-const LANE_BY_SECTION: Record<string, { label: string; tone: string }> = {
+export const LANE_BY_SECTION: Record<string, { label: string; tone: string }> = {
   ethiopia: { label: "Ethiopia", tone: "#45e0c8" },
   eastafrica: { label: "East Africa", tone: "#7c6cf6" },
   diaspora: { label: "Diaspora", tone: "#f0a868" },

@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { logEvent } from "@/lib/analytics-events";
 import { useEffect, useState } from "react";
-import { ArrowRight, Globe2 } from "lucide-react";
-import { SectionHeader } from "@/components/ui/section-header";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { SaveStoryButton } from "@/components/library/library-buttons";
+import { LANE_BY_SECTION } from "@/components/world-news/world-news-page";
+import { logEvent } from "@/lib/analytics-events";
 import { getWorldNewsFeed } from "@/services/world-news-client-service";
-import { WorldNewsItem } from "@/types";
+import type { WorldNewsItem } from "@/types";
 
+const HEADLINE_COUNT = 4;
+
+/** The home page's news card: the freshest headlines, one tap from each. */
 export function WorldNewsTeaser() {
   const [items, setItems] = useState<WorldNewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -15,18 +19,10 @@ export function WorldNewsTeaser() {
   useEffect(() => {
     let isMounted = true;
 
-    void (async () => {
-      try {
-        const payload = await getWorldNewsFeed();
-        if (isMounted) {
-          setItems(payload.topStories.slice(0, 4));
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    })();
+    getWorldNewsFeed()
+      .then((payload) => isMounted && setItems(payload.topStories.slice(0, HEADLINE_COUNT)))
+      .catch(() => undefined)
+      .finally(() => isMounted && setIsLoading(false));
 
     return () => {
       isMounted = false;
@@ -34,86 +30,83 @@ export function WorldNewsTeaser() {
   }, []);
 
   return (
-    <section className="overflow-hidden rounded-[30px] border border-brand-100/80 bg-card/96 p-4 shadow-soft sm:p-5">
-      <SectionHeader
-        eyebrow="World News"
-        title="Ethiopia and East Africa, updated throughout the day"
-        description="Fast, free source lanes bring together Ethiopia, the Horn, East Africa, and diaspora stories without burying them in a generic world-news feed."
-        action={
-          <Link
-            href="/world-news"
-            className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-brand-800 transition hover:bg-brand-100"
-          >
-            <Globe2 className="h-3.5 w-3.5" />
-            Open World News
-          </Link>
-        }
-      />
-
-      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_15rem]">
-        <div className="rounded-[26px] bg-gradient-to-r from-brand-500 via-orange-300 to-orange-500 px-4 py-4 text-brand-950 sm:px-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-950/60">
-            Curated lanes
-          </p>
-          <p className="mt-2 text-lg font-black tracking-tight">
-            Ethiopia, East Africa, and the diaspora in one focused news destination.
-          </p>
-          <p className="mt-2 text-sm text-brand-950/75">
-            Direct publisher feeds and fast RSS search lanes keep the page useful without a paid news API.
-          </p>
-          <div className="mt-4">
-            <Link
-              href="/world-news"
-              className="inline-flex items-center gap-2 rounded-full bg-card px-4 py-2 text-sm font-semibold text-brand-800 shadow-soft transition hover:bg-brand-50"
-            >
-              Open World News
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-[24px] border border-brand-100/80 bg-brand-50/35 px-4 py-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">
-            Top headlines
-          </p>
-          <div className="mt-3 space-y-3">
-            {isLoading ? (
-              <div className="rounded-[20px] bg-card/90 px-4 py-4 text-sm text-stone-500">
-                Loading headlines...
-              </div>
-            ) : items.length ? (
-              items.map((item) => (
-                <a
-                  key={item.id}
-                  href={item.link}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={() =>
-                    logEvent("story_opened", null, {
-                      surface: "home_teaser",
-                      category: item.category,
-                      source: item.source
-                    })
-                  }
-                  className="block rounded-[20px] bg-card/92 px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-sm"
-                >
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-700">
-                    {item.category}
-                  </p>
-                  <p className="mt-2 text-sm font-bold leading-6 text-ink">{item.headline}</p>
-                  <p className="mt-1 text-xs text-stone-500">
-                    {item.source} · {item.publishLabel}
-                  </p>
-                </a>
-              ))
-            ) : (
-              <div className="rounded-[20px] bg-card/90 px-4 py-4 text-sm text-stone-500">
-                Fresh headlines will appear here as soon as the world-news lanes update.
-              </div>
-            )}
-          </div>
-        </div>
+    <section className="rounded-[26px] border border-white/[0.08] bg-card/90 p-5 sm:p-6">
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-stone-400">Latest news</span>
+        <Link
+          href="/world-news"
+          className="inline-flex items-center gap-1 text-[13px] font-semibold text-brand-700 transition hover:text-ink"
+        >
+          All news
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
+
+      <ul className="mt-3 divide-y divide-white/[0.06]">
+        {isLoading
+          ? Array.from({ length: HEADLINE_COUNT }, (_, index) => (
+              <li key={index} className="py-4" aria-hidden="true">
+                <div className="h-2.5 w-20 animate-pulse rounded bg-white/[0.06]" />
+                <div className="mt-3 h-4 w-11/12 animate-pulse rounded bg-white/[0.06]" />
+                <div className="mt-2 h-4 w-2/3 animate-pulse rounded bg-white/[0.06]" />
+              </li>
+            ))
+          : items.map((item) => {
+              const lane = LANE_BY_SECTION[item.section] ?? LANE_BY_SECTION.top;
+              return (
+                <li key={item.id} className="flex items-start gap-2 py-4 first:pt-3">
+                  <a
+                    href={item.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() =>
+                      logEvent("story_opened", null, {
+                        surface: "home_teaser",
+                        category: item.category,
+                        source: item.source
+                      })
+                    }
+                    className="group min-w-0 flex-1"
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: lane.tone }} />
+                      <span
+                        className="font-mono text-[10px] font-medium uppercase tracking-[0.12em]"
+                        style={{ color: lane.tone }}
+                      >
+                        {item.category}
+                      </span>
+                    </span>
+                    <span className="mt-2 block text-[15.5px] font-semibold leading-[1.4] text-ink transition group-hover:text-brand-700">
+                      {item.headline}
+                    </span>
+                    <span className="mt-1.5 block font-mono text-[11px] text-stone-400">
+                      {item.source} · {item.publishLabel}
+                    </span>
+                  </a>
+                  <SaveStoryButton item={item} className="-mr-2" />
+                </li>
+              );
+            })}
+      </ul>
+
+      {!isLoading && !items.length ? (
+        <p className="py-4 text-sm text-stone-500">
+          Headlines are refreshing. Check back in a minute.
+        </p>
+      ) : null}
+
+      <Link
+        href="/world-news"
+        className="mt-2 flex items-center gap-3 rounded-[18px] border border-orange-500/30 bg-gradient-to-br from-orange-500/[0.16] to-orange-500/[0.03] px-4 py-3.5 transition hover:border-orange-500/50"
+      >
+        <Sparkles className="h-4 w-4 shrink-0 text-orange-700" aria-hidden="true" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold text-ink">Read today&apos;s brief</span>
+          <span className="block text-[12.5px] text-stone-500">The biggest stories, summed up in a minute.</span>
+        </span>
+        <ArrowRight className="h-4 w-4 shrink-0 text-orange-700" />
+      </Link>
     </section>
   );
 }
