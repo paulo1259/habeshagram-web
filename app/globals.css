@@ -455,6 +455,33 @@ img {
   }
 }
 
+/*
+ * Large live waveform. Animates transform rather than height so it stays on
+ * the compositor at any bar size, and each bar's delay is set inline so the
+ * motion reads as a signal rather than a synchronised pulse.
+ */
+.wave-bar {
+  transform-origin: bottom;
+  animation: wave-pulse 1.15s ease-in-out infinite;
+}
+
+@keyframes wave-pulse {
+  0%,
+  100% {
+    transform: scaleY(0.32);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wave-bar {
+    animation: none;
+    transform: scaleY(0.6);
+  }
+}
+
 .radio-volume-slider {
   appearance: none;
   -webkit-appearance: none;

@@ -5,7 +5,6 @@ import { Headphones, Pause, Play, Radio, Volume2 } from "lucide-react";
 import { radioStations } from "@/services/discovery-data";
 import { cn } from "@/lib/utils";
 import { useRadio } from "@/hooks/use-radio";
-import { logEvent } from "@/lib/analytics-events";
 
 export function RadioTeaser({ compact = false }: { compact?: boolean }) {
   const featuredStation = radioStations.find((station) => station.featured) ?? radioStations[0];
@@ -71,7 +70,6 @@ export function RadioTeaser({ compact = false }: { compact?: boolean }) {
               if (activeStation?.id === quickPlayStation.id) {
                 void togglePlayback();
               } else {
-                logEvent("radio_play");
                 void playStation(quickPlayStation);
               }
             }}

@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode
 } from "react";
+import { logEvent } from "@/lib/analytics-events";
 import { radioStations } from "@/services/discovery-data";
 import { subscribeToNowPlaying } from "@/services/now-playing-service";
 import type { RadioStation } from "@/types";
@@ -63,6 +64,9 @@ function getPlaybackMode(station: RadioStation | null) {
 /** Backoff between automatic reconnect attempts after a stream drops. */
 const RECONNECT_DELAYS_MS = [2000, 5000, 12000];
 
+/** Listening shorter than this is a skip or a mis-tap, not a listen. */
+const MIN_REPORTED_LISTEN_SECONDS = 10;
+
 export function RadioProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const stationRef = useRef<RadioStation | null>(null);
@@ -79,10 +83,39 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   const reconnectTimeoutRef = useRef<number | null>(null);
   const reconnectAttemptRef = useRef(0);
   const wasPlayingRef = useRef(false);
+  // Listening time is reported in chunks: whatever has accumulated since the
+  // last report, flushed whenever listening stops for any reason.
+  const elapsedRef = useRef(0);
+  const reportedRef = useRef(0);
 
   useEffect(() => {
     stationRef.current = station;
   }, [station]);
+
+  useEffect(() => {
+    elapsedRef.current = elapsedSeconds;
+  }, [elapsedSeconds]);
+
+  /**
+   * Report listening time accrued since the last flush. This is the number
+   * that actually says whether the radio is working as a product -- a play
+   * count cannot tell a ten-second skip from an hour of background listening.
+   */
+  const flushListening = useCallback((reason: string) => {
+    const activeStation = stationRef.current;
+    const seconds = elapsedRef.current - reportedRef.current;
+
+    if (!activeStation || seconds < MIN_REPORTED_LISTEN_SECONDS) {
+      return;
+    }
+
+    reportedRef.current = elapsedRef.current;
+    logEvent("radio_listen", null, {
+      station_id: activeStation.id,
+      seconds,
+      reason
+    });
+  }, []);
 
   // Count listening time while the stream is playing.
   useEffect(() => {
@@ -124,8 +157,21 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     async (nextStation: RadioStation) => {
       const audio = audioRef.current;
       const mode = getPlaybackMode(nextStation);
+
+      if (stationRef.current && stationRef.current.id !== nextStation.id) {
+        flushListening("switched");
+      }
+      if (stationRef.current?.id !== nextStation.id) {
+        logEvent("radio_play", null, {
+          station_id: nextStation.id,
+          station_name: nextStation.name
+        });
+      }
+
       setErrorMessage("");
       setElapsedSeconds(0);
+      elapsedRef.current = 0;
+      reportedRef.current = 0;
       setNowPlaying("");
       reconnectAttemptRef.current = 0;
       if (reconnectTimeoutRef.current) {
@@ -166,7 +212,7 @@ export function RadioProvider({ children }: { children: ReactNode }) {
         );
       }
     },
-    [isMuted, volume]
+    [flushListening, isMuted, volume]
   );
 
   const togglePlayback = useCallback(async () => {
@@ -240,6 +286,10 @@ export function RadioProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    logEvent("sleep_timer_set", null, {
+      minutes,
+      station_id: stationRef.current?.id ?? null
+    });
     setSleepAt(Date.now() + minutes * 60_000);
     sleepTimeoutRef.current = window.setTimeout(() => {
       audioRef.current?.pause();
@@ -249,6 +299,7 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const closePlayer = useCallback(() => {
+    flushListening("closed");
     const audio = audioRef.current;
     audio?.pause();
     reconnectAttemptRef.current = 0;
@@ -272,7 +323,7 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     setStatus("idle");
     setExpanded(false);
     setErrorMessage("");
-  }, []);
+  }, [flushListening]);
 
   /**
    * Live streams drop for all sorts of reasons -- a dozy encoder, a phone
@@ -285,6 +336,12 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     const activeStation = stationRef.current;
 
     if (!audio || !activeStation || !wasPlayingRef.current) {
+      if (activeStation) {
+        logEvent("radio_error", null, {
+          station_id: activeStation.id,
+          reason: "failed_to_start"
+        });
+      }
       setStatus("error");
       setErrorMessage("The station stream could not be reached. Try another station.");
       return;
@@ -293,6 +350,11 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     const attempt = reconnectAttemptRef.current;
 
     if (attempt >= RECONNECT_DELAYS_MS.length) {
+      logEvent("radio_error", null, {
+        station_id: activeStation.id,
+        reason: "reconnect_exhausted",
+        attempts: attempt
+      });
       reconnectAttemptRef.current = 0;
       wasPlayingRef.current = false;
       setStatus("error");
@@ -338,6 +400,14 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     },
     []
   );
+
+  // Most sessions end by closing the tab, not by pressing pause. Without this
+  // the longest listens -- the ones that matter most -- would never report.
+  useEffect(() => {
+    const onPageHide = () => flushListening("page_closed");
+    window.addEventListener("pagehide", onPageHide);
+    return () => window.removeEventListener("pagehide", onPageHide);
+  }, [flushListening]);
 
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) {
@@ -455,6 +525,13 @@ export function RadioProvider({ children }: { children: ReactNode }) {
         onLoadStart={() => setStatus("loading")}
         onWaiting={() => setStatus("loading")}
         onPlaying={() => {
+          if (reconnectAttemptRef.current > 0 && stationRef.current) {
+            logEvent("radio_reconnect", null, {
+              station_id: stationRef.current.id,
+              attempts: reconnectAttemptRef.current,
+              recovered: true
+            });
+          }
           reconnectAttemptRef.current = 0;
           wasPlayingRef.current = true;
           setStatus("playing");
@@ -466,6 +543,7 @@ export function RadioProvider({ children }: { children: ReactNode }) {
           }
           if (stationRef.current) {
             wasPlayingRef.current = false;
+            flushListening("paused");
             setStatus("paused");
           }
         }}

@@ -35,7 +35,11 @@ export function initAnalytics() {
         autocapture: false,
         capture_pageview: false,
         disable_session_recording: true,
-        persistence: "localStorage+cookie"
+        persistence: "localStorage+cookie",
+        // Anonymous visitors do not get a person profile, which is what drives
+        // PostHog's billing -- the events still arrive and can be counted.
+        person_profiles: "identified_only",
+        respect_dnt: true
       });
 
       return posthog;

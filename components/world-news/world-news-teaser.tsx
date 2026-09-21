@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { logEvent } from "@/lib/analytics-events";
 import { useEffect, useState } from "react";
 import { ArrowRight, Globe2 } from "lucide-react";
 import { SectionHeader } from "@/components/ui/section-header";
@@ -87,6 +88,13 @@ export function WorldNewsTeaser() {
                   href={item.link}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={() =>
+                    logEvent("story_opened", null, {
+                      surface: "home_teaser",
+                      category: item.category,
+                      source: item.source
+                    })
+                  }
                   className="block rounded-[20px] bg-card/92 px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-sm"
                 >
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-700">

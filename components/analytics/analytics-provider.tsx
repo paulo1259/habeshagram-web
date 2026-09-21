@@ -4,11 +4,19 @@ import { useEffect, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { POSTHOG_KEY, initAnalytics, trackEvent } from "@/lib/analytics";
 
-const TRACKED_PAGE_LABELS: Record<string, string> = {
-  "/": "homepage",
-  "/radio": "radio",
-  "/world-news": "world-news"
-};
+/**
+ * A readable name for each page, so dashboards say "radio" rather than a raw
+ * path. Dynamic routes are grouped by prefix: every /radio/<station> page is
+ * "station" with the path kept alongside for the per-station breakdown.
+ */
+function pageNameFor(pathname: string): string {
+  if (pathname === "/") return "home";
+  if (pathname === "/radio") return "radio";
+  if (pathname.startsWith("/radio/")) return "station";
+  if (pathname === "/world-news") return "news";
+  if (pathname === "/login" || pathname === "/signup" || pathname === "/forgot-password") return "auth";
+  return "other";
+}
 
 let hasInitialized = false;
 
@@ -26,21 +34,10 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const label = TRACKED_PAGE_LABELS[pathname];
-
-    if (!label) {
-      return;
-    }
-
     trackEvent("page_view", {
-      page_name: label,
+      page_name: pageNameFor(pathname),
       pathname
     });
-
-    if (label === "homepage") {
-      return;
-    }
-
   }, [pathname]);
 
   return <>{children}</>;

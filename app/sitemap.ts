@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/lib/site";
+import { radioStations } from "@/services/discovery-data";
 
 type Route = {
   path: string;
@@ -19,7 +20,13 @@ const routes: Route[] = [
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
 
-  return routes.map((route) => ({
+  const stationRoutes: Route[] = radioStations.map((station) => ({
+    path: `/radio/${station.id}`,
+    changeFrequency: "daily",
+    priority: 0.7
+  }));
+
+  return [...routes, ...stationRoutes].map((route) => ({
     url: absoluteUrl(route.path),
     lastModified,
     changeFrequency: route.changeFrequency,
