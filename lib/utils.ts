@@ -55,34 +55,6 @@ export function formatRelativeTime(value: string) {
   }).format(new Date(value));
 }
 
-export function createId(prefix: string) {
-  return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
-}
-
-export function getInitials(username: string) {
-  return username
-    .split(/[\s._-]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
-export function normalizeHashtag(tag: string) {
-  return tag.replace(/^#+/, "").trim().toLowerCase();
-}
-
-export function parseHashtags(text: string) {
-  const matches = text.match(/#[\p{L}\p{N}_]+/gu) ?? [];
-  return Array.from(
-    new Set(
-      matches
-        .map((match) => normalizeHashtag(match))
-      .filter(Boolean)
-    )
-  );
-}
-
 export function slugify(value: string) {
   return value
     .toLowerCase()
@@ -96,6 +68,3 @@ export function createDeterministicId(prefix: string, value: string) {
   return `${prefix}_${normalized || "item"}`;
 }
 
-export function getBreakingDiscussionPostId(headline: string, source: string) {
-  return createDeterministicId("system_breaking", `${headline}-${source}`);
-}

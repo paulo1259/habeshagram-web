@@ -12,7 +12,6 @@ export default function SignupPage() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [bio, setBio] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -42,7 +41,7 @@ export default function SignupPage() {
     try {
       setIsSubmitting(true);
       setErrorMessage("");
-      await signup({ username, email, password, bio });
+      await signup({ username, email, password });
       router.push("/");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Unable to create account.");
@@ -58,7 +57,7 @@ export default function SignupPage() {
         <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Join Zema</h1>
         <p className="mt-2 text-sm text-stone-600">
           {authMode === "supabase"
-            ? "Create your account and set up your Zema profile."
+            ? "Create a free account to save your stations and pick up where you left off."
             : "Sign-in is not configured yet. Add your NEXT_PUBLIC_SUPABASE_* values to .env.local and restart the dev server."}
         </p>
 
@@ -83,26 +82,15 @@ export default function SignupPage() {
             placeholder="Password"
             className="w-full rounded-2xl border border-brand-100 bg-brand-50/40 px-4 py-3 outline-none ring-brand-300 focus:ring-2"
           />
-          <textarea
-            rows={3}
-            value={bio}
-            onChange={(event) => setBio(event.target.value)}
-            placeholder="Tell the community a little about yourself"
-            className="w-full rounded-2xl border border-brand-100 bg-brand-50/40 px-4 py-3 outline-none ring-brand-300 focus:ring-2"
-          />
           {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Creating account..." : "Create account"}
           </Button>
         </form>
 
-        <p className="mt-4 text-xs leading-5 text-stone-500">
-          New accounts create a matching Firestore profile automatically, so this is one of the key flows to test before soft launch.
-        </p>
-
         <div className="mt-6 flex items-center justify-between text-sm text-stone-600">
           <Link href="/" className="font-medium text-brand-800">
-            Back to feed
+            Back to Zema
           </Link>
           <Link href="/login" className="font-medium text-brand-800">
             Already have an account?

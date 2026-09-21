@@ -81,7 +81,7 @@ export default function LoginPage() {
 
         <div className="mt-6 flex items-center justify-between text-sm text-stone-600">
           <Link href="/" className="font-medium text-brand-800">
-            Back to feed
+            Back to Zema
           </Link>
           <Link href="/signup" className="font-medium text-brand-800">
             Create account
