@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Globe2, House, LogOut, Radio } from "lucide-react";
+import { Globe2, House, LogOut, Radio, UserCircle2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 const items = [
   { href: "/", label: "Home", icon: House },
   { href: "/radio", label: "Radio", icon: Radio },
-  { href: "/world-news", label: "World News", icon: Globe2 }
+  { href: "/world-news", label: "World News", icon: Globe2 },
+  { href: "/you", label: "You", icon: UserCircle2 }
 ];
 
 export function DesktopSidebar() {
@@ -72,7 +73,7 @@ export function DesktopSidebar() {
         ) : (
           <>
             <p className="text-sm leading-6 text-stone-500">
-              Save your stations and pick up articles where you left them.
+              Keep your favourite stations and save stories for later.
             </p>
             <Button className="mt-4 w-full" onClick={() => router.push("/login")}>
               Sign in

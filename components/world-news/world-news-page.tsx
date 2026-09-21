@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, Sparkles } from "lucide-react";
+import { SaveStoryButton } from "@/components/library/library-buttons";
 import { AppShell } from "@/components/layout/app-shell";
 import { logEvent } from "@/lib/analytics-events";
 import { cn } from "@/lib/utils";
@@ -52,45 +53,48 @@ function LeadStory({ item, why }: { item: WorldNewsItem; why?: string }) {
   const lane = LANE_BY_SECTION[item.section] ?? LANE_BY_SECTION.top;
 
   return (
-    <a
-      href={item.link}
-      target="_blank"
-      rel="noreferrer"
-      onClick={() => openStory(item, "news_lead")}
-      className="group grid gap-5 rounded-[24px] border border-white/[0.09] bg-white/[0.03] p-5 transition hover:border-white/[0.16] sm:grid-cols-[200px_minmax(0,1fr)] sm:p-6"
-    >
-      <div className="relative aspect-[16/10] overflow-hidden rounded-[16px] border border-white/[0.08] bg-gradient-to-br from-brand-500/[0.18] to-orange-500/[0.2] sm:aspect-auto sm:h-full sm:min-h-[140px]">
-        {item.imageURL ? (
-          // RSS images come from arbitrary hosts, so a plain img avoids having
-          // to allowlist every publisher domain for next/image.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.imageURL} alt="" className="h-full w-full object-cover" loading="lazy" />
-        ) : (
-          <span className="absolute inset-0 flex items-center justify-center font-mono text-[10px] uppercase tracking-[0.14em] text-stone-500">
-            {lane.label}
-          </span>
-        )}
-      </div>
-
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <span
-            className="rounded-md px-2 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em]"
-            style={{ color: lane.tone, background: `${lane.tone}22` }}
-          >
-            {lane.label}
-          </span>
-          <span className="font-mono text-[11px] text-stone-400">
-            {item.source} · {item.publishLabel}
-          </span>
+    <div className="relative">
+      <a
+        href={item.link}
+        target="_blank"
+        rel="noreferrer"
+        onClick={() => openStory(item, "news_lead")}
+        className="group grid gap-5 rounded-[24px] border border-white/[0.09] bg-white/[0.03] p-5 transition hover:border-white/[0.16] sm:grid-cols-[200px_minmax(0,1fr)] sm:p-6"
+      >
+        <div className="relative aspect-[16/10] overflow-hidden rounded-[16px] border border-white/[0.08] bg-gradient-to-br from-brand-500/[0.18] to-orange-500/[0.2] sm:aspect-auto sm:h-full sm:min-h-[140px]">
+          {item.imageURL ? (
+            // RSS images come from arbitrary hosts, so a plain img avoids having
+            // to allowlist every publisher domain for next/image.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={item.imageURL} alt="" className="h-full w-full object-cover" loading="lazy" />
+          ) : (
+            <span className="absolute inset-0 flex items-center justify-center font-mono text-[10px] uppercase tracking-[0.14em] text-stone-500">
+              {lane.label}
+            </span>
+          )}
         </div>
-        <h3 className="mt-3 font-display text-[1.35rem] font-semibold leading-[1.25] tracking-[-0.02em] text-ink transition group-hover:text-brand-700 sm:text-[1.5rem]">
-          {item.headline}
-        </h3>
-        <p className="mt-2.5 text-sm leading-6 text-stone-500">{item.summary}</p>
-        <WhyItMatters text={why} />
-      </div>
-    </a>
+  
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2.5 sm:pr-10">
+            <span
+              className="rounded-md px-2 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em]"
+              style={{ color: lane.tone, background: `${lane.tone}22` }}
+            >
+              {lane.label}
+            </span>
+            <span className="font-mono text-[11px] text-stone-400">
+              {item.source} · {item.publishLabel}
+            </span>
+          </div>
+          <h3 className="mt-3 font-display text-[1.35rem] font-semibold leading-[1.25] tracking-[-0.02em] text-ink transition group-hover:text-brand-700 sm:text-[1.5rem]">
+            {item.headline}
+          </h3>
+          <p className="mt-2.5 text-sm leading-6 text-stone-500">{item.summary}</p>
+          <WhyItMatters text={why} />
+        </div>
+      </a>
+      <SaveStoryButton item={item} className="absolute right-3 top-3 bg-surface/70 backdrop-blur" />
+    </div>
   );
 }
 
@@ -98,32 +102,35 @@ function StoryCard({ item, why, surface }: { item: WorldNewsItem; why?: string; 
   const lane = LANE_BY_SECTION[item.section] ?? LANE_BY_SECTION.top;
 
   return (
-    <a
-      href={item.link}
-      target="_blank"
-      rel="noreferrer"
-      onClick={() => openStory(item, surface)}
-      className="group flex flex-col rounded-[20px] border border-white/[0.07] bg-white/[0.022] p-5 transition hover:-translate-y-0.5 hover:border-white/[0.14]"
-    >
-      <div className="flex items-center gap-2">
-        <span className="h-1.5 w-1.5 rounded-full" style={{ background: lane.tone }} />
-        <span
-          className="font-mono text-[10px] font-medium uppercase tracking-[0.12em]"
-          style={{ color: lane.tone }}
-        >
-          {lane.label}
-        </span>
-        <span className="ml-auto font-mono text-[11px] text-stone-400">{item.publishLabel}</span>
-      </div>
-      <h3 className="mt-3 text-[15.5px] font-semibold leading-[1.4] text-ink transition group-hover:text-brand-700">
-        {item.headline}
-      </h3>
-      <p className="mt-2 flex items-center gap-1.5 text-[12px] text-stone-400">
-        {item.source}
-        <ArrowUpRight className="h-3 w-3 opacity-0 transition group-hover:opacity-100" aria-hidden="true" />
-      </p>
-      <WhyItMatters text={why} />
-    </a>
+    <div className="relative flex">
+      <a
+        href={item.link}
+        target="_blank"
+        rel="noreferrer"
+        onClick={() => openStory(item, surface)}
+        className="group flex w-full flex-col rounded-[20px] border border-white/[0.07] bg-white/[0.022] p-5 transition hover:-translate-y-0.5 hover:border-white/[0.14]"
+      >
+        <div className="flex items-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full" style={{ background: lane.tone }} />
+          <span
+            className="font-mono text-[10px] font-medium uppercase tracking-[0.12em]"
+            style={{ color: lane.tone }}
+          >
+            {lane.label}
+          </span>
+          <span className="ml-auto mr-8 font-mono text-[11px] text-stone-400">{item.publishLabel}</span>
+        </div>
+        <h3 className="mt-3 text-[15.5px] font-semibold leading-[1.4] text-ink transition group-hover:text-brand-700">
+          {item.headline}
+        </h3>
+        <p className="mt-2 flex items-center gap-1.5 text-[12px] text-stone-400">
+          {item.source}
+          <ArrowUpRight className="h-3 w-3 opacity-0 transition group-hover:opacity-100" aria-hidden="true" />
+        </p>
+        <WhyItMatters text={why} />
+      </a>
+      <SaveStoryButton item={item} className="absolute right-2 top-2" />
+    </div>
   );
 }
 

@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { getSafeNext } from "@/lib/safe-next";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -14,10 +15,16 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [nextQuery, setNextQuery] = useState("");
+
+  useEffect(() => {
+    const next = getSafeNext("");
+    setNextQuery(next ? `?next=${encodeURIComponent(next)}` : "");
+  }, []);
 
   useEffect(() => {
     if (isReady && currentUser) {
-      router.replace("/");
+      router.replace(getSafeNext());
     }
   }, [currentUser, isReady, router]);
 
@@ -42,7 +49,7 @@ export default function SignupPage() {
       setIsSubmitting(true);
       setErrorMessage("");
       await signup({ username, email, password });
-      router.push("/");
+      router.push(getSafeNext());
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Unable to create account.");
     } finally {
@@ -92,7 +99,7 @@ export default function SignupPage() {
           <Link href="/" className="font-medium text-brand-800">
             Back to Zema
           </Link>
-          <Link href="/login" className="font-medium text-brand-800">
+          <Link href={`/login${nextQuery}`} className="font-medium text-brand-800">
             Already have an account?
           </Link>
         </div>

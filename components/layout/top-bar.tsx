@@ -58,10 +58,10 @@ export function TopBar() {
           </Link>
 
           {currentUser ? (
-            <div className="hidden text-right lg:block">
+            <Link href="/you" className="hidden text-right transition hover:opacity-80 sm:block">
               <p className="text-sm font-semibold text-ink">@{currentUser.username}</p>
-              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-stone-400">Signed in</p>
-            </div>
+              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-stone-400">Your stations</p>
+            </Link>
           ) : (
             <Link
               href="/login"

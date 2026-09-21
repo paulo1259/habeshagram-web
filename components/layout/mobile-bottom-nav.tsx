@@ -10,7 +10,7 @@ const items = [
   { href: "/", label: "Home", icon: House },
   { href: "/radio", label: "Radio", icon: Radio },
   { href: "/world-news", label: "News", icon: Globe2 },
-  { href: "/login", label: "You", icon: UserCircle2 }
+  { href: "/you", label: "You", icon: UserCircle2 }
 ];
 
 export function MobileBottomNav() {

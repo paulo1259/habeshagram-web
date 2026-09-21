@@ -33,7 +33,10 @@ export type AnalyticsEventName =
   | "sleep_timer_set"
   // News
   | "brief_viewed"
-  | "story_opened";
+  | "story_opened"
+  // Accounts
+  | "station_favorited"
+  | "story_saved";
 
 export type AnalyticsMetadata = Record<string, string | number | boolean | null | undefined>;
 

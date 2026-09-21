@@ -13,6 +13,8 @@ import {
   VolumeX
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
+import { FavoriteButton } from "@/components/library/library-buttons";
+import { useLibrary } from "@/hooks/use-library";
 import { useStationHealth } from "@/hooks/use-station-health";
 import { useRadio } from "@/hooks/use-radio";
 import { cn } from "@/lib/utils";
@@ -25,10 +27,10 @@ const WAVE = [
   64, 98, 38, 68, 84, 50, 76, 28, 62, 48, 70, 34
 ];
 
-type Category = "All" | "News & Talk" | "Entertainment" | "Faith";
-const CATEGORIES: Category[] = ["All", "News & Talk", "Entertainment", "Faith"];
+type Category = "All" | "Yours" | "News & Talk" | "Entertainment" | "Faith";
+const CATEGORIES: Category[] = ["All", "Yours", "News & Talk", "Entertainment", "Faith"];
 
-function categoryOf(station: RadioStation): Exclude<Category, "All"> {
+function categoryOf(station: RadioStation): Exclude<Category, "All" | "Yours"> {
   const tags = station.tags ?? [];
   if (tags.includes("Religious")) return "Faith";
   if (tags[0] === "Entertainment") return "Entertainment";
@@ -89,11 +91,13 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
     retry
   } = useRadio();
   const { healthOf } = useStationHealth();
+  const { lastStation } = useLibrary();
 
   const featured = radioStations.find((item) => item.featured) ?? radioStations[0];
   // On a station page the hero is about that station even if another one is
   // playing; on /radio it follows whatever is playing, else the featured pick.
-  const shown = focusStation ?? station ?? featured;
+  const shown = focusStation ?? station ?? lastStation ?? featured;
+  const isResume = !focusStation && !station && Boolean(lastStation);
   const isCurrent = Boolean(station) && station?.id === shown.id;
   const playingElsewhere = Boolean(focusStation && station && station.id !== focusStation.id);
 
@@ -145,7 +149,9 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
                 ? `Playing ${station?.name} — tap to switch`
                 : focusStation
                   ? "Live station"
-                  : "Featured station"}
+                  : isResume
+                    ? "Pick up where you left off"
+                    : "Featured station"}
           </span>
           <span className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1", badge.tone)}>
             <span className={cn("h-1.5 w-1.5 rounded-full", badge.dot)} />
@@ -153,11 +159,14 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
           </span>
         </div>
 
-        <Link href={stationPath(shown)} className="group mt-4 block">
-          <h1 className="font-display text-[2.1rem] font-bold leading-[1.05] tracking-[-0.03em] text-ink transition group-hover:text-brand-700 sm:text-[2.6rem]">
-            {shown.name}
-          </h1>
-        </Link>
+        <div className="mt-4 flex items-start justify-between gap-3">
+          <Link href={stationPath(shown)} className="group block min-w-0">
+            <h1 className="font-display text-[2.1rem] font-bold leading-[1.05] tracking-[-0.03em] text-ink transition group-hover:text-brand-700 sm:text-[2.6rem]">
+              {shown.name}
+            </h1>
+          </Link>
+          <FavoriteButton station={shown} />
+        </div>
 
         <p className="mt-2 font-mono text-[12.5px] text-stone-500">
           {shown.frequency} · {shown.city}
@@ -294,7 +303,7 @@ export function StationCard({ station }: { station: RadioStation }) {
   return (
     <article
       className={cn(
-        "group relative rounded-[22px] border p-5 transition duration-200",
+        "group relative min-w-0 rounded-[22px] border p-5 transition duration-200",
         isActive
           ? "border-brand-500/40 bg-brand-500/[0.06]"
           : "border-white/[0.08] bg-white/[0.025] hover:-translate-y-0.5 hover:border-white/[0.14]",
@@ -314,19 +323,22 @@ export function StationCard({ station }: { station: RadioStation }) {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => void (isActive ? togglePlayback() : playStation(station))}
-          aria-label={isLive ? `Pause ${station.name}` : `Play ${station.name}`}
-          className={cn(
-            "relative z-10 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition active:scale-[0.95]",
-            isActive
-              ? "bg-brand-500 text-brand-950 shadow-glow-sm"
-              : "bg-white/[0.06] text-stone-500 group-hover:bg-brand-500 group-hover:text-brand-950"
-          )}
-        >
-          {isLive ? <Pause className="h-4 w-4 fill-current" /> : <Play className="ml-0.5 h-4 w-4 fill-current" />}
-        </button>
+        <div className="flex shrink-0 items-center gap-1">
+          <FavoriteButton station={station} size="sm" />
+          <button
+            type="button"
+            onClick={() => void (isActive ? togglePlayback() : playStation(station))}
+            aria-label={isLive ? `Pause ${station.name}` : `Play ${station.name}`}
+            className={cn(
+              "relative z-10 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition active:scale-[0.95]",
+              isActive
+                ? "bg-brand-500 text-brand-950 shadow-glow-sm"
+                : "bg-white/[0.06] text-stone-500 group-hover:bg-brand-500 group-hover:text-brand-950"
+            )}
+          >
+            {isLive ? <Pause className="h-4 w-4 fill-current" /> : <Play className="ml-0.5 h-4 w-4 fill-current" />}
+          </button>
+        </div>
       </div>
 
       <div className="mt-4">
@@ -360,19 +372,35 @@ export function StationCard({ station }: { station: RadioStation }) {
 
 export function RadioPage() {
   const [category, setCategory] = useState<Category>("All");
+  const { favoriteIds } = useLibrary();
 
   const counts = useMemo(() => {
-    const result: Record<Category, number> = { All: radioStations.length, "News & Talk": 0, Entertainment: 0, Faith: 0 };
+    const result: Record<Category, number> = {
+      All: radioStations.length,
+      Yours: favoriteIds.length,
+      "News & Talk": 0,
+      Entertainment: 0,
+      Faith: 0
+    };
     radioStations.forEach((station) => {
       result[categoryOf(station)] += 1;
     });
     return result;
-  }, []);
+  }, [favoriteIds]);
 
-  const visible = useMemo(
-    () => (category === "All" ? radioStations : radioStations.filter((station) => categoryOf(station) === category)),
-    [category]
-  );
+  // Favourites lead the full list, in the order they were added.
+  const visible = useMemo(() => {
+    if (category === "Yours" && favoriteIds.length) return radioStations.filter((station) => favoriteIds.includes(station.id));
+    const pool = category === "All" || category === "Yours" ? radioStations : radioStations.filter((station) => categoryOf(station) === category);
+    const rank = (station: RadioStation) => {
+      const index = favoriteIds.indexOf(station.id);
+      return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+    };
+    return [...pool].sort((a, b) => rank(a) - rank(b));
+  }, [category, favoriteIds]);
+
+  // If the last favourite is removed while filtering by them, fall back.
+  const activeCategory = category === "Yours" && favoriteIds.length === 0 ? "All" : category;
 
   return (
     <AppShell>
@@ -382,7 +410,7 @@ export function RadioPage() {
         <section className="px-4 sm:px-0">
           <div className="flex flex-wrap items-center gap-2">
             {CATEGORIES.filter((item) => item === "All" || counts[item] > 0).map((item) => {
-              const active = item === category;
+              const active = item === activeCategory;
               return (
                 <button
                   key={item}
@@ -396,7 +424,7 @@ export function RadioPage() {
                       : "text-stone-500 ring-1 ring-white/[0.11] hover:text-ink"
                   )}
                 >
-                  {item}
+                  {item === "Yours" ? "Your stations" : item}
                   <span className={cn("ml-1.5 font-mono text-[11px]", active ? "text-brand-950/60" : "text-stone-400")}>
                     {counts[item]}
                   </span>

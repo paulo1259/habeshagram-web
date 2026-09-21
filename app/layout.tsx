@@ -4,6 +4,7 @@ import "./globals.css";
 import { siteDescription, siteName, siteTagline, siteUrl } from "@/lib/site";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { AuthProvider } from "@/hooks/use-auth";
+import { LibraryProvider } from "@/hooks/use-library";
 import { RadioProvider } from "@/hooks/use-radio";
 import { PersistentRadioPlayer } from "@/components/radio/persistent-radio-player";
 
@@ -85,8 +86,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <AuthProvider>
           <AnalyticsProvider>
             <RadioProvider>
+              <LibraryProvider>
               {children}
               <PersistentRadioPlayer />
+              </LibraryProvider>
             </RadioProvider>
           </AnalyticsProvider>
         </AuthProvider>

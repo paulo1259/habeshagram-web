@@ -1,101 +1,105 @@
 "use client";
 
 import Link from "next/link";
-import { Headphones, Pause, Play, Radio, Volume2 } from "lucide-react";
-import { radioStations } from "@/services/discovery-data";
-import { cn } from "@/lib/utils";
+import { ArrowRight, Heart, Pause, Play } from "lucide-react";
+import { useLibrary } from "@/hooks/use-library";
 import { useRadio } from "@/hooks/use-radio";
+import { cn } from "@/lib/utils";
+import { loginHref } from "@/lib/safe-next";
+import { radioStations } from "@/services/discovery-data";
+import type { RadioStation } from "@/types";
 
-export function RadioTeaser({ compact = false }: { compact?: boolean }) {
-  const featuredStation = radioStations.find((station) => station.featured) ?? radioStations[0];
-  const quickPlayStation = radioStations.find(
-    (station) => station.streamUrl
-  );
-  const { station: activeStation, isPlaying, playStation, togglePlayback } = useRadio();
+/**
+ * The home page's radio card. It leads with whatever is most likely to be
+ * wanted: the station already playing, else the one you were last on, else
+ * the featured pick — and then your favourites as one-tap chips.
+ */
+export function RadioTeaser() {
+  const { station: active, isPlaying, playStation, togglePlayback } = useRadio();
+  const { lastStation, favoriteStations, isSignedIn } = useLibrary();
+  const featured = radioStations.find((station) => station.featured) ?? radioStations[0];
 
-  if (!featuredStation) {
-    return null;
-  }
+  const lead = active ?? lastStation ?? featured;
+  const leadIsActive = active?.id === lead.id;
+  const leadLive = leadIsActive && isPlaying;
+  const eyebrow = leadIsActive ? "Now playing" : lastStation ? "Pick up where you left off" : "Featured station";
+
+  const play = (station: RadioStation) =>
+    void (active?.id === station.id ? togglePlayback() : playStation(station));
+
+  const chips = favoriteStations.filter((station) => station.id !== lead.id);
 
   return (
-    <section
-      className={cn(
-        "overflow-hidden rounded-[28px] border border-brand-100/80 bg-card/96 shadow-soft",
-        compact ? "p-4" : "p-4 sm:p-5"
-      )}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">
-            Radio
-          </p>
-          <h3 className="mt-1 text-lg font-black tracking-tight text-ink">Live stations, one place</h3>
-          <p className="mt-1 text-sm text-stone-500">
-            Featured now: {featuredStation.name}
-          </p>
-        </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold text-brand-800">
-          <span className="h-2 w-2 rounded-full bg-emerald-500" />
-          Radio
-        </div>
-      </div>
-
-      <p className="mt-3 text-sm leading-6 text-stone-600">
-        {compact
-          ? "Start a live stream and keep listening while you browse the rest of Zema."
-          : "Radio now has a persistent global player with background playback, station switching, volume, reconnect, and device media controls."}
-      </p>
-
-      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-stone-500">
-        <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1.5">
-          <Radio className="h-3.5 w-3.5 text-brand-700" />
-          {radioStations.length} stations
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1.5">
-          <Headphones className="h-3.5 w-3.5 text-brand-700" />
-          Persistent player
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1.5">
-          <Volume2 className="h-3.5 w-3.5 text-brand-700" />
-          Background-ready streams
-        </span>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        {quickPlayStation ? (
-          <button
-            type="button"
-            className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-brand-500 to-orange-400 px-4 py-2 text-sm font-semibold text-brand-950 shadow-soft transition hover:brightness-105"
-            onClick={() => {
-              if (activeStation?.id === quickPlayStation.id) {
-                void togglePlayback();
-              } else {
-                void playStation(quickPlayStation);
-              }
-            }}
-          >
-            {activeStation?.id === quickPlayStation.id && isPlaying ? (
-              <Pause className="mr-2 h-4 w-4 fill-current" />
-            ) : (
-              <Play className="mr-2 h-4 w-4 fill-current" />
-            )}
-            {activeStation?.id === quickPlayStation.id && isPlaying
-              ? "Pause radio"
-              : `Play ${quickPlayStation.name}`}
-          </button>
-        ) : null}
+    <section className="rounded-[26px] border border-white/[0.08] bg-card/90 p-5 sm:p-6">
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-stone-400">{eyebrow}</span>
         <Link
           href="/radio"
-          className="inline-flex items-center justify-center rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-800 transition hover:bg-brand-100"
+          className="inline-flex items-center gap-1 text-[13px] font-semibold text-brand-700 transition hover:text-ink"
         >
-          Open Radio
+          All stations
+          <ArrowRight className="h-3.5 w-3.5" />
         </Link>
-        {!compact ? (
-          <p className="text-sm text-stone-500">
-            Playback continues when you leave the Radio page.
-          </p>
-        ) : null}
       </div>
+
+      <div className="mt-4 flex items-center gap-4">
+        <button
+          type="button"
+          onClick={() => play(lead)}
+          aria-label={leadLive ? `Pause ${lead.name}` : `Play ${lead.name}`}
+          className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-brand-500 text-brand-950 shadow-glow-sm transition hover:scale-[1.04] active:scale-[0.97]"
+        >
+          {leadLive ? <Pause className="h-5 w-5 fill-current" /> : <Play className="ml-0.5 h-5 w-5 fill-current" />}
+        </button>
+        <div className="min-w-0">
+          <Link
+            href={`/radio/${lead.id}`}
+            className="block truncate font-display text-xl font-semibold tracking-[-0.02em] text-ink transition hover:text-brand-700"
+          >
+            {lead.name}
+          </Link>
+          <p className="mt-0.5 font-mono text-[12px] text-stone-400">
+            {lead.frequency} · {lead.city}
+          </p>
+        </div>
+      </div>
+
+      {chips.length ? (
+        <div className="mt-5 border-t border-white/[0.07] pt-4">
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-stone-400">Your stations</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {chips.map((station) => {
+              const live = active?.id === station.id && isPlaying;
+              return (
+                <button
+                  key={station.id}
+                  type="button"
+                  onClick={() => play(station)}
+                  className={cn(
+                    "inline-flex min-h-10 items-center gap-2 rounded-xl px-3.5 text-[13px] font-semibold transition",
+                    live
+                      ? "bg-brand-500/[0.14] text-brand-700 ring-1 ring-brand-500/50"
+                      : "text-stone-500 ring-1 ring-white/[0.1] hover:text-ink"
+                  )}
+                >
+                  {live ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="h-3.5 w-3.5 fill-current" />}
+                  {station.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : !isSignedIn ? (
+        <p className="mt-5 flex items-center gap-2 border-t border-white/[0.07] pt-4 text-[13px] text-stone-500">
+          <Heart className="h-3.5 w-3.5 shrink-0 text-orange-700" />
+          <span>
+            <Link href={loginHref("/")} className="font-semibold text-brand-700 hover:text-ink">
+              Sign in
+            </Link>{" "}
+            to keep your favourite stations one tap away, on any device.
+          </span>
+        </p>
+      ) : null}
     </section>
   );
 }

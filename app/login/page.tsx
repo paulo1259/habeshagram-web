@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { getSafeNext } from "@/lib/safe-next";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,10 +14,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [nextQuery, setNextQuery] = useState("");
+
+  useEffect(() => {
+    const next = getSafeNext("");
+    setNextQuery(next ? `?next=${encodeURIComponent(next)}` : "");
+  }, []);
 
   useEffect(() => {
     if (isReady && currentUser) {
-      router.replace("/");
+      router.replace(getSafeNext());
     }
   }, [currentUser, isReady, router]);
 
@@ -27,7 +34,7 @@ export default function LoginPage() {
       setIsSubmitting(true);
       setErrorMessage("");
       await login(email, password);
-      router.push("/");
+      router.push(getSafeNext());
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Unable to log in.");
     } finally {
@@ -83,7 +90,7 @@ export default function LoginPage() {
           <Link href="/" className="font-medium text-brand-800">
             Back to Zema
           </Link>
-          <Link href="/signup" className="font-medium text-brand-800">
+          <Link href={`/signup${nextQuery}`} className="font-medium text-brand-800">
             Create account
           </Link>
         </div>
