@@ -5,9 +5,12 @@ import { useEffect } from "react";
 import { ArrowRight, Globe2, Play } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Reveal } from "@/components/motion/reveal";
+import { EthiopianCalendarCard } from "@/components/calendar/ethiopian-calendar-card";
+import { OnAirBoard } from "@/components/radio/on-air-board";
 import { RadioTeaser } from "@/components/radio/radio-teaser";
 import { WorldNewsTeaser } from "@/components/world-news/world-news-teaser";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 import { useStationHealth } from "@/hooks/use-station-health";
 import { logEvent } from "@/lib/analytics-events";
 import { radioStations } from "@/services/discovery-data";
@@ -29,8 +32,11 @@ export default function HomePage() {
   }, [currentUser?.id]);
 
   const { onAirCount } = useStationHealth();
+  const { t } = useLanguage();
   const liveLabel =
-    onAirCount === null ? `${radioStations.length} stations` : `${onAirCount} of ${radioStations.length} stations on air`;
+    onAirCount === null
+      ? t("home.stations", { total: radioStations.length })
+      : t("home.stationsOnAir", { n: onAirCount, total: radioStations.length });
 
   return (
     <AppShell>
@@ -51,13 +57,13 @@ export default function HomePage() {
             <h1 className="mt-5 animate-fade-up font-display text-[2.35rem] font-bold leading-[1.02] tracking-[-0.035em] sm:text-[3.4rem]">
               {currentUser ? (
                 <>
-                  Selam, <span className="text-gold">@{currentUser.username}</span>
+                  {t("home.greeting")} <span className="text-gold">@{currentUser.username}</span>
                 </>
               ) : (
                 <>
-                  Every station.
+                  {t("home.heroLine1")}
                   <br />
-                  One frequency.
+                  {t("home.heroLine2")}
                 </>
               )}
             </h1>
@@ -66,8 +72,7 @@ export default function HomePage() {
               className="mt-5 max-w-xl animate-fade-up text-[15px] leading-7 text-stone-500 sm:text-base"
               style={{ animationDelay: "120ms" }}
             >
-              Live Ethiopian and Eritrean radio, streaming uninterrupted while you read the stories
-              shaping East Africa today.
+              {t("home.heroBody")}
             </p>
 
             <div
@@ -79,14 +84,14 @@ export default function HomePage() {
                 className="btn-glow inline-flex items-center gap-2.5 rounded-[14px] px-6 py-3.5 text-[15px] hover:-translate-y-0.5"
               >
                 <Play className="h-4 w-4 fill-current" />
-                Start listening
+                {t("home.startListening")}
               </Link>
               <Link
                 href="/world-news"
                 className="inline-flex items-center gap-2.5 rounded-[14px] border border-white/[0.12] px-6 py-3.5 text-[15px] font-medium text-ink transition hover:-translate-y-0.5 hover:border-brand-500/35"
               >
                 <Globe2 className="h-4 w-4" />
-                Today&apos;s brief
+                {t("home.todaysBrief")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -111,11 +116,19 @@ export default function HomePage() {
         </section>
 
         <Reveal>
-          <WorldNewsTeaser />
+          <OnAirBoard />
         </Reveal>
-        <Reveal delay={40}>
-          <RadioTeaser />
+        <Reveal delay={20}>
+          <EthiopianCalendarCard />
         </Reveal>
+        <div className="grid gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+          <Reveal delay={40}>
+            <WorldNewsTeaser />
+          </Reveal>
+          <Reveal delay={80}>
+            <RadioTeaser />
+          </Reveal>
+        </div>
       </div>
     </AppShell>
   );

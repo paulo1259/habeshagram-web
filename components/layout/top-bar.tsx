@@ -2,22 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Globe2, Radio } from "lucide-react";
 import { ZemaWordmark } from "@/components/brand/logo";
+import { LanguageToggle } from "@/components/layout/language-toggle";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 import { cn } from "@/lib/utils";
 
-const iconLinkClass =
-  "inline-flex rounded-xl border border-white/[0.09] bg-white/[0.03] p-2.5 text-stone-500 transition hover:-translate-y-0.5 hover:border-brand-500/40 hover:text-brand-700 active:scale-[0.96]";
-
 const navItems = [
-  { href: "/", label: "Home" },
-  { href: "/radio", label: "Radio" },
-  { href: "/world-news", label: "News" }
-];
+  { href: "/", key: "nav.home" },
+  { href: "/radio", key: "nav.radio" },
+  { href: "/world-news", key: "nav.news" }
+] as const;
 
 export function TopBar() {
   const { currentUser } = useAuth();
+  const { t } = useLanguage();
   const pathname = usePathname();
 
   return (
@@ -43,31 +42,26 @@ export function TopBar() {
                     : "font-medium text-stone-500 hover:bg-white/[0.05] hover:text-ink"
                 )}
               >
-                {item.label}
+                {t(item.key)}
               </Link>
             );
           })}
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <Link href="/radio" aria-label="Radio" className={`sm:hidden ${iconLinkClass}`}>
-            <Radio className="h-4 w-4" />
-          </Link>
-          <Link href="/world-news" aria-label="World News" className={`sm:hidden ${iconLinkClass}`}>
-            <Globe2 className="h-4 w-4" />
-          </Link>
+          <LanguageToggle />
 
           {currentUser ? (
             <Link href="/you" className="hidden text-right transition hover:opacity-80 sm:block">
               <p className="text-sm font-semibold text-ink">@{currentUser.username}</p>
-              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-stone-400">Your stations</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-stone-400">{t("nav.yourStations")}</p>
             </Link>
           ) : (
             <Link
               href="/login"
               className="rounded-xl bg-ink px-5 py-2.5 text-sm font-semibold text-surface transition hover:-translate-y-0.5 active:scale-[0.97]"
             >
-              Sign in
+              {t("nav.signIn")}
             </Link>
           )}
         </div>

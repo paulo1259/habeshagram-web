@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Copy, Share2 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/hooks/use-language";
 import { cn } from "@/lib/utils";
 
 type ShareActionsProps = {
@@ -63,6 +64,7 @@ export function ShareActions({
   compact = false
 }: ShareActionsProps) {
   const [feedback, setFeedback] = useState("");
+  const { t } = useLanguage();
   const [errorMessage, setErrorMessage] = useState("");
   const [canNativeShare, setCanNativeShare] = useState(false);
 
@@ -94,10 +96,10 @@ export function ShareActions({
         path,
         title
       });
-      setFeedback("Link copied");
+      setFeedback(t("share.copied"));
     } catch {
       setFeedback("");
-      setErrorMessage("Unable to copy link right now");
+      setErrorMessage(t("share.copyFailed"));
     }
   }
 
@@ -109,7 +111,7 @@ export function ShareActions({
 
     try {
       setErrorMessage("");
-      setFeedback("Share sheet opened");
+      setFeedback(t("share.opened"));
       trackEvent("share_action", {
         action: "native_share",
         path,
@@ -128,7 +130,7 @@ export function ShareActions({
       }
 
       setFeedback("");
-      setErrorMessage("Unable to share right now");
+      setErrorMessage(t("share.shareFailed"));
     }
   }
 
@@ -154,7 +156,7 @@ export function ShareActions({
           onClick={() => void handleShare()}
         >
           <Share2 className="h-4 w-4" />
-          <span>{canNativeShare ? "Share" : "Share or copy link"}</span>
+          <span>{t(canNativeShare ? "share.share" : "share.shareOrCopy")}</span>
         </button>
         <button
           type="button"
@@ -162,7 +164,7 @@ export function ShareActions({
           onClick={() => void handleCopy()}
         >
           <Copy className="h-4 w-4" />
-          <span>Copy link</span>
+          <span>{t("share.copy")}</span>
         </button>
         {feedbackNode}
       </div>
@@ -182,7 +184,7 @@ export function ShareActions({
           onClick={() => void handleShare()}
         >
           <Share2 className={cn("h-4 w-4", compact && "h-3.5 w-3.5")} />
-          {canNativeShare ? "Share" : "Share"}
+          {t("share.share")}
         </Button>
         <Button
           type="button"
@@ -194,7 +196,7 @@ export function ShareActions({
           onClick={() => void handleCopy()}
         >
           <Copy className={cn("h-4 w-4", compact && "h-3.5 w-3.5")} />
-          Copy link
+          {t("share.copy")}
         </Button>
       </div>
       {feedbackNode}

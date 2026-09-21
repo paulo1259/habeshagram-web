@@ -34,6 +34,7 @@ export type AnalyticsEventName =
   // News
   | "brief_viewed"
   | "story_opened"
+  | "brief_listened"
   // Accounts
   | "station_favorited"
   | "story_saved";

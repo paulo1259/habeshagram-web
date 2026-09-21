@@ -130,9 +130,10 @@ const config: Config = {
         }
       },
       fontFamily: {
-        sans: ["var(--font-body)", "IBM Plex Sans", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-body)", "IBM Plex Sans", "Noto Sans Ethiopic", "ui-sans-serif", "system-ui", "sans-serif"],
+        ethiopic: ["Noto Sans Ethiopic", "var(--font-body)", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "IBM Plex Mono", "ui-monospace", "SFMono-Regular", "monospace"],
-        display: ["var(--font-display)", "var(--font-body)", "ui-sans-serif", "system-ui", "sans-serif"]
+        display: ["var(--font-display)", "var(--font-body)", "Noto Sans Ethiopic", "ui-sans-serif", "system-ui", "sans-serif"]
       },
       boxShadow: {
         soft: "0 18px 44px rgba(0, 0, 0, 0.45)",

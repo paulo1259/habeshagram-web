@@ -5,20 +5,22 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Globe2, House, LogOut, Radio, UserCircle2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const items = [
-  { href: "/", label: "Home", icon: House },
-  { href: "/radio", label: "Radio", icon: Radio },
-  { href: "/world-news", label: "World News", icon: Globe2 },
-  { href: "/you", label: "You", icon: UserCircle2 }
-];
+  { href: "/", key: "nav.home", icon: House },
+  { href: "/radio", key: "nav.radio", icon: Radio },
+  { href: "/world-news", key: "nav.worldNews", icon: Globe2 },
+  { href: "/you", key: "nav.you", icon: UserCircle2 }
+] as const;
 
 export function DesktopSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { currentUser, logout } = useAuth();
+  const { t } = useLanguage();
 
   return (
     <aside className="glass-card sticky top-24 hidden h-fit rounded-[28px] p-5 shadow-soft lg:block">
@@ -44,7 +46,7 @@ export function DesktopSidebar() {
                 />
               ) : null}
               <Icon className="relative h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
-              <span className="relative">{item.label}</span>
+              <span className="relative">{t(item.key)}</span>
               {active ? (
                 <span className="relative ml-auto h-1.5 w-1.5 rounded-full bg-brand-500 shadow-glow-sm" />
               ) : null}
@@ -56,7 +58,7 @@ export function DesktopSidebar() {
       <div className="mt-6 border-t border-white/[0.07] pt-5">
         {currentUser ? (
           <>
-            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-stone-400">Account</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-stone-400">{t("nav.account")}</p>
             <p className="mt-2 text-sm font-semibold text-ink">@{currentUser.username}</p>
             <Button
               variant="outline"
@@ -67,16 +69,16 @@ export function DesktopSidebar() {
               }}
             >
               <LogOut className="mr-2 h-4 w-4" />
-              Log out
+              {t("nav.logOut")}
             </Button>
           </>
         ) : (
           <>
             <p className="text-sm leading-6 text-stone-500">
-              Keep your favourite stations and save stories for later.
+              {t("nav.sidebarPitch")}
             </p>
             <Button className="mt-4 w-full" onClick={() => router.push("/login")}>
-              Sign in
+              {t("nav.signIn")}
             </Button>
           </>
         )}

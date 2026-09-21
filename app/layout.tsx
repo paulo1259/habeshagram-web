@@ -1,10 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { cookies } from "next/headers";
 import "./globals.css";
 import { siteDescription, siteName, siteTagline, siteUrl } from "@/lib/site";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { AuthProvider } from "@/hooks/use-auth";
+import { BriefPlayerProvider } from "@/hooks/use-brief-player";
+import { LanguageProvider } from "@/hooks/use-language";
 import { LibraryProvider } from "@/hooks/use-library";
+import { LANG_COOKIE, parseLang } from "@/lib/i18n/config";
 import { RadioProvider } from "@/hooks/use-radio";
 import { PersistentRadioPlayer } from "@/components/radio/persistent-radio-player";
 
@@ -72,27 +76,34 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  // Read on the server so the very first paint is in the visitor's language.
+  const lang = parseLang(cookies().get(LANG_COOKIE)?.value);
+
   return (
-    <html lang="en">
+    <html lang={lang}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
       <body className="min-h-screen bg-surface text-ink antialiased">
-        <AuthProvider>
-          <AnalyticsProvider>
-            <RadioProvider>
-              <LibraryProvider>
-              {children}
-              <PersistentRadioPlayer />
-              </LibraryProvider>
-            </RadioProvider>
-          </AnalyticsProvider>
-        </AuthProvider>
+        <LanguageProvider initialLang={lang}>
+          <AuthProvider>
+            <AnalyticsProvider>
+              <RadioProvider>
+                <LibraryProvider>
+                  <BriefPlayerProvider>
+                    {children}
+                    <PersistentRadioPlayer />
+                  </BriefPlayerProvider>
+                </LibraryProvider>
+              </RadioProvider>
+            </AnalyticsProvider>
+          </AuthProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

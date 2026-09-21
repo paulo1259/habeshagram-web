@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { AuthCard, AuthInput, AuthMessage, AuthSubmit, authLinkClass } from "@/components/auth/auth-card";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 import { getSafeNext } from "@/lib/safe-next";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, currentUser, authMode, isReady } = useAuth();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -36,65 +38,56 @@ export default function LoginPage() {
       await login(email, password);
       router.push(getSafeNext());
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Unable to log in.");
+      setErrorMessage(error instanceof Error ? error.message : t("auth.loginFailed"));
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-surface bg-warm px-4 py-10">
-      <div className="glass-card mx-auto max-w-md rounded-[2rem] border border-brand-100 p-6 shadow-soft">
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">Login</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Welcome back</h1>
-        <p className="mt-2 text-sm text-stone-600">
-          {authMode === "supabase"
-            ? "Sign in with your email and password."
-            : "Sign-in is not configured yet. Add your NEXT_PUBLIC_SUPABASE_* values to .env.local and restart the dev server."}
-        </p>
-
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="Email"
-            className="w-full rounded-2xl border border-brand-100 bg-brand-50/40 px-4 py-3 outline-none ring-brand-300 focus:ring-2"
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Password"
-            className="w-full rounded-2xl border border-brand-100 bg-brand-50/40 px-4 py-3 outline-none ring-brand-300 focus:ring-2"
-          />
-          <div className="flex justify-end">
-            <Link href="/forgot-password" className="text-sm font-medium text-brand-800 transition hover:text-brand-900">
-              Forgot password?
-            </Link>
-          </div>
-          {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
-          {currentUser ? (
-            <p className="text-sm text-brand-700">Already logged in as @{currentUser.username}.</p>
-          ) : null}
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Logging in..." : "Log in"}
-          </Button>
-        </form>
-
-        <p className="mt-4 text-xs leading-5 text-stone-500">
-          Soft launch note: confirm email sign-in is enabled in Supabase Auth and this domain is listed under the allowed redirect URLs before inviting testers.
-        </p>
-
-        <div className="mt-6 flex items-center justify-between text-sm text-stone-600">
-          <Link href="/" className="font-medium text-brand-800">
-            Back to Zema
+    <AuthCard
+      eyebrow={t("auth.login")}
+      title={t("auth.welcomeBack")}
+      body={authMode === "supabase" ? t("auth.loginBody") : t("auth.notConfigured")}
+      footer={
+        <>
+          <Link href="/" className={authLinkClass}>
+            {t("auth.backToZema")}
           </Link>
-          <Link href={`/signup${nextQuery}`} className="font-medium text-brand-800">
-            Create account
+          <Link href={`/signup${nextQuery}`} className={authLinkClass}>
+            {t("auth.noAccount")}
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-3.5">
+        <AuthInput
+          type="email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder={t("auth.email")}
+          aria-label={t("auth.email")}
+        />
+        <AuthInput
+          type="password"
+          autoComplete="current-password"
+          required
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder={t("auth.password")}
+          aria-label={t("auth.password")}
+        />
+        <div className="flex justify-end">
+          <Link href="/forgot-password" className="text-[13px] font-medium text-stone-500 transition hover:text-ink">
+            {t("auth.forgot")}
           </Link>
         </div>
-      </div>
-    </main>
+        {errorMessage ? <AuthMessage tone="error">{errorMessage}</AuthMessage> : null}
+        {currentUser ? <AuthMessage tone="success">{t("auth.alreadyIn", { name: currentUser.username })}</AuthMessage> : null}
+        <AuthSubmit disabled={isSubmitting}>{isSubmitting ? t("auth.loggingIn") : t("auth.logIn")}</AuthSubmit>
+      </form>
+    </AuthCard>
   );
 }

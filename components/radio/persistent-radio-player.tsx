@@ -16,6 +16,8 @@ import {
   X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/hooks/use-language";
+import { radioErrorText } from "@/lib/i18n/radio-errors";
 import { useRadio } from "@/hooks/use-radio";
 
 const SLEEP_OPTIONS = [15, 30, 60, 90] as const;
@@ -71,6 +73,7 @@ export function PersistentRadioPlayer() {
     elapsedSeconds,
     setSleepTimer
   } = useRadio();
+  const { t } = useLanguage();
   const [showSleepMenu, setShowSleepMenu] = useState(false);
   const [, tick] = useState(0);
   const sleepMenuRef = useRef<HTMLDivElement | null>(null);
@@ -106,20 +109,21 @@ export function PersistentRadioPlayer() {
 
   const sleepRemainingMinutes = sleepAt ? Math.max(0, Math.ceil((sleepAt - Date.now()) / 60_000)) : null;
 
-  const statusLabel =
+  const statusLabel = t(
     status === "playing"
-      ? "Live now"
+      ? "radio.player.live"
       : status === "loading"
-        ? "Connecting..."
+        ? "radio.player.connecting"
         : status === "reconnecting"
-          ? "Reconnecting..."
+          ? "radio.player.reconnecting"
           : status === "error"
-            ? "Connection issue"
-            : "Paused";
+            ? "radio.player.issue"
+            : "radio.player.paused"
+  );
 
   return (
     <aside
-      aria-label="Persistent radio player"
+      aria-label={t("radio.player.label")}
       className="fixed bottom-[6.4rem] left-3 right-3 z-50 mx-auto max-w-xl lg:bottom-4 lg:left-auto lg:right-4 lg:mx-0 lg:w-[34rem]"
     >
       <div className="overflow-hidden rounded-[26px] border border-brand-500/25 bg-card/98 shadow-[0_22px_70px_rgba(0,0,0,0.72),0_0_30px_rgba(69,224,200,0.14)] backdrop-blur-2xl">
@@ -142,11 +146,11 @@ export function PersistentRadioPlayer() {
               {nowPlaying ? `${station.name} · ` : ""}
               {statusLabel}
               {isPlaying || status === "paused" ? ` · ${formatElapsed(elapsedSeconds)}` : ""}
-              {sleepRemainingMinutes ? ` · sleep ${sleepRemainingMinutes}m` : ""}
+              {sleepRemainingMinutes ? ` · ${t("radio.player.sleep", { n: sleepRemainingMinutes })}` : ""}
             </p>
           </div>
 
-          <button type="button" className={controlClass} onClick={() => void playPrevious()} aria-label="Previous station">
+          <button type="button" className={controlClass} onClick={() => void playPrevious()} aria-label={t("radio.previous")}>
             <SkipBack className="h-4 w-4" />
           </button>
 
@@ -154,12 +158,12 @@ export function PersistentRadioPlayer() {
             type="button"
             className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-orange-500 text-brand-950 shadow-glow-sm transition hover:scale-105"
             onClick={() => void togglePlayback()}
-            aria-label={isPlaying ? "Pause radio" : "Play radio"}
+            aria-label={t(isPlaying ? "radio.player.pause" : "radio.player.play")}
           >
             {isPlaying ? <Pause className="h-4.5 w-4.5 fill-current" /> : <Play className="ml-0.5 h-4.5 w-4.5 fill-current" />}
           </button>
 
-          <button type="button" className={controlClass} onClick={() => void playNext()} aria-label="Next station">
+          <button type="button" className={controlClass} onClick={() => void playNext()} aria-label={t("radio.next")}>
             <SkipForward className="h-4 w-4" />
           </button>
 
@@ -167,12 +171,12 @@ export function PersistentRadioPlayer() {
             type="button"
             className={controlClass}
             onClick={() => setExpanded(!isExpanded)}
-            aria-label={isExpanded ? "Collapse radio player" : "Expand radio player"}
+            aria-label={t(isExpanded ? "radio.player.collapse" : "radio.player.expand")}
           >
             {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
           </button>
 
-          <button type="button" className={controlClass} onClick={closePlayer} aria-label="Close radio player">
+          <button type="button" className={controlClass} onClick={closePlayer} aria-label={t("radio.player.close")}>
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -185,11 +189,11 @@ export function PersistentRadioPlayer() {
         >
             <div className="space-y-3 px-4 pb-4 pt-3">
               <div className="flex items-center gap-3">
-                <button type="button" className={controlClass} onClick={toggleMute} aria-label={isMuted ? "Unmute radio" : "Mute radio"}>
+                <button type="button" className={controlClass} onClick={toggleMute} aria-label={t(isMuted ? "radio.unmute" : "radio.mute")}>
                   {isMuted || volume === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                 </button>
                 <input
-                  aria-label="Radio volume"
+                  aria-label={t("radio.volume")}
                   type="range"
                   min="0"
                   max="1"
@@ -204,7 +208,7 @@ export function PersistentRadioPlayer() {
                 <div ref={sleepMenuRef} className="relative">
                   <button
                     type="button"
-                    aria-label="Sleep timer"
+                    aria-label={t("radio.player.sleepTimer")}
                     onClick={() => setShowSleepMenu((value) => !value)}
                     className={cn(
                       controlClass,
@@ -216,7 +220,7 @@ export function PersistentRadioPlayer() {
                   {showSleepMenu ? (
                     <div className="glass-card absolute bottom-11 right-0 z-10 w-40 rounded-2xl p-1.5 shadow-soft">
                       <p className="px-2.5 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-stone-500">
-                        Sleep timer
+                        {t("radio.player.sleepTimer")}
                       </p>
                       {SLEEP_OPTIONS.map((minutes) => (
                         <button
@@ -228,7 +232,7 @@ export function PersistentRadioPlayer() {
                             setShowSleepMenu(false);
                           }}
                         >
-                          {minutes} minutes
+                          {t("radio.player.minutes", { n: minutes })}
                         </button>
                       ))}
                       <button
@@ -239,26 +243,24 @@ export function PersistentRadioPlayer() {
                           setShowSleepMenu(false);
                         }}
                       >
-                        Off
+                        {t("radio.sleepOff")}
                       </button>
                     </div>
                   ) : null}
                 </div>
               </div>
               <p className="text-xs leading-5 text-stone-500">
-                Playback keeps running in the background — across pages, minimized windows, and with
-                lock-screen or keyboard media controls where your browser supports them. Set a sleep
-                timer to stop automatically.
+                {t("radio.player.help")}
               </p>
             </div>
         </div>
 
         {errorMessage ? (
           <div className="flex items-center justify-between gap-3 border-t border-red-500/15 bg-red-50 px-4 py-2.5 text-xs text-red-700">
-            <span>{errorMessage}</span>
+            <span>{radioErrorText(errorMessage, t)}</span>
             <button type="button" className="inline-flex shrink-0 items-center gap-1 font-bold" onClick={() => void retry()}>
               <RefreshCw className="h-3.5 w-3.5" />
-              Retry
+              {t("radio.retry")}
             </button>
           </div>
         ) : null}

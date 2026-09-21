@@ -3,18 +3,23 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { MailCheck } from "lucide-react";
+import { AuthCard, AuthInput, AuthMessage, AuthSubmit, authLinkClass } from "@/components/auth/auth-card";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 import { getSafeNext } from "@/lib/safe-next";
+import { EmailConfirmationRequiredError } from "@/services/auth-service";
 
 export default function SignupPage() {
   const router = useRouter();
   const { signup, currentUser, authMode, isReady } = useAuth();
+  const { t } = useLanguage();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmSentTo, setConfirmSentTo] = useState("");
   const [nextQuery, setNextQuery] = useState("");
 
   useEffect(() => {
@@ -31,17 +36,17 @@ export default function SignupPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!username.trim() || username.trim().length < 3) {
-      setErrorMessage("Choose a username with at least 3 characters.");
+      setErrorMessage(t("auth.usernameShort"));
       return;
     }
 
     if (!email.trim() || !password.trim()) {
-      setErrorMessage("Email and password are required.");
+      setErrorMessage(t("auth.required"));
       return;
     }
 
     if (password.trim().length < 6) {
-      setErrorMessage("Use a password with at least 6 characters.");
+      setErrorMessage(t("auth.passwordShort"));
       return;
     }
 
@@ -51,59 +56,81 @@ export default function SignupPage() {
       await signup({ username, email, password });
       router.push(getSafeNext());
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Unable to create account.");
+      if (error instanceof EmailConfirmationRequiredError) {
+        setConfirmSentTo(email.trim());
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : t("auth.signupFailed"));
+      }
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  return (
-    <main className="min-h-screen bg-surface bg-warm px-4 py-10">
-      <div className="glass-card mx-auto max-w-md rounded-[2rem] border border-brand-100 p-6 shadow-soft">
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">Sign up</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Join Zema</h1>
-        <p className="mt-2 text-sm text-stone-600">
-          {authMode === "supabase"
-            ? "Create a free account to save your stations and pick up where you left off."
-            : "Sign-in is not configured yet. Add your NEXT_PUBLIC_SUPABASE_* values to .env.local and restart the dev server."}
-        </p>
-
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <input
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-            placeholder="Username"
-            className="w-full rounded-2xl border border-brand-100 bg-brand-50/40 px-4 py-3 outline-none ring-brand-300 focus:ring-2"
-          />
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="Email"
-            className="w-full rounded-2xl border border-brand-100 bg-brand-50/40 px-4 py-3 outline-none ring-brand-300 focus:ring-2"
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Password"
-            className="w-full rounded-2xl border border-brand-100 bg-brand-50/40 px-4 py-3 outline-none ring-brand-300 focus:ring-2"
-          />
-          {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Creating account..." : "Create account"}
-          </Button>
-        </form>
-
-        <div className="mt-6 flex items-center justify-between text-sm text-stone-600">
-          <Link href="/" className="font-medium text-brand-800">
-            Back to Zema
+  if (confirmSentTo) {
+    return (
+      <AuthCard
+        eyebrow={t("auth.signupEyebrow")}
+        title={t("auth.checkEmailTitle")}
+        footer={
+          <Link href="/" className={authLinkClass}>
+            {t("auth.backToZema")}
           </Link>
-          <Link href={`/login${nextQuery}`} className="font-medium text-brand-800">
-            Already have an account?
-          </Link>
+        }
+      >
+        <div className="flex gap-3 rounded-2xl border border-brand-500/30 bg-brand-500/[0.07] p-4">
+          <MailCheck className="mt-0.5 h-5 w-5 shrink-0 text-brand-500" aria-hidden="true" />
+          <p className="text-[14.5px] leading-6 text-stone-600">{t("auth.checkEmailBody", { email: confirmSentTo })}</p>
         </div>
-      </div>
-    </main>
+      </AuthCard>
+    );
+  }
+
+  return (
+    <AuthCard
+      eyebrow={t("auth.signupEyebrow")}
+      title={t("auth.signupTitle")}
+      body={authMode === "supabase" ? t("auth.signupBody") : t("auth.notConfigured")}
+      footer={
+        <>
+          <Link href="/" className={authLinkClass}>
+            {t("auth.backToZema")}
+          </Link>
+          <Link href={`/login${nextQuery}`} className={authLinkClass}>
+            {t("auth.haveAccount")}
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-3.5">
+        <AuthInput
+          autoComplete="username"
+          required
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
+          placeholder={t("auth.username")}
+          aria-label={t("auth.username")}
+        />
+        <AuthInput
+          type="email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder={t("auth.email")}
+          aria-label={t("auth.email")}
+        />
+        <AuthInput
+          type="password"
+          autoComplete="new-password"
+          required
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder={t("auth.password")}
+          aria-label={t("auth.password")}
+        />
+        {errorMessage ? <AuthMessage tone="error">{errorMessage}</AuthMessage> : null}
+        <AuthSubmit disabled={isSubmitting}>{isSubmitting ? t("auth.creating") : t("auth.create")}</AuthSubmit>
+      </form>
+    </AuthCard>
   );
 }

@@ -64,6 +64,14 @@ async function loadProfile(authUser: SupabaseUser): Promise<User> {
   };
 }
 
+/** Sign-up worked, but the account needs its email confirmed before sign-in. */
+export class EmailConfirmationRequiredError extends Error {
+  constructor() {
+    super("Check your email to confirm your account, then sign in.");
+    this.name = "EmailConfirmationRequiredError";
+  }
+}
+
 function mapAuthError(error: unknown) {
   const message = error instanceof Error ? error.message : "";
 
@@ -154,12 +162,22 @@ export async function signupUser(input: SignupInput): Promise<User> {
     password: input.password,
     options: {
       // Read by the handle_new_user trigger to seed profiles.username.
-      data: { username: input.username.trim() }
+      data: { username: input.username.trim() },
+      // Where the confirmation email's link lands. Must be listed under
+      // Supabase → Authentication → URL Configuration → Redirect URLs.
+      emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/you` : undefined
     }
   });
 
   if (error || !data.user) {
     throw new Error(mapAuthError(error));
+  }
+
+  // With "Confirm email" on, Supabase creates the account but no session
+  // until the link in the email is clicked. Treating that as signed in would
+  // show a logged-in UI that every database call then rejects.
+  if (!data.session) {
+    throw new EmailConfirmationRequiredError();
   }
 
   return loadProfile(data.user);
@@ -175,9 +193,18 @@ export async function requestPasswordReset(email: string): Promise<void> {
   const client = requireClient();
 
   const { error } = await client.auth.resetPasswordForEmail(normalizedEmail, {
-    redirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined
+    redirectTo: typeof window !== "undefined" ? `${window.location.origin}/reset-password` : undefined
   });
 
+  if (error) {
+    throw new Error(mapAuthError(error));
+  }
+}
+
+/** Set a new password for the signed-in (or recovery-link) session. */
+export async function updatePassword(password: string): Promise<void> {
+  const client = requireClient();
+  const { error } = await client.auth.updateUser({ password });
   if (error) {
     throw new Error(mapAuthError(error));
   }

@@ -4,17 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { Globe2, House, Radio, UserCircle2 } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 import { cn } from "@/lib/utils";
 
 const items = [
-  { href: "/", label: "Home", icon: House },
-  { href: "/radio", label: "Radio", icon: Radio },
-  { href: "/world-news", label: "News", icon: Globe2 },
-  { href: "/you", label: "You", icon: UserCircle2 }
-];
+  { href: "/", key: "nav.home", icon: House },
+  { href: "/radio", key: "nav.radio", icon: Radio },
+  { href: "/world-news", key: "nav.news", icon: Globe2 },
+  { href: "/you", key: "nav.you", icon: UserCircle2 }
+] as const;
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 px-3 pb-3 pt-1 lg:hidden">
@@ -40,7 +42,7 @@ export function MobileBottomNav() {
                 />
               ) : null}
               <Icon className="relative h-[19px] w-[19px]" />
-              <span className="relative">{item.label}</span>
+              <span className="relative">{t(item.key)}</span>
             </Link>
           );
         })}

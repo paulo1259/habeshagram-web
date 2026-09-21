@@ -41,6 +41,7 @@
     color: #f2f3f7;
     font-family:
       var(--font-body, "IBM Plex Sans"),
+      "Noto Sans Ethiopic",
       ui-sans-serif,
       system-ui,
       -apple-system,
@@ -67,7 +68,7 @@
   h3,
   .page-title,
   .section-title {
-    font-family: var(--font-display, var(--font-body, "IBM Plex Sans")), ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-display, var(--font-body, "IBM Plex Sans")), "Noto Sans Ethiopic", ui-sans-serif, system-ui, sans-serif;
   }
 
   * {
@@ -511,4 +512,10 @@ img {
   box-shadow: 0 0 10px rgba(69, 224, 200, 0.6);
   cursor: pointer;
   border: none;
+}
+
+/* Ethiopic script doesn't take letter-spacing well: the tracked, uppercase
+   mono labels that suit English read as scattered characters in Amharic. */
+html[lang="am"] .font-mono {
+  letter-spacing: 0 !important;
 }

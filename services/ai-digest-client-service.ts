@@ -8,44 +8,52 @@ export type WorldNewsDigestPayload = {
   generatedAt?: string;
   stale?: boolean;
   message?: string;
+  lang?: "en" | "am";
+  /** Short hash of the brief's text; changes whenever the brief is rewritten. */
+  version?: string;
+  /** Present when a spoken version can be generated. */
+  audioUrl?: string;
 };
 
 const DIGEST_CLIENT_CACHE_MS = 5 * 60 * 1000;
 
-let cachedPayload: WorldNewsDigestPayload | null = null;
-let cachedAt = 0;
-let inflight: Promise<WorldNewsDigestPayload> | null = null;
+type Lang = "en" | "am";
+const cache: Partial<Record<Lang, { payload: WorldNewsDigestPayload; at: number }>> = {};
+const inflightByLang: Partial<Record<Lang, Promise<WorldNewsDigestPayload>>> = {};
 
-export async function getWorldNewsDigest(): Promise<WorldNewsDigestPayload> {
-  if (cachedPayload && Date.now() - cachedAt < DIGEST_CLIENT_CACHE_MS) {
-    return cachedPayload;
+export async function getWorldNewsDigest(lang: Lang = "en"): Promise<WorldNewsDigestPayload> {
+  const cached = cache[lang];
+  if (cached && Date.now() - cached.at < DIGEST_CLIENT_CACHE_MS) {
+    return cached.payload;
   }
 
-  if (inflight) {
-    return inflight;
+  const pending = inflightByLang[lang];
+  if (pending) {
+    return pending;
   }
 
-  inflight = fetch("/api/world-news/digest", { method: "GET", cache: "no-store" })
+  const request = fetch(`/api/world-news/digest?lang=${lang}`, { method: "GET", cache: "no-store" })
     .then(async (response) => {
       if (!response.ok) {
         throw new Error(`Digest request failed with ${response.status}.`);
       }
 
       const payload = (await response.json()) as WorldNewsDigestPayload;
-      cachedPayload = payload;
-      cachedAt = Date.now();
+      cache[lang] = { payload, at: Date.now() };
       return payload;
     })
     .catch((error) => {
-      if (cachedPayload) {
-        return cachedPayload;
+      const fallback = cache[lang]?.payload;
+      if (fallback) {
+        return fallback;
       }
 
       throw error;
     })
     .finally(() => {
-      inflight = null;
+      delete inflightByLang[lang];
     });
 
-  return inflight;
+  inflightByLang[lang] = request;
+  return request;
 }

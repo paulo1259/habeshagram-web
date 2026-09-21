@@ -2,6 +2,7 @@
 
 import { Bookmark, Heart } from "lucide-react";
 import { useLibrary } from "@/hooks/use-library";
+import { useLanguage } from "@/hooks/use-language";
 import { cn } from "@/lib/utils";
 import type { SavedStory } from "@/services/library-service";
 import type { RadioStation, WorldNewsItem } from "@/types";
@@ -20,12 +21,9 @@ export function FavoriteButton({
   className?: string;
 }) {
   const { isFavorite, toggleFavorite, isSignedIn } = useLibrary();
+  const { t } = useLanguage();
   const active = isFavorite(station.id);
-  const label = active
-    ? `Remove ${station.name} from your stations`
-    : isSignedIn
-      ? `Add ${station.name} to your stations`
-      : `Sign in to save ${station.name}`;
+  const label = t(active ? "lib.fav.remove" : isSignedIn ? "lib.fav.add" : "lib.fav.signIn", { name: station.name });
 
   return (
     <button
@@ -58,8 +56,9 @@ export function SaveStoryButton({
   className?: string;
 }) {
   const { isSaved, toggleSaved, isSignedIn } = useLibrary();
+  const { t } = useLanguage();
   const active = isSaved(item.id);
-  const label = active ? "Remove from saved stories" : isSignedIn ? "Save story for later" : "Sign in to save stories";
+  const label = t(active ? "lib.save.remove" : isSignedIn ? "lib.save.add" : "lib.save.signIn");
 
   return (
     <button

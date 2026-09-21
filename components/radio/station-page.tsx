@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { NowPlayingHero, StationCard } from "@/components/radio/radio-page";
 import { ShareActions } from "@/components/ui/share-actions";
+import { useLanguage } from "@/hooks/use-language";
 import { radioStations } from "@/services/discovery-data";
 import type { RadioStation } from "@/types";
 
@@ -18,6 +19,7 @@ import type { RadioStation } from "@/types";
  */
 export function StationPage({ station }: { station: RadioStation }) {
   const others = radioStations.filter((item) => item.id !== station.id);
+  const { t } = useLanguage();
 
   return (
     <AppShell>
@@ -28,12 +30,12 @@ export function StationPage({ station }: { station: RadioStation }) {
             className="inline-flex min-h-10 items-center gap-2 text-sm font-medium text-stone-500 transition hover:text-ink"
           >
             <ArrowLeft className="h-4 w-4" />
-            All stations
+            {t("radio.allStations")}
           </Link>
           <ShareActions
             path={`/radio/${station.id}`}
-            title={`${station.name} · Live on Zema`}
-            text={`Listen to ${station.name} live on Zema`}
+            title={t("radio.shareTitle", { name: station.name })}
+            text={t("radio.shareText", { name: station.name })}
           />
         </div>
 
@@ -53,7 +55,7 @@ export function StationPage({ station }: { station: RadioStation }) {
         ) : null}
 
         <section className="px-4 sm:px-0">
-          <h2 className="font-display text-lg font-semibold tracking-[-0.02em] text-ink">More stations</h2>
+          <h2 className="font-display text-lg font-semibold tracking-[-0.02em] text-ink">{t("radio.moreStations")}</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {others.map((item) => (
               <StationCard key={item.id} station={item} />

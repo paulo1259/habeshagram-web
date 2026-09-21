@@ -14,7 +14,10 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { FavoriteButton } from "@/components/library/library-buttons";
+import { useLanguage } from "@/hooks/use-language";
+import { radioErrorText } from "@/lib/i18n/radio-errors";
 import { useLibrary } from "@/hooks/use-library";
+import { stationDescription, stationMeta } from "@/lib/i18n/stations";
 import { useStationHealth } from "@/hooks/use-station-health";
 import { useRadio } from "@/hooks/use-radio";
 import { cn } from "@/lib/utils";
@@ -65,7 +68,7 @@ function Waveform({ live, compact = false }: { live: boolean; compact?: boolean 
 }
 
 const SLEEP_OPTIONS: Array<{ label: string; minutes: number | null }> = [
-  { label: "Off", minutes: null },
+  { label: "off", minutes: null },
   { label: "15m", minutes: 15 },
   { label: "30m", minutes: 30 },
   { label: "1h", minutes: 60 }
@@ -92,6 +95,7 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
   } = useRadio();
   const { healthOf } = useStationHealth();
   const { lastStation } = useLibrary();
+  const { t, lang } = useLanguage();
 
   const featured = radioStations.find((item) => item.featured) ?? radioStations[0];
   // On a station page the hero is about that station even if another one is
@@ -114,25 +118,25 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
   const shownHealth = healthOf(shown.id);
   const badge = !isCurrent
     ? shownHealth === "online"
-      ? { label: "On air", tone: "bg-emerald-500/[0.12] text-emerald-700", dot: "bg-emerald-500" }
+      ? { label: t("radio.badgeOnAir"), tone: "bg-emerald-500/[0.12] text-emerald-700", dot: "bg-emerald-500" }
       : shownHealth === "offline"
-        ? { label: "Off air", tone: "bg-white/[0.06] text-stone-500", dot: "bg-stone-400" }
-        : { label: "Ready", tone: "bg-white/[0.06] text-stone-500", dot: "bg-stone-400" }
+        ? { label: t("radio.badgeOffAir"), tone: "bg-white/[0.06] text-stone-500", dot: "bg-stone-400" }
+        : { label: t("radio.badgeReady"), tone: "bg-white/[0.06] text-stone-500", dot: "bg-stone-400" }
     : status === "playing"
-      ? { label: "Live", tone: "bg-red-500/[0.14] text-red-700", dot: "bg-red-600 animate-pulse" }
+      ? { label: t("radio.badgeLive"), tone: "bg-red-500/[0.14] text-red-700", dot: "bg-red-600 animate-pulse" }
       : status === "loading" || status === "reconnecting"
         ? {
-            label: status === "reconnecting" ? "Reconnecting" : "Connecting",
+            label: t(status === "reconnecting" ? "radio.badgeReconnecting" : "radio.badgeConnecting"),
             tone: "bg-brand-500/[0.12] text-brand-700",
             dot: "bg-brand-500 animate-pulse"
           }
         : status === "error"
-          ? { label: "Off air", tone: "bg-white/[0.06] text-stone-500", dot: "bg-stone-400" }
-          : { label: "Paused", tone: "bg-white/[0.06] text-stone-500", dot: "bg-stone-400" };
+          ? { label: t("radio.badgeOffAir"), tone: "bg-white/[0.06] text-stone-500", dot: "bg-stone-400" }
+          : { label: t("radio.badgePaused"), tone: "bg-white/[0.06] text-stone-500", dot: "bg-stone-400" };
 
   // Live state belongs to the station shown, not to whatever the player holds.
   const showingLive = isCurrent && isPlaying;
-  const playLabel = showingLive ? "Pause" : isCurrent ? "Resume" : `Play ${shown.name}`;
+  const playLabel = showingLive ? t("radio.pause") : isCurrent ? t("radio.resumeShort") : t("radio.playName", { name: shown.name });
 
   return (
     <section className="relative overflow-hidden border-b border-white/[0.06] bg-card/90 px-4 py-6 sm:rounded-[30px] sm:border sm:border-brand-500/25 sm:px-7 sm:py-7 sm:shadow-soft">
@@ -144,14 +148,14 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
         <div className="flex items-center justify-between gap-3">
           <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-stone-400">
             {isCurrent
-              ? "Now playing"
+              ? t("radio.nowPlaying")
               : playingElsewhere
-                ? `Playing ${station?.name} — tap to switch`
+                ? t("radio.playingElsewhere", { name: station?.name ?? "" })
                 : focusStation
-                  ? "Live station"
+                  ? t("radio.liveStation")
                   : isResume
-                    ? "Pick up where you left off"
-                    : "Featured station"}
+                    ? t("radio.resume")
+                    : t("radio.featured")}
           </span>
           <span className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1", badge.tone)}>
             <span className={cn("h-1.5 w-1.5 rounded-full", badge.dot)} />
@@ -169,17 +173,17 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
         </div>
 
         <p className="mt-2 font-mono text-[12.5px] text-stone-500">
-          {shown.frequency} · {shown.city}
+          {stationMeta(shown, lang)}
         </p>
 
         <p className="mt-3 min-h-[1.5rem] text-[15px] leading-6 text-stone-600">
           {isCurrent && nowPlaying ? (
             <>
-              <span className="text-stone-400">On air · </span>
+              <span className="text-stone-400">{t("radio.onAirPrefix")} </span>
               <span className="font-medium text-ink">{nowPlaying}</span>
             </>
           ) : (
-            shown.description
+            stationDescription(shown, lang)
           )}
         </p>
 
@@ -191,7 +195,7 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
           <button
             type="button"
             onClick={() => void playPrevious()}
-            aria-label="Previous station"
+            aria-label={t("radio.previous")}
             className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/[0.1] text-stone-500 transition hover:border-brand-500/40 hover:text-ink"
           >
             <SkipBack className="h-4 w-4 fill-current" />
@@ -209,7 +213,7 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
           <button
             type="button"
             onClick={() => void playNext()}
-            aria-label="Next station"
+            aria-label={t("radio.next")}
             className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/[0.1] text-stone-500 transition hover:border-brand-500/40 hover:text-ink"
           >
             <SkipForward className="h-4 w-4 fill-current" />
@@ -219,13 +223,13 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
             <button
               type="button"
               onClick={toggleMute}
-              aria-label={isMuted ? "Unmute" : "Mute"}
+              aria-label={t(isMuted ? "radio.unmute" : "radio.mute")}
               className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-stone-500 transition hover:text-ink"
             >
               {isMuted || volume === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             </button>
             <label htmlFor="hero-volume" className="sr-only">
-              Volume
+              {t("radio.volume")}
             </label>
             <input
               id="hero-volume"
@@ -244,8 +248,8 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
           <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3">
             <p className="text-sm text-stone-500">
               {shownHealth === "offline"
-                ? `${shown.name} looks off air right now. It usually comes back on its own — try again later or pick another station.`
-                : errorMessage}
+                ? t("radio.offAirHelp", { name: shown.name })
+                : radioErrorText(errorMessage, t)}
             </p>
             <button
               type="button"
@@ -253,7 +257,7 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
               className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-brand-700"
             >
               <RefreshCw className="h-3.5 w-3.5" />
-              Retry
+              {t("radio.retry")}
             </button>
           </div>
         ) : null}
@@ -261,7 +265,7 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
         <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-white/[0.07] pt-5">
           <span className="mr-1 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-stone-400">
             <Moon className="h-3.5 w-3.5" />
-            Sleep
+            {t("radio.sleep")}
           </span>
           {SLEEP_OPTIONS.map((option) => {
             const active = option.label === activeSleep.label;
@@ -278,12 +282,12 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
                     : "text-stone-500 ring-1 ring-white/[0.1] hover:text-ink"
                 )}
               >
-                {option.label}
+                {option.minutes === null ? t("radio.sleepOff") : option.label}
               </button>
             );
           })}
           {sleepMinutesLeft ? (
-            <span className="ml-auto font-mono text-[11px] text-stone-400">stops in {sleepMinutesLeft}m</span>
+            <span className="ml-auto font-mono text-[11px] text-stone-400">{t("radio.stopsIn", { n: sleepMinutesLeft })}</span>
           ) : null}
         </div>
       </div>
@@ -297,6 +301,7 @@ export function StationCard({ station }: { station: RadioStation }) {
   const isLive = isActive && isPlaying;
   const isBusy = isActive && (status === "loading" || status === "reconnecting");
   const { healthOf } = useStationHealth();
+  const { t, lang } = useLanguage();
   const health = healthOf(station.id);
   const isOffAir = !isActive && health === "offline";
 
@@ -319,7 +324,7 @@ export function StationCard({ station }: { station: RadioStation }) {
             {station.name}
           </Link>
           <p className="mt-1 font-mono text-[12px] text-stone-400">
-            {station.frequency} · {station.city}
+            {stationMeta(station, lang)}
           </p>
         </div>
 
@@ -328,7 +333,7 @@ export function StationCard({ station }: { station: RadioStation }) {
           <button
             type="button"
             onClick={() => void (isActive ? togglePlayback() : playStation(station))}
-            aria-label={isLive ? `Pause ${station.name}` : `Play ${station.name}`}
+            aria-label={t(isLive ? "radio.pauseName" : "radio.playName", { name: station.name })}
             className={cn(
               "relative z-10 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition active:scale-[0.95]",
               isActive
@@ -350,7 +355,7 @@ export function StationCard({ station }: { station: RadioStation }) {
           {isActive && nowPlaying ? (
             <span className="text-ink">{nowPlaying}</span>
           ) : (
-            station.description
+            stationDescription(station, lang)
           )}
         </p>
         <span
@@ -363,7 +368,15 @@ export function StationCard({ station }: { station: RadioStation }) {
           {!isLive && !isBusy && health ? (
             <span className={cn("h-1.5 w-1.5 rounded-full", health === "online" ? "bg-emerald-500" : "bg-stone-500")} />
           ) : null}
-          {isLive ? "Playing" : isBusy ? "Tuning" : health === "online" ? "On air" : health === "offline" ? "Off air" : categoryOf(station)}
+          {isLive
+            ? t("radio.cardPlaying")
+            : isBusy
+              ? t("radio.cardTuning")
+              : health === "online"
+                ? t("radio.badgeOnAir")
+                : health === "offline"
+                  ? t("radio.badgeOffAir")
+                  : t(`radio.cat.${categoryOf(station)}`)}
         </span>
       </div>
     </article>
@@ -373,6 +386,7 @@ export function StationCard({ station }: { station: RadioStation }) {
 export function RadioPage() {
   const [category, setCategory] = useState<Category>("All");
   const { favoriteIds } = useLibrary();
+  const { t } = useLanguage();
 
   const counts = useMemo(() => {
     const result: Record<Category, number> = {
@@ -424,7 +438,7 @@ export function RadioPage() {
                       : "text-stone-500 ring-1 ring-white/[0.11] hover:text-ink"
                   )}
                 >
-                  {item === "Yours" ? "Your stations" : item}
+                  {t(`radio.cat.${item}`)}
                   <span className={cn("ml-1.5 font-mono text-[11px]", active ? "text-brand-950/60" : "text-stone-400")}>
                     {counts[item]}
                   </span>
@@ -440,8 +454,7 @@ export function RadioPage() {
           </div>
 
           <p className="mt-5 text-[13px] leading-6 text-stone-400">
-            Playback keeps going as you move around the site, and works with your lock screen and
-            keyboard media keys. Dropped connections reconnect on their own.
+            {t("radio.footnote")}
           </p>
         </section>
       </div>

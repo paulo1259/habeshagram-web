@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { AuthCard, AuthInput, AuthMessage, AuthSubmit, authLinkClass } from "@/components/auth/auth-card";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function ForgotPasswordPage() {
   const { authMode, sendPasswordReset } = useAuth();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [sent, setSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -18,67 +20,47 @@ export default function ForgotPasswordPage() {
     try {
       setIsSubmitting(true);
       setErrorMessage("");
-      setSuccessMessage("");
+      setSent(false);
       await sendPasswordReset(email);
-      setSuccessMessage(
-        "If an account exists for that email, a password reset link has been sent. Please check your inbox and spam folder."
-      );
+      setSent(true);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Unable to send a password reset email right now."
-      );
+      setErrorMessage(error instanceof Error ? error.message : t("auth.resetFailed"));
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-surface bg-warm px-4 py-10">
-      <div className="glass-card mx-auto max-w-md rounded-[2rem] border border-brand-100 p-6 shadow-soft">
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">Password reset</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Reset your password</h1>
-        <p className="mt-2 text-sm text-stone-600">
-          {authMode === "supabase"
-            ? "Enter the email you signed up with and we'll send a reset link."
-            : "Sign-in is not configured yet. Add your NEXT_PUBLIC_SUPABASE_* values to .env.local and restart the dev server."}
-        </p>
-
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="Email"
-            className="w-full rounded-2xl border border-brand-100 bg-brand-50/40 px-4 py-3 outline-none ring-brand-300 focus:ring-2"
-          />
-          {errorMessage ? (
-            <p className="rounded-2xl border border-red-100 bg-red-50/80 px-4 py-3 text-sm text-red-700">
-              {errorMessage}
-            </p>
-          ) : null}
-          {successMessage ? (
-            <p className="rounded-2xl border border-emerald-100 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-700">
-              {successMessage}
-            </p>
-          ) : null}
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Sending reset link..." : "Send reset link"}
-          </Button>
-        </form>
-
-        <p className="mt-4 text-xs leading-5 text-stone-500">
-          For privacy, Zema won't confirm whether a specific email has an account before sending this request.
-        </p>
-
-        <div className="mt-6 flex items-center justify-between text-sm text-stone-600">
-          <Link href="/login" className="font-medium text-brand-800">
-            Back to login
+    <AuthCard
+      eyebrow={t("auth.resetEyebrow")}
+      title={t("auth.resetTitle")}
+      body={authMode === "supabase" ? t("auth.resetBody") : t("auth.notConfigured")}
+      footer={
+        <>
+          <Link href="/login" className={authLinkClass}>
+            {t("auth.backToLogin")}
           </Link>
-          <Link href="/signup" className="font-medium text-brand-800">
-            Create account
+          <Link href="/signup" className={authLinkClass}>
+            {t("auth.noAccount")}
           </Link>
-        </div>
-      </div>
-    </main>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-3.5">
+        <AuthInput
+          type="email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder={t("auth.email")}
+          aria-label={t("auth.email")}
+        />
+        {errorMessage ? <AuthMessage tone="error">{errorMessage}</AuthMessage> : null}
+        {sent ? <AuthMessage tone="success">{t("auth.resetSent")}</AuthMessage> : null}
+        <AuthSubmit disabled={isSubmitting}>{isSubmitting ? t("auth.resetSending") : t("auth.resetSend")}</AuthSubmit>
+        <p className="text-[12.5px] leading-5 text-stone-400">{t("auth.resetPrivacy")}</p>
+      </form>
+    </AuthCard>
   );
 }

@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { ArrowRight, Heart, Pause, Play } from "lucide-react";
 import { useLibrary } from "@/hooks/use-library";
+import { useLanguage } from "@/hooks/use-language";
 import { useRadio } from "@/hooks/use-radio";
 import { cn } from "@/lib/utils";
 import { loginHref } from "@/lib/safe-next";
+import { stationMeta } from "@/lib/i18n/stations";
 import { radioStations } from "@/services/discovery-data";
 import type { RadioStation } from "@/types";
 
@@ -18,11 +20,12 @@ export function RadioTeaser() {
   const { station: active, isPlaying, playStation, togglePlayback } = useRadio();
   const { lastStation, favoriteStations, isSignedIn } = useLibrary();
   const featured = radioStations.find((station) => station.featured) ?? radioStations[0];
+  const { t, lang } = useLanguage();
 
   const lead = active ?? lastStation ?? featured;
   const leadIsActive = active?.id === lead.id;
   const leadLive = leadIsActive && isPlaying;
-  const eyebrow = leadIsActive ? "Now playing" : lastStation ? "Pick up where you left off" : "Featured station";
+  const eyebrow = t(leadIsActive ? "radio.nowPlaying" : lastStation ? "radio.resume" : "radio.featured");
 
   const play = (station: RadioStation) =>
     void (active?.id === station.id ? togglePlayback() : playStation(station));
@@ -37,7 +40,7 @@ export function RadioTeaser() {
           href="/radio"
           className="inline-flex items-center gap-1 text-[13px] font-semibold text-brand-700 transition hover:text-ink"
         >
-          All stations
+          {t("radio.allStations")}
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
@@ -46,7 +49,7 @@ export function RadioTeaser() {
         <button
           type="button"
           onClick={() => play(lead)}
-          aria-label={leadLive ? `Pause ${lead.name}` : `Play ${lead.name}`}
+          aria-label={t(leadLive ? "radio.pauseName" : "radio.playName", { name: lead.name })}
           className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-brand-500 text-brand-950 shadow-glow-sm transition hover:scale-[1.04] active:scale-[0.97]"
         >
           {leadLive ? <Pause className="h-5 w-5 fill-current" /> : <Play className="ml-0.5 h-5 w-5 fill-current" />}
@@ -59,14 +62,14 @@ export function RadioTeaser() {
             {lead.name}
           </Link>
           <p className="mt-0.5 font-mono text-[12px] text-stone-400">
-            {lead.frequency} · {lead.city}
+            {stationMeta(lead, lang)}
           </p>
         </div>
       </div>
 
       {chips.length ? (
         <div className="mt-5 border-t border-white/[0.07] pt-4">
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-stone-400">Your stations</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-stone-400">{t("nav.yourStations")}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {chips.map((station) => {
               const live = active?.id === station.id && isPlaying;
@@ -94,9 +97,9 @@ export function RadioTeaser() {
           <Heart className="h-3.5 w-3.5 shrink-0 text-orange-700" />
           <span>
             <Link href={loginHref("/")} className="font-semibold text-brand-700 hover:text-ink">
-              Sign in
+              {t("nav.signIn")}
             </Link>{" "}
-            to keep your favourite stations one tap away, on any device.
+            {t("teaser.radio.signInPrompt")}
           </span>
         </p>
       ) : null}
