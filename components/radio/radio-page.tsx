@@ -23,6 +23,7 @@ import { useRadio } from "@/hooks/use-radio";
 import { cn } from "@/lib/utils";
 import { radioStations } from "@/services/discovery-data";
 import type { RadioStation } from "@/types";
+import { StationArt } from "@/components/radio/station-art";
 
 /** Fixed pattern — random heights would differ between server and client. */
 const WAVE = [
@@ -163,18 +164,35 @@ export function NowPlayingHero({ focusStation }: { focusStation?: RadioStation }
           </span>
         </div>
 
-        <div className="mt-4 flex items-start justify-between gap-3">
-          <Link href={stationPath(shown)} className="group block min-w-0">
-            <h1 className="font-display text-[2.1rem] font-bold leading-[1.05] tracking-[-0.03em] text-ink transition group-hover:text-brand-700 sm:text-[2.6rem]">
-              {shown.name}
-            </h1>
-          </Link>
-          <FavoriteButton station={shown} />
+        <div className="mt-5 flex items-center gap-4 sm:gap-5">
+          <StationArt
+            station={shown}
+            size={88}
+            live={showingLive}
+            rounded="rounded-[24px]"
+            className="shadow-[0_18px_44px_rgba(0,0,0,0.5)] sm:hidden"
+          />
+          <StationArt
+            station={shown}
+            size={112}
+            live={showingLive}
+            rounded="rounded-[28px]"
+            className="hidden shadow-[0_18px_44px_rgba(0,0,0,0.5)] sm:inline-flex"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3">
+              <Link href={stationPath(shown)} className="group block min-w-0">
+                <h1 className="font-display text-[1.8rem] font-bold leading-[1.05] tracking-[-0.03em] text-ink transition group-hover:text-brand-700 sm:text-[2.6rem]">
+                  {shown.name}
+                </h1>
+              </Link>
+              <FavoriteButton station={shown} />
+            </div>
+            <p className="mt-2 font-mono text-[12.5px] text-stone-500">
+              {stationMeta(shown, lang)}
+            </p>
+          </div>
         </div>
-
-        <p className="mt-2 font-mono text-[12.5px] text-stone-500">
-          {stationMeta(shown, lang)}
-        </p>
 
         <p className="mt-3 min-h-[1.5rem] text-[15px] leading-6 text-stone-600">
           {isCurrent && nowPlaying ? (
@@ -316,7 +334,8 @@ export function StationCard({ station }: { station: RadioStation }) {
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+        <StationArt station={station} size={52} live={isLive} rounded="rounded-[16px]" />
+        <div className="min-w-0 flex-1">
           <Link
             href={stationPath(station)}
             className="font-display text-[1.15rem] font-semibold tracking-[-0.02em] text-ink transition after:absolute after:inset-0 after:rounded-[22px] hover:text-brand-700"

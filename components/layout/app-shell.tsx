@@ -13,7 +13,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         <TopBar />
       </Suspense>
-      <main className="mx-auto grid max-w-[1180px] grid-cols-1 gap-3 px-0 py-0 pb-24 sm:px-3 sm:py-3 lg:grid-cols-[248px_minmax(0,1fr)] lg:gap-5 lg:px-4 lg:py-4 lg:pb-8">
+      <main className="app-main mx-auto grid max-w-[1180px] grid-cols-1 gap-3 px-0 py-0 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-3 sm:py-3 lg:grid-cols-[248px_minmax(0,1fr)] lg:gap-5 lg:px-4 lg:py-4 lg:pb-8">
         <DesktopSidebar />
         <section className="min-w-0">{children}</section>
       </main>

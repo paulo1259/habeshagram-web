@@ -6,6 +6,7 @@ import { ZemaWordmark } from "@/components/brand/logo";
 import { LanguageToggle } from "@/components/layout/language-toggle";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
+import { useRadio } from "@/hooks/use-radio";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -18,13 +19,14 @@ export function TopBar() {
   const { currentUser } = useAuth();
   const { t } = useLanguage();
   const pathname = usePathname();
+  const { isPlaying } = useRadio();
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-surface/80 backdrop-blur-2xl">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/50 to-transparent" />
       <div className="mx-auto flex max-w-[1180px] items-center gap-4 px-4 py-3 sm:gap-10 sm:px-6">
         <Link href="/" aria-label="Zema home">
-          <ZemaWordmark size={30} />
+          <ZemaWordmark size={32} live={isPlaying} />
         </Link>
 
         <nav className="hidden items-center gap-1 sm:flex">

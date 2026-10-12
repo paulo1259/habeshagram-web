@@ -7,6 +7,8 @@ import { AppShell } from "@/components/layout/app-shell";
 import { Reveal } from "@/components/motion/reveal";
 import { EthiopianCalendarCard } from "@/components/calendar/ethiopian-calendar-card";
 import { OnAirBoard } from "@/components/radio/on-air-board";
+import { FrequencyDial } from "@/components/radio/frequency-dial";
+import { SignalOrb } from "@/components/brand/signal-orb";
 import { RadioTeaser } from "@/components/radio/radio-teaser";
 import { WorldNewsTeaser } from "@/components/world-news/world-news-teaser";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,14 +17,6 @@ import { useStationHealth } from "@/hooks/use-station-health";
 import { logEvent } from "@/lib/analytics-events";
 import { radioStations } from "@/services/discovery-data";
 
-/**
- * Deterministic bar heights. A random walk would differ between the server
- * render and hydration, so the pattern is fixed and animated with CSS only.
- */
-const WAVEFORM = [
-  14, 26, 44, 62, 38, 70, 52, 80, 34, 58, 76, 46, 88, 30, 64, 50, 72, 40, 84, 28, 60, 48, 78, 36,
-  66, 54, 82, 32, 56, 74, 42, 68, 24, 50, 38, 20
-];
 
 export default function HomePage() {
   const { currentUser } = useAuth();
@@ -45,6 +39,7 @@ export default function HomePage() {
           <div className="pointer-events-none absolute -left-24 -top-40 h-[420px] w-[420px] rounded-full bg-brand-500/[0.13] blur-[90px]" />
           <div className="pointer-events-none absolute -right-28 -top-24 h-[360px] w-[360px] animate-float-slow rounded-full bg-orange-500/[0.14] blur-[90px]" />
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/70 to-transparent" />
+          <SignalOrb className="pointer-events-none absolute -right-16 -top-16 hidden md:block" />
 
           <div className="relative">
             <p className="inline-flex animate-fade-in items-center gap-2.5 rounded-full border border-brand-500/30 bg-brand-500/[0.07] px-3.5 py-1.5">
@@ -76,19 +71,19 @@ export default function HomePage() {
             </p>
 
             <div
-              className="mt-7 flex animate-fade-up flex-wrap items-center gap-3"
+              className="mt-7 grid animate-fade-up grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center"
               style={{ animationDelay: "200ms" }}
             >
               <Link
                 href="/radio"
-                className="btn-glow inline-flex items-center gap-2.5 rounded-[14px] px-6 py-3.5 text-[15px] hover:-translate-y-0.5"
+                className="btn-glow inline-flex items-center justify-center gap-2 rounded-[14px] px-4 py-3.5 text-[14.5px] hover:-translate-y-0.5 sm:gap-2.5 sm:px-6 sm:text-[15px]"
               >
                 <Play className="h-4 w-4 fill-current" />
                 {t("home.startListening")}
               </Link>
               <Link
                 href="/world-news"
-                className="inline-flex items-center gap-2.5 rounded-[14px] border border-white/[0.12] px-6 py-3.5 text-[15px] font-medium text-ink transition hover:-translate-y-0.5 hover:border-brand-500/35"
+                className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-white/[0.12] px-4 py-3.5 text-[14.5px] font-medium text-ink transition hover:-translate-y-0.5 hover:border-brand-500/35 sm:gap-2.5 sm:px-6 sm:text-[15px]"
               >
                 <Globe2 className="h-4 w-4" />
                 {t("home.todaysBrief")}
@@ -96,21 +91,8 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <div
-              className="mt-9 flex animate-fade-up items-end gap-[3px] opacity-70"
-              style={{ animationDelay: "280ms", height: 56 }}
-              aria-hidden="true"
-            >
-              {WAVEFORM.map((height, index) => (
-                <span
-                  key={index}
-                  className="flex-1 rounded-[2px]"
-                  style={{
-                    height: `${Math.round(height * 0.55)}px`,
-                    background: index % 5 === 0 ? "#7c6cf6" : "#45e0c8"
-                  }}
-                />
-              ))}
+            <div className="mt-9 animate-fade-up" style={{ animationDelay: "280ms" }}>
+              <FrequencyDial />
             </div>
           </div>
         </section>

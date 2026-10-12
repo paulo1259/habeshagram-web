@@ -19,7 +19,7 @@ export function MobileBottomNav() {
   const { t } = useLanguage();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 px-3 pb-3 pt-1 lg:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1 lg:hidden">
       <div className="mx-auto flex max-w-md items-center justify-around rounded-[22px] border border-white/[0.09] bg-card/92 px-2 py-1.5 shadow-soft backdrop-blur-xl">
         {items.map((item) => {
           const Icon = item.icon;

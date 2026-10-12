@@ -62,10 +62,17 @@ export default function StationOgImage({ params }: { params: { station: string }
 
         <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
           <svg width="64" height="64" viewBox="0 0 64 64">
-            <rect x="2" y="2" width="60" height="60" rx="18" fill="#0e0e17" stroke="#45e0c8" strokeWidth="3" />
-            <rect x="17" y="15" width="30" height="7" rx="3.5" fill="#45e0c8" />
-            <path d="M43.5 22 L20.5 42" stroke="#45e0c8" strokeWidth="7" strokeLinecap="round" />
-            <rect x="17" y="42" width="30" height="7" rx="3.5" fill="#45e0c8" />
+            <defs>
+              <linearGradient id="zs" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#5ff2d9" />
+                <stop offset="1" stopColor="#8b7bff" />
+              </linearGradient>
+            </defs>
+            <rect width="64" height="64" rx="20" fill="#0f1a22" />
+            <rect x="1" y="1" width="62" height="62" rx="19" fill="none" stroke="#ffffff" strokeOpacity="0.09" strokeWidth="2" />
+            <path d="M18 20 H44 L18 44 H46" fill="none" stroke="url(#zs)" strokeWidth="7.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M47.5 11.5 A8 8 0 0 1 52.5 16.5" fill="none" stroke="#5ff2d9" strokeWidth="3" strokeLinecap="round" />
+            <path d="M48.5 4.5 A15 15 0 0 1 59.5 15.5" fill="none" stroke="#5ff2d9" strokeOpacity="0.55" strokeWidth="3" strokeLinecap="round" />
           </svg>
           <div style={{ display: "flex", fontSize: 34, fontWeight: 700, color: "#f2f3f7", letterSpacing: -1 }}>
             Zema

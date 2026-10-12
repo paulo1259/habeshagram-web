@@ -11,6 +11,7 @@ import { useStationHealth } from "@/hooks/use-station-health";
 import { cn } from "@/lib/utils";
 import { radioStations } from "@/services/discovery-data";
 import { stationDescription } from "@/lib/i18n/stations";
+import { StationArt } from "@/components/radio/station-art";
 
 /**
  * Every station at a glance, with what each one is playing right now. Titles
@@ -74,14 +75,28 @@ export function OnAirBoard() {
                 type="button"
                 onClick={() => void (isActive ? togglePlayback() : playStation(station))}
                 aria-label={t(live ? "radio.pauseName" : "radio.playName", { name: station.name })}
-                className={cn(
-                  "relative z-10 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition active:scale-[0.94]",
-                  isActive
-                    ? "bg-brand-500 text-brand-950"
-                    : "bg-white/[0.06] text-stone-500 group-hover:bg-brand-500 group-hover:text-brand-950"
-                )}
+                className="relative z-10 shrink-0 rounded-[14px] transition active:scale-[0.94]"
               >
-                {live ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />}
+                <StationArt station={station} size={46} live={live} rounded="rounded-[14px]" />
+                <span
+                  className={cn(
+                    "absolute inset-0 flex items-center justify-center rounded-[14px] bg-black/45 text-white transition",
+                    isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                  )}
+                >
+                  {busy ? (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  ) : live ? (
+                    <Pause className="h-4 w-4 fill-current" />
+                  ) : (
+                    <Play className="ml-0.5 h-4 w-4 fill-current" />
+                  )}
+                </span>
+                {!isActive ? (
+                  <span className="absolute -bottom-1 -right-1 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-ink text-surface shadow-soft transition group-hover:opacity-0">
+                    <Play className="ml-[1px] h-2.5 w-2.5 fill-current" />
+                  </span>
+                ) : null}
               </button>
 
               <div className="min-w-0 flex-1">

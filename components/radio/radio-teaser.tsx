@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Heart, Pause, Play } from "lucide-react";
+import { StationArt } from "@/components/radio/station-art";
 import { useLibrary } from "@/hooks/use-library";
 import { useLanguage } from "@/hooks/use-language";
 import { useRadio } from "@/hooks/use-radio";
@@ -50,9 +51,12 @@ export function RadioTeaser() {
           type="button"
           onClick={() => play(lead)}
           aria-label={t(leadLive ? "radio.pauseName" : "radio.playName", { name: lead.name })}
-          className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-brand-500 text-brand-950 shadow-glow-sm transition hover:scale-[1.04] active:scale-[0.97]"
+          className="group relative shrink-0 rounded-[20px] transition hover:scale-[1.03] active:scale-[0.97]"
         >
-          {leadLive ? <Pause className="h-5 w-5 fill-current" /> : <Play className="ml-0.5 h-5 w-5 fill-current" />}
+          <StationArt station={lead} size={64} live={leadLive} rounded="rounded-[20px]" />
+          <span className="absolute -bottom-1.5 -right-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-brand-500 text-brand-950 shadow-glow-sm ring-4 ring-card">
+            {leadLive ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />}
+          </span>
         </button>
         <div className="min-w-0">
           <Link

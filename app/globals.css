@@ -391,7 +391,7 @@ img {
 }
 
 .glass-card {
-  background: rgba(22, 18, 16, 0.72);
+  background: rgba(14, 14, 23, 0.78);
   backdrop-filter: blur(20px) saturate(1.3);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
@@ -518,4 +518,81 @@ img {
    mono labels that suit English read as scattered characters in Amharic. */
 html[lang="am"] .font-mono {
   letter-spacing: 0 !important;
+}
+
+/* ── Brand & station art ───────────────────────────────────────────── */
+
+/* The logo's broadcast arcs breathe while a station is playing. */
+.signal-arc {
+  animation: signal-arc 1.8s ease-in-out infinite;
+}
+
+.signal-arc-outer {
+  animation-delay: 0.3s;
+}
+
+@keyframes signal-arc {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  45% {
+    opacity: 1;
+  }
+}
+
+/* Station art rings ripple outward from the corner while live. */
+.station-ring {
+  animation: station-ring 2.4s ease-out infinite;
+}
+
+@keyframes station-ring {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+/* Frequency dial: the needle glides between stations. */
+.dial-ticks {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.16) 0 1px,
+    transparent 1px 10px
+  );
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+.dial-ticks-major {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.32) 0 1px,
+    transparent 1px 50px
+  );
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-arc,
+  .station-ring {
+    animation: none;
+  }
+}
+
+/* Room for the docked player above the mobile tab bar. */
+html[data-player="open"] .app-main {
+  padding-bottom: calc(11.5rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 1024px) {
+  html[data-player="open"] .app-main {
+    padding-bottom: 7rem;
+  }
 }
