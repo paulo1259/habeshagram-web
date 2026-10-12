@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
+import { AiredTimeline } from "@/components/radio/aired-timeline";
 import { NowPlayingHero, StationCard } from "@/components/radio/radio-page";
 import { ShareActions } from "@/components/ui/share-actions";
 import { useLanguage } from "@/hooks/use-language";
@@ -53,6 +54,8 @@ export function StationPage({ station }: { station: RadioStation }) {
             ))}
           </div>
         ) : null}
+
+        <AiredTimeline station={station} />
 
         <section className="px-4 sm:px-0">
           <h2 className="font-display text-lg font-semibold tracking-[-0.02em] text-ink">{t("radio.moreStations")}</h2>
