@@ -31,12 +31,14 @@ const WAVE = [
   64, 98, 38, 68, 84, 50, 76, 28, 62, 48, 70, 34
 ];
 
-type Category = "All" | "Yours" | "News & Talk" | "Entertainment" | "Faith";
-const CATEGORIES: Category[] = ["All", "Yours", "News & Talk", "Entertainment", "Faith"];
+type Category = "All" | "Yours" | "News & Talk" | "Music" | "Entertainment" | "Faith" | "Regional";
+const CATEGORIES: Category[] = ["All", "Yours", "News & Talk", "Music", "Entertainment", "Faith", "Regional"];
 
-function categoryOf(station: RadioStation): Exclude<Category, "All" | "Yours"> {
+export function categoryOf(station: RadioStation): Exclude<Category, "All" | "Yours"> {
   const tags = station.tags ?? [];
   if (tags.includes("Religious")) return "Faith";
+  if (tags.includes("Regional")) return "Regional";
+  if (tags[0] === "Music") return "Music";
   if (tags[0] === "Entertainment") return "Entertainment";
   return "News & Talk";
 }
@@ -412,8 +414,10 @@ export function RadioPage() {
       All: radioStations.length,
       Yours: favoriteIds.length,
       "News & Talk": 0,
+      Music: 0,
       Entertainment: 0,
-      Faith: 0
+      Faith: 0,
+      Regional: 0
     };
     radioStations.forEach((station) => {
       result[categoryOf(station)] += 1;

@@ -44,6 +44,7 @@ const en = {
   "onAir.subtitle": "Live from every station",
   "onAir.tuning": "Tuning in…",
   "onAir.offAirNow": "Off air right now",
+  "onAir.seeAll": "All {n} stations",
 
   // calendar
   "cal.today": "Today in Ethiopia",
@@ -93,6 +94,8 @@ const en = {
   "radio.cat.News & Talk": "News & Talk",
   "radio.cat.Entertainment": "Entertainment",
   "radio.cat.Faith": "Faith",
+  "radio.cat.Music": "Music",
+  "radio.cat.Regional": "Regional",
   "radio.footnote":
     "Playback keeps going as you move around the site, and works with your lock screen and keyboard media keys. Dropped connections reconnect on their own.",
   "radio.allStations": "All stations",
@@ -112,7 +115,9 @@ const en = {
   "airplay.earlier": "Earlier on {name}",
   // home tuner
   "dial.online": "Online",
-  "dial.hint": "Tap a station to tune in",
+  "dial.hint": "{n} stations · slide along the dial to tune, tap the station to play",
+  "dial.previous": "Previous station on the dial",
+  "dial.next": "Next station on the dial",
   "radio.shareTitle": "{name} · Live on Zema",
   "radio.shareText": "Listen to {name} live on Zema",
   "radio.player.live": "Live now",
@@ -298,6 +303,7 @@ const am: Partial<Record<MessageKey, string>> = {
   "onAir.subtitle": "ከሁሉም ጣቢያዎች በቀጥታ",
   "onAir.tuning": "በመቃኘት ላይ…",
   "onAir.offAirNow": "አሁን ከአየር ውጭ ነው",
+  "onAir.seeAll": "ሁሉም {n} ጣቢያዎች",
 
   "cal.today": "ዛሬ በኢትዮጵያ",
   "cal.ethiopianTime": "የኢትዮጵያ ሰዓት",
@@ -345,6 +351,8 @@ const am: Partial<Record<MessageKey, string>> = {
   "radio.cat.News & Talk": "ዜና እና ውይይት",
   "radio.cat.Entertainment": "መዝናኛ",
   "radio.cat.Faith": "ሃይማኖት",
+  "radio.cat.Music": "ሙዚቃ",
+  "radio.cat.Regional": "ክልላዊ",
   "radio.footnote":
     "በድረ-ገጹ ውስጥ ሲዘዋወሩ ሬዲዮው መጫወቱን ይቀጥላል፤ በስልክዎ መቆለፊያ ገጽ እና በኪቦርድ ቁልፎችም ይሠራል። ግንኙነቱ ቢቋረጥ በራሱ እንደገና ይገናኛል።",
   "radio.allStations": "ሁሉም ጣቢያዎች",
@@ -363,7 +371,9 @@ const am: Partial<Record<MessageKey, string>> = {
     "ባለፉት 24 ሰዓታት ምንም አልተመዘገበም። አንዳንድ ጣቢያዎች የሚያጫውቱትን ስም አያሰራጩም — ይህ ጣቢያ ሲያሰራጭ እዚህ ይታያል።",
   "airplay.earlier": "ቀደም ሲል በ{name}",
   "dial.online": "ኦንላይን",
-  "dial.hint": "ለማዳመጥ ጣቢያ ይንኩ",
+  "dial.hint": "{n} ጣቢያዎች · ለመቃኘት በመደወያው ላይ ያንሸራትቱ፣ ለማዳመጥ ጣቢያውን ይንኩ",
+  "dial.previous": "በመደወያው ላይ ቀዳሚ ጣቢያ",
+  "dial.next": "በመደወያው ላይ ቀጣይ ጣቢያ",
   "radio.shareTitle": "{name} · በዜማ በቀጥታ",
   "radio.shareText": "በዜማ በቀጥታ ያዳምጡ፦ {name}",
   "radio.player.live": "አሁን በቀጥታ",

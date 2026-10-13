@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AiredTimeline } from "@/components/radio/aired-timeline";
-import { NowPlayingHero, StationCard } from "@/components/radio/radio-page";
+import { NowPlayingHero, StationCard, categoryOf } from "@/components/radio/radio-page";
 import { ShareActions } from "@/components/ui/share-actions";
 import { useLanguage } from "@/hooks/use-language";
 import { radioStations } from "@/services/discovery-data";
@@ -19,7 +19,12 @@ import type { RadioStation } from "@/types";
  * The page leads with one large play button instead: one tap, and honest.
  */
 export function StationPage({ station }: { station: RadioStation }) {
-  const others = radioStations.filter((item) => item.id !== station.id);
+  // Six suggestions, stations in the same category first.
+  const category = categoryOf(station);
+  const others = radioStations
+    .filter((item) => item.id !== station.id)
+    .sort((a, b) => Number(categoryOf(b) === category) - Number(categoryOf(a) === category))
+    .slice(0, 6);
   const { t } = useLanguage();
 
   return (

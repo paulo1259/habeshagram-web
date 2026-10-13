@@ -16,7 +16,17 @@ const PALETTES: Record<string, [string, string]> = {
   "fm-addis-971": ["#38bdf8", "#6355e0"],
   "wengel-fm": ["#fb7185", "#7c6cf6"],
   "orthodox-radio": ["#f5c66b", "#c2410c"],
-  "voice-of-grace-radio": ["#c4b5fd", "#2563eb"]
+  "voice-of-grace-radio": ["#c4b5fd", "#2563eb"],
+  "bisrat-fm-1011": ["#f472b6", "#45e0c8"],
+  "ahadu-radio-943": ["#60a5fa", "#0f766e"],
+  "ebc-fm-1047": ["#45e0c8", "#1e3a8a"],
+  "arada-fm-951": ["#fbbf24", "#db2777"],
+  "tirita-fm-976": ["#a78bfa", "#ec4899"],
+  "qesht-fm-1053": ["#34d399", "#7c3aed"],
+  "taem-radio": ["#fb923c", "#7c6cf6"],
+  "amhara-fm-969": ["#2dd4bf", "#ca8a04"],
+  "amhara-radio": ["#facc15", "#0e7490"],
+  "debre-birhan-fm-914": ["#93c5fd", "#9333ea"]
 };
 
 const FALLBACK: [string, string] = ["#45e0c8", "#7c6cf6"];

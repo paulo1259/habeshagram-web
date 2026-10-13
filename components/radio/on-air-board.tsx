@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Pause, Play } from "lucide-react";
+import { ArrowRight, Pause, Play } from "lucide-react";
 import { useOnAirBoard } from "@/hooks/use-on-air-board";
 import { useRadio } from "@/hooks/use-radio";
 import { useLanguage } from "@/hooks/use-language";
@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { radioStations } from "@/services/discovery-data";
 import { stationDescription } from "@/lib/i18n/stations";
 import { StationArt } from "@/components/radio/station-art";
+
+const BOARD_SIZE = 9;
 
 /**
  * Every station at a glance, with what each one is playing right now. Titles
@@ -25,6 +27,13 @@ export function OnAirBoard() {
   const { healthOf } = useStationHealth();
   const { station: active, isPlaying, status, playStation, togglePlayback } = useRadio();
   const { t, lang } = useLanguage();
+
+  // The board keeps to nine tiles: what's playing first, then stations that are
+  // on air, then the rest — the full list lives on the radio page.
+  const rank = (id: string) => (active?.id === id ? 0 : healthOf(id) === "offline" ? 2 : 1);
+  const shown = [...radioStations]
+    .sort((a, b) => rank(a.id) - rank(b.id) || radioStations.indexOf(a) - radioStations.indexOf(b))
+    .slice(0, BOARD_SIZE);
 
   useEffect(() => {
     const node = ref.current;
@@ -53,7 +62,7 @@ export function OnAirBoard() {
       </div>
 
       <ul className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-        {radioStations.map((station) => {
+        {shown.map((station) => {
           const isActive = active?.id === station.id;
           const live = isActive && isPlaying;
           const busy = isActive && (status === "loading" || status === "reconnecting");
@@ -149,6 +158,16 @@ export function OnAirBoard() {
           );
         })}
       </ul>
+
+      {radioStations.length > shown.length ? (
+        <Link
+          href="/radio"
+          className="mt-4 inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-brand-700 transition hover:bg-white/[0.05] hover:text-ink"
+        >
+          {t("onAir.seeAll", { n: radioStations.length })}
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      ) : null}
     </section>
   );
 }
