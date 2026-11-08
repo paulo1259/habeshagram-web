@@ -6,8 +6,8 @@ let cachedPayload: WorldNewsFeedPayload | null = null;
 let cachedAt = 0;
 let inflightRequest: Promise<WorldNewsFeedPayload> | null = null;
 
-export async function getWorldNewsFeed() {
-  if (cachedPayload && Date.now() - cachedAt < WORLD_NEWS_CACHE_MS) {
+export async function getWorldNewsFeed(force = false) {
+  if (!force && cachedPayload && Date.now() - cachedAt < WORLD_NEWS_CACHE_MS) {
     return cachedPayload;
   }
 
@@ -31,7 +31,7 @@ export async function getWorldNewsFeed() {
     })
     .catch((error) => {
       if (cachedPayload) {
-        return cachedPayload;
+        return { ...cachedPayload, stale: true };
       }
 
       throw error;
