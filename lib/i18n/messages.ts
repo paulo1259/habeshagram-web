@@ -14,7 +14,7 @@ import type { Lang } from "@/lib/i18n/config";
  */
 const en = {
   // navigation
-  "nav.home": "Home",
+  "nav.home": "Today",
   "nav.radio": "Radio",
   "nav.news": "News",
   "nav.worldNews": "World News",
@@ -275,7 +275,7 @@ const en = {
 export type MessageKey = keyof typeof en;
 
 const am: Partial<Record<MessageKey, string>> = {
-  "nav.home": "መነሻ",
+  "nav.home": "ዛሬ",
   "nav.radio": "ሬዲዮ",
   "nav.news": "ዜና",
   "nav.worldNews": "ዜና",
