@@ -45,7 +45,7 @@ export async function getWorldNewsDigest(lang: Lang = "en"): Promise<WorldNewsDi
     .catch((error) => {
       const fallback = cache[lang]?.payload;
       if (fallback) {
-        return fallback;
+        return { ...fallback, stale: true };
       }
 
       throw error;
