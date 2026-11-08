@@ -1,16 +1,34 @@
-/** Cities Zema has curated listings for. Add a city here before listing its events. */
+/**
+ * Community events: the shape of a listing and the pure helpers around it.
+ * The listings themselves live in Supabase (public.community_events); see
+ * services/events-service.ts. This file has no imports so scripts/check-events
+ * can load it on its own.
+ */
+
+/** Cities Zema has curated listings for. The database check on community_events.city must match. */
 export const eventCities = ["Washington, DC", "Seattle"] as const;
 export type EventCity = (typeof eventCities)[number];
 export const isEventCity = (value: string | null | undefined): value is EventCity =>
   (eventCities as readonly string[]).includes(value ?? "");
 
+/** Each city's events are shown, and entered, in its local time. */
+export const cityTimeZone: Record<EventCity, string> = {
+  "Washington, DC": "America/New_York",
+  "Seattle": "America/Los_Angeles"
+};
+
+export const eventCategories = ["culture", "music", "community"] as const;
+export type EventCategory = (typeof eventCategories)[number];
+
 export type CommunityEvent = {
   id: string;
   title: string;
   city: EventCity;
-  category: "culture" | "music" | "community";
+  category: EventCategory;
+  /** Local calendar date, YYYY-MM-DD. */
   date: string;
   timeZone: string;
+  /** ISO instants. Never inferred: absent until the organizer announces a time. */
   start?: string;
   end?: string;
   venue: string;
@@ -19,47 +37,41 @@ export type CommunityEvent = {
   summary: string;
   sourceName: string;
   sourceUrl: string;
+  /** When an editor last confirmed the listing against its source, YYYY-MM-DD. */
   checkedOn: string;
 };
 
-/** Editorial catalogue. Keep original sources, explicit offsets, and review dates.
- * Never infer a start time or ticket price. Expired listings leave discovery automatically.
- */
-export const communityEvents: CommunityEvent[] = [
-  {
-    id: "taste-of-ethiopian-coffee-2026", title: "Taste of Ethiopian Coffee",
-    city: "Washington, DC", category: "culture", date: "2026-11-14", timeZone: "America/New_York",
-    start: "2026-11-14T17:00:00-05:00", end: "2026-11-14T21:00:00-05:00",
-    venue: "Embassy of Ethiopia", address: "3506 International Dr NW, Washington, DC 20008",
-    organizer: "Robe Coffee",
-    summary: "An evening exploring Ethiopian coffee through tastings, ceremony and conversations with the coffee community.",
-    sourceName: "Ethiopique", sourceUrl: "https://ethiopique.com/event/taste-of-ethiopian-coffee-2/", checkedOn: "2026-11-07"
-  },
-  {
-    id: "meet-the-eris-seattle-november-2026", title: "Meet The Eri’s Seattle",
-    city: "Seattle", category: "music", date: "2026-11-28", timeZone: "America/Los_Angeles",
-    start: "2026-11-28T22:00:00-08:00",
-    venue: "Union N Eritrean and Ethiopian Bar and Restaurant", address: "8824 Renton Avenue South, Seattle, WA 98118",
-    organizer: "3ritreanRaider", summary: "A Seattle nightlife gathering for Eritreans and friends. Check the ticket listing for admission requirements and availability.",
-    sourceName: "Eventbrite", sourceUrl: "https://www.eventbrite.com/e/meet-the-eris-seattle-1128-tickets-2004029421948", checkedOn: "2026-11-07"
-  },
-  {
-    id: "tigray-seattle-christmas-2026", title: "Christmas Celebration",
-    city: "Seattle", category: "community", date: "2026-12-19", timeZone: "America/Los_Angeles",
-    venue: "Tigray Community Center, Seattle", organizer: "Tigray Community Seattle",
-    summary: "A community holiday gathering with food, cultural performances and activities for children. The organizer has published the date; the start time is not yet listed.",
-    sourceName: "Tigray Community Seattle", sourceUrl: "https://tcseattle.org/events", checkedOn: "2026-11-07"
-  }
-];
-
-export function eventById(id: string) { return communityEvents.find((event) => event.id === id); }
-
+/** Upcoming until its published end, or through its local date when no end is published. */
 export function isUpcoming(event: CommunityEvent, now: Date): boolean {
   if (event.end) return Date.parse(event.end) > now.getTime();
-  // If no end is published, retain the listing through its local calendar date.
-  const parts = new Intl.DateTimeFormat("en", { timeZone: event.timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(now);
+  return event.date >= localDate(now, event.timeZone);
+}
+
+/** The calendar date (YYYY-MM-DD) at `now` in a time zone. */
+export function localDate(now: Date, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat("en", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(now);
   const part = (type: string) => parts.find((value) => value.type === type)!.value;
-  return event.date >= `${part("year")}-${part("month")}-${part("day")}`;
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
+/** Milliseconds the zone is ahead of UTC at `instant`. */
+function zoneOffset(instant: number, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit"
+  }).formatToParts(new Date(instant));
+  const part = (type: string) => Number(parts.find((value) => value.type === type)!.value);
+  return Date.UTC(part("year"), part("month") - 1, part("day"), part("hour"), part("minute"), part("second")) - instant;
+}
+
+/** A wall-clock date and time in a zone ("2026-11-14", "17:00") as an ISO instant. */
+export function zonedTimeToIso(date: string, time: string, timeZone: string): string {
+  const [year, month, day] = date.split("-").map(Number);
+  const [hour, minute] = time.split(":").map(Number);
+  const wall = Date.UTC(year, month - 1, day, hour, minute);
+  let instant = wall - zoneOffset(wall, timeZone);
+  // Correct once more in case the first guess landed across a DST change.
+  instant = wall - zoneOffset(instant, timeZone);
+  return new Date(instant).toISOString();
 }
 
 export function eventDate(event: CommunityEvent, lang: "en" | "am") {

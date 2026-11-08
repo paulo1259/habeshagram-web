@@ -24,3 +24,14 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
       }
     })
   : null;
+
+/**
+ * Server-side reader for public data (approved events and the like). It
+ * carries no user session, so it sees exactly what a signed-out visitor sees.
+ */
+export function publicReader(): SupabaseClient | null {
+  if (!isSupabaseConfigured) return null;
+  return createClient(url as string, anonKey as string, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  });
+}

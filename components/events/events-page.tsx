@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowRight, ArrowUpRight, CalendarDays, MapPin } from "lucide-react";
+import { ArrowRight, ArrowUpRight, CalendarDays, MapPin, Plus } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { useLanguage } from "@/hooks/use-language";
-import { communityEvents, eventCities, eventDate, eventTime, isEventCity, isUpcoming, type CommunityEvent } from "@/lib/events/catalogue";
+import { eventCities, eventDate, eventTime, isEventCity, isUpcoming, type CommunityEvent } from "@/lib/events/catalogue";
 
 const categories = ["all", "culture", "music", "community"] as const;
 type Category = (typeof categories)[number];
@@ -47,7 +47,7 @@ export function EventCard({ event, detail = false }: { event: CommunityEvent; de
   </article>;
 }
 
-export function EventsPage({ initialNow }: { initialNow: string }) {
+export function EventsPage({ events: listings, unavailable, initialNow }: { events: CommunityEvent[]; unavailable: boolean; initialNow: string }) {
   const { t } = useLanguage();
   const params = useSearchParams();
   const [city, setCity] = useState("all");
@@ -66,7 +66,7 @@ export function EventsPage({ initialNow }: { initialNow: string }) {
     try { localStorage.setItem(CITY_STORAGE_KEY, value); } catch { /* Session-only fallback. */ }
   };
   const needle = query.trim().toLowerCase();
-  const events = communityEvents
+  const events = listings
     .filter((event) => isUpcoming(event, now)
       && (city === "all" || event.city === city)
       && (category === "all" || event.category === category)
@@ -78,7 +78,9 @@ export function EventsPage({ initialNow }: { initialNow: string }) {
       <h1 className="mt-4 font-display text-4xl font-bold tracking-tight sm:text-5xl">{t("events.title")}</h1>
       <p className="mt-4 max-w-xl text-base leading-7 text-stone-500">{t("events.body")}</p>
       <p className="mt-4 text-xs leading-5 text-stone-400">{t("events.note")}</p>
+      <Link href="/events/suggest" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 px-4 text-sm font-semibold hover:bg-white/5"><Plus className="h-4 w-4" aria-hidden="true" />{t("events.suggestCta")}</Link>
     </header>
+    {unavailable ? <p role="alert" className="rounded-xl border border-white/15 p-4 text-sm text-stone-400">{t("events.unavailable")}</p> : null}
     <section aria-label={t("events.filter")} className={panel}>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-medium">{t("events.city")}<select value={city} onChange={(e) => chooseCity(e.target.value)} className="mt-2 block min-h-12 w-full rounded-xl border border-white/20 bg-surface px-3"><option value="all">{t("events.bothCities")}</option>{eventCities.map((name) => <option key={name}>{name}</option>)}</select></label>
@@ -87,7 +89,7 @@ export function EventsPage({ initialNow }: { initialNow: string }) {
       <div className="mt-4 flex flex-wrap gap-2">{categories.map((key) => <button key={key} onClick={() => setCategory(key)} aria-pressed={category === key} className={`min-h-11 rounded-full border px-4 text-sm ${category === key ? "border-brand-500 bg-brand-500 text-brand-950" : "border-white/15 text-stone-400 hover:text-ink"}`}>{t(categoryKey[key])}</button>)}</div>
     </section>
     <p role="status" className="px-2 text-sm text-stone-400">{t(events.length === 1 ? "events.upcomingOne" : "events.upcomingMany", { n: events.length })}</p>
-    {events.length ? <div className="grid gap-4 xl:grid-cols-2">{events.map((event) => <EventCard key={event.id} event={event} />)}</div> : <div className={`${panel} text-center`}><h2 className="text-xl font-semibold">{t("events.noMatchTitle")}</h2><p className="mt-3 text-sm text-stone-400">{t("events.noMatchBody")}</p><button className="mt-5 min-h-11 rounded-xl border border-white/20 px-5" onClick={() => { chooseCity("all"); setCategory("all"); setQuery(""); }}>{t("events.clearFilters")}</button></div>}
+    {events.length ? <div className="grid gap-4 xl:grid-cols-2">{events.map((event) => <EventCard key={event.id} event={event} />)}</div> : <div className={`${panel} text-center`}><h2 className="text-xl font-semibold">{t("events.noMatchTitle")}</h2><p className="mt-3 text-sm text-stone-400">{t("events.noMatchBody")}</p><Link href="/events/suggest" className="mt-3 inline-block text-sm font-semibold text-brand-600">{t("events.suggestCta")}</Link><br /><button className="mt-5 min-h-11 rounded-xl border border-white/20 px-5" onClick={() => { chooseCity("all"); setCategory("all"); setQuery(""); }}>{t("events.clearFilters")}</button></div>}
   </div></AppShell>;
 }
 
