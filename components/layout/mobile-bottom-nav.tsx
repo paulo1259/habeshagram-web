@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Globe2, House, Radio, UserCircle2 } from "lucide-react";
+import { CalendarDays, Globe2, House, Radio, UserCircle2 } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ const items = [
   { href: "/", key: "nav.home", icon: House },
   { href: "/radio", key: "nav.radio", icon: Radio },
   { href: "/world-news", key: "nav.news", icon: Globe2 },
+  { href: "/events", key: "nav.events", icon: CalendarDays },
   { href: "/you", key: "nav.you", icon: UserCircle2 }
 ] as const;
 
@@ -30,7 +31,7 @@ export function MobileBottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "relative flex min-h-[52px] min-w-[62px] flex-col items-center justify-center gap-1 rounded-[14px] px-3 text-[10.5px] font-semibold transition",
+                "relative flex min-h-[52px] min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[14px] px-1 text-[10.5px] font-semibold transition",
                 active ? "text-brand-950" : "text-stone-500 active:scale-[0.95]"
               )}
             >
