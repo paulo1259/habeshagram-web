@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, CalendarDays, MapPin } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
@@ -33,6 +34,7 @@ export function LocalDiscovery() {
         <option value="">{am ? "ከተማ ይምረጡ" : "Choose a city"}</option>
         {cities.map((name) => <option key={name} value={name}>{name}</option>)}
       </select>
+      <Link href={`/events${city ? `?city=${encodeURIComponent(city)}` : "?city=all"}`} className="mt-4 flex min-h-12 items-center justify-between rounded-xl bg-brand-500/10 px-3 text-sm font-semibold text-brand-600">{am ? "ዝግጅቶችን ይመልከቱ" : "Browse community events"}<ArrowUpRight className="h-4 w-4" aria-hidden="true" /></Link>
       {city ? <div className="mt-4 space-y-2">
         {[{ en: "Ethiopian events", am: "የኢትዮጵያ ዝግጅቶች", query: "Ethiopian" }, { en: "Eritrean events", am: "የኤርትራ ዝግጅቶች", query: "Eritrean" }].map((item) => (
           <a key={item.query} href={`https://www.eventbrite.com/d/${cityPaths[city]}/all-events/?q=${encodeURIComponent(item.query)}`} target="_blank" rel="noopener noreferrer" className="flex min-h-12 items-center justify-between gap-3 rounded-xl bg-white/[0.04] px-3 text-sm font-medium hover:bg-brand-500/10 focus-visible:outline focus-visible:outline-brand-500">
