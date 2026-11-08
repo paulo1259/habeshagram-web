@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/lib/site";
+import { communityEvents } from "@/lib/events/catalogue";
 import { radioStations } from "@/services/discovery-data";
 
 type Route = {
@@ -12,6 +13,7 @@ type Route = {
 const routes: Route[] = [
   { path: "/", changeFrequency: "hourly", priority: 1 },
   { path: "/world-news", changeFrequency: "hourly", priority: 0.9 },
+  { path: "/events", changeFrequency: "daily", priority: 0.8 },
   { path: "/radio", changeFrequency: "daily", priority: 0.8 },
   { path: "/login", changeFrequency: "yearly", priority: 0.3 },
   { path: "/signup", changeFrequency: "yearly", priority: 0.3 }
@@ -26,7 +28,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7
   }));
 
-  return [...routes, ...stationRoutes].map((route) => ({
+  const eventRoutes: Route[] = communityEvents.map((event) => ({
+    path: `/events/${event.id}`,
+    changeFrequency: "weekly",
+    priority: 0.6
+  }));
+
+  return [...routes, ...stationRoutes, ...eventRoutes].map((route) => ({
     url: absoluteUrl(route.path),
     lastModified,
     changeFrequency: route.changeFrequency,

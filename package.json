@@ -6,10 +6,11 @@
     "clean": "node -e \"const fs=require('fs'); ['.next','tsconfig.tsbuildinfo'].forEach((path)=>fs.rmSync(path,{ recursive:true, force:true }))\"",
     "dev": "npm run clean && next dev",
     "dev:reset": "npm run clean && next dev",
-    "build": "npm run clean && next build",
+    "build": "npm run clean && npm run test:events && next build",
     "build:clean": "npm run clean && next build",
     "start": "next start",
-    "lint": "node -e \"console.log('Lint is optional for this MVP.')\"",
+    "test:events": "node scripts/check-events.cjs",
+    "lint":"node -e \"console.log('Lint is optional for this MVP.')\"",
     "seed:content": "node --env-file=.env.local scripts/seed-content.mjs"
   },
   "engines": {

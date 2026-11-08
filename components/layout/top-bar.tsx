@@ -12,7 +12,8 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/", key: "nav.home" },
   { href: "/radio", key: "nav.radio" },
-  { href: "/world-news", key: "nav.news" }
+  { href: "/world-news", key: "nav.news" },
+  { href: "/events", key: "nav.events" }
 ] as const;
 
 export function TopBar() {
