@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/lib/site";
-import { communityEvents } from "@/lib/events/catalogue";
+import { fetchEventIds } from "@/services/events-service";
 import { radioStations } from "@/services/discovery-data";
 
 type Route = {
@@ -19,7 +19,10 @@ const routes: Route[] = [
   { path: "/signup", changeFrequency: "yearly", priority: 0.3 }
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+/** Re-read the event list hourly rather than on every crawl. */
+export const revalidate = 3600;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date();
 
   const stationRoutes: Route[] = radioStations.map((station) => ({
@@ -28,8 +31,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7
   }));
 
-  const eventRoutes: Route[] = communityEvents.map((event) => ({
-    path: `/events/${event.id}`,
+  const eventIds = await fetchEventIds().catch((error) => {
+    console.error("[sitemap] could not load event ids", error);
+    return [] as string[];
+  });
+  const eventRoutes: Route[] = eventIds.map((id) => ({
+    path: `/events/${id}`,
     changeFrequency: "weekly",
     priority: 0.6
   }));
