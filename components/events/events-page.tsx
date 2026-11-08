@@ -6,18 +6,21 @@ import { useSearchParams } from "next/navigation";
 import { ArrowRight, ArrowUpRight, CalendarDays, MapPin } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { useLanguage } from "@/hooks/use-language";
-import { communityEvents, eventDate, eventTime, isUpcoming, type CommunityEvent } from "@/lib/events/catalogue";
+import { communityEvents, eventCities, eventDate, eventTime, isEventCity, isUpcoming, type CommunityEvent } from "@/lib/events/catalogue";
 
-const categories = { all: ["All events", "ሁሉም"], culture: ["Culture & coffee", "ባህልና ቡና"], music: ["Music & nightlife", "ሙዚቃ"], community: ["Community", "ማህበረሰብ"] } as const;
-const cities = ["Washington, DC", "Seattle"];
+const categories = ["all", "culture", "music", "community"] as const;
+type Category = (typeof categories)[number];
+const categoryKey = { all: "events.all", culture: "events.culture", music: "events.music", community: "events.community" } as const;
+/** Shared with the home page's city picker, so both remember the same choice. */
+export const CITY_STORAGE_KEY = "zema.today.city";
 const panel = "rounded-[26px] border border-white/[0.08] bg-card/90 p-5 sm:p-7";
 
 export function EventCard({ event, detail = false }: { event: CommunityEvent; detail?: boolean }) {
-  const { lang } = useLanguage();
-  const am = lang === "am";
+  const { lang, t } = useLanguage();
+  const checked = <>{t("events.checked")} {event.checkedOn}</>;
   return <article className={panel}>
     <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-brand-600">
-      <span className="rounded-full bg-brand-500/10 px-3 py-1.5">{categories[event.category][am ? 1 : 0]}</span>
+      <span className="rounded-full bg-brand-500/10 px-3 py-1.5">{t(categoryKey[event.category])}</span>
       <span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" aria-hidden="true" />{event.city}</span>
     </div>
     <p className="mt-5 font-mono text-sm text-brand-600">{eventDate(event, lang)}</p>
@@ -25,62 +28,72 @@ export function EventCard({ event, detail = false }: { event: CommunityEvent; de
     <p className="mt-3 text-sm leading-6 text-stone-500">{event.summary}</p>
     <div className="mt-5 space-y-2 text-sm">
       <p className="font-medium">{event.venue}</p>
-      <p className="text-stone-400">{eventTime(event, lang)}</p>
+      <p className="text-stone-400">{eventTime(event, lang) ?? t("events.timeTba")}</p>
       {detail && event.address ? <p className="text-stone-400">{event.address}</p> : null}
     </div>
     {detail ? <div className="mt-5 border-t border-white/10 pt-5 text-sm text-stone-400">
-      <p>{am ? "አዘጋጅ" : "Organizer"}: <span className="text-ink">{event.organizer}</span></p>
-      <p className="mt-2">{am ? "ምንጭ" : "Source"}: {event.sourceName} · {am ? "የተመረመረበት ቀን" : "Checked"} {event.checkedOn}</p>
-      <p className="mt-3 leading-6">{am ? "ከመሄድዎ በፊት ሰዓት፣ ቦታና የመግቢያ መስፈርቶችን ከአዘጋጁ ጋር ያረጋግጡ።" : "Confirm time, venue, admission requirements and ticket availability with the organizer before you travel."}</p>
-      {!event.start ? <p className="mt-3">{am ? "የቀን ማስታወሻ ብቻ፤ ሰዓቱ ገና አልተገለጸም።" : "The calendar download is a date reminder, not a confirmed all-day schedule."}</p> : null}
+      <p>{t("events.organizer")}: <span className="text-ink">{event.organizer}</span></p>
+      <p className="mt-2">{t("events.source")}: {event.sourceName} · {checked}</p>
+      <p className="mt-3 leading-6">{t("events.confirmNote")}</p>
+      {!event.start ? <p className="mt-3">{t("events.dateOnlyNote")}</p> : null}
     </div> : null}
     <div className="mt-6 flex flex-wrap gap-3">
       {detail ? <>
-        <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer" className="btn-glow inline-flex min-h-11 items-center gap-2 rounded-xl px-4 py-3 text-sm">{am ? "የዝግጅቱ ምንጭ" : "View source & tickets"}<ArrowUpRight className="h-4 w-4" aria-hidden="true" /></a>
-        <a href={`/events/${event.id}/calendar`} download className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 px-4 py-3 text-sm"><CalendarDays className="h-4 w-4" aria-hidden="true" />{am ? "ወደ ቀን መቁጠሪያ ያክሉ" : "Add to calendar"}</a>
-      </> : <Link href={`/events/${event.id}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-600">{am ? "ዝርዝር ይመልከቱ" : "See event details"}<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>}
+        <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer" className="btn-glow inline-flex min-h-11 items-center gap-2 rounded-xl px-4 py-3 text-sm">{t("events.viewSource")}<ArrowUpRight className="h-4 w-4" aria-hidden="true" /></a>
+        <a href={`/events/${event.id}/calendar`} download className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 px-4 py-3 text-sm"><CalendarDays className="h-4 w-4" aria-hidden="true" />{t("events.addToCalendar")}</a>
+      </> : <Link href={`/events/${event.id}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-600">{t("events.seeDetails")}<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>}
     </div>
-    {!detail ? <p className="mt-3 text-xs text-stone-400">{event.sourceName} · {am ? "የተመረመረበት ቀን" : "Checked"} {event.checkedOn}</p> : null}
+    {!detail ? <p className="mt-3 text-xs text-stone-400">{event.sourceName} · {checked}</p> : null}
   </article>;
 }
 
 export function EventsPage({ initialNow }: { initialNow: string }) {
-  const { lang } = useLanguage();
-  const am = lang === "am";
+  const { t } = useLanguage();
   const params = useSearchParams();
   const [city, setCity] = useState("all");
-  const [category, setCategory] = useState<keyof typeof categories>("all");
+  const [category, setCategory] = useState<Category>("all");
   const [query, setQuery] = useState("");
   const [now, setNow] = useState(new Date(initialNow));
   useEffect(() => {
     const requested = params.get("city");
-    if (requested === "all" || (requested && cities.includes(requested))) { setCity(requested); return; }
-    try { const saved = localStorage.getItem("zema.today.city"); if (saved && cities.includes(saved)) setCity(saved); } catch { /* Use all cities. */ }
+    if (requested === "all" || isEventCity(requested)) { setCity(requested); return; }
+    // No (or an unlisted) city in the link: fall back to the last choice made here, including "all".
+    try { const saved = localStorage.getItem(CITY_STORAGE_KEY); if (saved === "all" || isEventCity(saved)) setCity(saved); } catch { /* Use all cities. */ }
   }, [params]);
   useEffect(() => { const timer = window.setInterval(() => setNow(new Date()), 60_000); return () => window.clearInterval(timer); }, []);
-  const events = communityEvents.filter((event) => isUpcoming(event, now) && (city === "all" || event.city === city) && (category === "all" || event.category === category) && `${event.title} ${event.summary} ${event.venue} ${event.organizer}`.toLowerCase().includes(query.trim().toLowerCase())).sort((a,b) => a.date.localeCompare(b.date));
+  const chooseCity = (value: string) => {
+    setCity(value);
+    try { localStorage.setItem(CITY_STORAGE_KEY, value); } catch { /* Session-only fallback. */ }
+  };
+  const needle = query.trim().toLowerCase();
+  const events = communityEvents
+    .filter((event) => isUpcoming(event, now)
+      && (city === "all" || event.city === city)
+      && (category === "all" || event.category === category)
+      && `${event.title} ${event.summary} ${event.venue} ${event.organizer}`.toLowerCase().includes(needle))
+    .sort((a, b) => a.date.localeCompare(b.date));
   return <AppShell><div className="space-y-5 px-3 py-4 sm:px-0 sm:py-0">
     <header className={`${panel} relative overflow-hidden`}>
-      <p className="font-mono text-xs uppercase tracking-widest text-brand-600">{am ? "አብረን እንገናኝ" : "Better together"}</p>
-      <h1 className="mt-4 font-display text-4xl font-bold tracking-tight sm:text-5xl">{am ? "የመገናኘት ምክንያት።" : "A reason to gather."}</h1>
-      <p className="mt-4 max-w-xl text-base leading-7 text-stone-500">{am ? "በዋሽንግተን ዲሲ እና ሲያትል ያሉ የማህበረሰብ ዝግጅቶች። ዝርዝሩን ይመልከቱ፣ ቀኑን ያስቀምጡ።" : "Coffee, culture and community in Washington, DC and Seattle. Find your next plan, check the details, and make it a date."}</p>
-      <p className="mt-4 text-xs leading-5 text-stone-400">{am ? "ከተጠቀሱ ምንጮች የተመረጠ ትንሽ ዝርዝር። የዝግጅት ስሞችና መግለጫዎች በምንጩ ቋንቋ ቀርበዋል።" : "A small, source-linked selection—not a complete city calendar. Event descriptions are shown in their source language."}</p>
+      <p className="font-mono text-xs uppercase tracking-widest text-brand-600">{t("events.eyebrow")}</p>
+      <h1 className="mt-4 font-display text-4xl font-bold tracking-tight sm:text-5xl">{t("events.title")}</h1>
+      <p className="mt-4 max-w-xl text-base leading-7 text-stone-500">{t("events.body")}</p>
+      <p className="mt-4 text-xs leading-5 text-stone-400">{t("events.note")}</p>
     </header>
-    <section aria-label={am ? "ዝግጅቶችን አጣራ" : "Filter events"} className={panel}>
+    <section aria-label={t("events.filter")} className={panel}>
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-medium">{am ? "ከተማ" : "City"}<select value={city} onChange={(e) => { setCity(e.target.value); try { if(e.target.value !== "all") localStorage.setItem("zema.today.city",e.target.value); } catch {} }} className="mt-2 block min-h-12 w-full rounded-xl border border-white/20 bg-surface px-3"><option value="all">{am ? "ሁለቱም ከተሞች" : "Both cities"}</option>{cities.map((name)=><option key={name}>{name}</option>)}</select></label>
-        <label className="text-sm font-medium">{am ? "ፈልግ" : "Search events"}<input type="search" value={query} onChange={(e)=>setQuery(e.target.value)} placeholder={am ? "ርዕስ፣ ቦታ ወይም አዘጋጅ" : "Title, venue or organizer"} className="mt-2 block min-h-12 w-full rounded-xl border border-white/20 bg-surface px-3" /></label>
+        <label className="text-sm font-medium">{t("events.city")}<select value={city} onChange={(e) => chooseCity(e.target.value)} className="mt-2 block min-h-12 w-full rounded-xl border border-white/20 bg-surface px-3"><option value="all">{t("events.bothCities")}</option>{eventCities.map((name) => <option key={name}>{name}</option>)}</select></label>
+        <label className="text-sm font-medium">{t("events.search")}<input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("events.searchPlaceholder")} className="mt-2 block min-h-12 w-full rounded-xl border border-white/20 bg-surface px-3" /></label>
       </div>
-      <div className="mt-4 flex flex-wrap gap-2">{(Object.keys(categories) as Array<keyof typeof categories>).map((key)=><button key={key} onClick={()=>setCategory(key)} aria-pressed={category === key} className={`min-h-11 rounded-full border px-4 text-sm ${category === key ? "border-brand-500 bg-brand-500 text-brand-950" : "border-white/15 text-stone-400 hover:text-ink"}`}>{categories[key][am ? 1 : 0]}</button>)}</div>
+      <div className="mt-4 flex flex-wrap gap-2">{categories.map((key) => <button key={key} onClick={() => setCategory(key)} aria-pressed={category === key} className={`min-h-11 rounded-full border px-4 text-sm ${category === key ? "border-brand-500 bg-brand-500 text-brand-950" : "border-white/15 text-stone-400 hover:text-ink"}`}>{t(categoryKey[key])}</button>)}</div>
     </section>
-    <p role="status" className="px-2 text-sm text-stone-400">{events.length} {am ? "የሚመጡ ዝግጅቶች" : `upcoming event${events.length === 1 ? "" : "s"}`}</p>
-    {events.length ? <div className="grid gap-4 xl:grid-cols-2">{events.map((event)=><EventCard key={event.id} event={event} />)}</div> : <div className={`${panel} text-center`}><h2 className="text-xl font-semibold">{am ? "ዝግጅት አልተገኘም" : "No matching upcoming events"}</h2><p className="mt-3 text-sm text-stone-400">{am ? "ሌላ ከተማ ወይም ምድብ ይሞክሩ።" : "Try another city or category. New listings will appear as they are reviewed."}</p><button className="mt-5 min-h-11 rounded-xl border border-white/20 px-5" onClick={()=>{setCity("all");setCategory("all");setQuery("");}}>{am ? "ማጣሪያዎችን አጽዳ" : "Clear filters"}</button></div>}
+    <p role="status" className="px-2 text-sm text-stone-400">{t(events.length === 1 ? "events.upcomingOne" : "events.upcomingMany", { n: events.length })}</p>
+    {events.length ? <div className="grid gap-4 xl:grid-cols-2">{events.map((event) => <EventCard key={event.id} event={event} />)}</div> : <div className={`${panel} text-center`}><h2 className="text-xl font-semibold">{t("events.noMatchTitle")}</h2><p className="mt-3 text-sm text-stone-400">{t("events.noMatchBody")}</p><button className="mt-5 min-h-11 rounded-xl border border-white/20 px-5" onClick={() => { chooseCity("all"); setCategory("all"); setQuery(""); }}>{t("events.clearFilters")}</button></div>}
   </div></AppShell>;
 }
 
 export function EventDetail({ event, past }: { event: CommunityEvent; past: boolean }) {
-  const { lang } = useLanguage();
-  return <AppShell><div className="space-y-5 px-3 py-4 sm:px-0"><Link className="inline-flex min-h-11 items-center text-sm text-brand-600" href="/events?city=all">← {lang === "am" ? "ሁሉም ዝግጅቶች" : "All events"}</Link>
-    {past ? <p role="status" className="rounded-xl border border-white/15 p-4 text-stone-400">{lang === "am" ? "ይህ ዝግጅት አልፏል።" : "This event has ended. Details are kept for reference."}</p> : null}
+  const { t } = useLanguage();
+  return <AppShell><div className="space-y-5 px-3 py-4 sm:px-0"><Link className="inline-flex min-h-11 items-center text-sm text-brand-600" href="/events?city=all">← {t("events.allEvents")}</Link>
+    {past ? <p role="status" className="rounded-xl border border-white/15 p-4 text-stone-400">{t("events.ended")}</p> : null}
     <h1 className="sr-only">{event.title}</h1><EventCard event={event} detail /></div></AppShell>;
 }

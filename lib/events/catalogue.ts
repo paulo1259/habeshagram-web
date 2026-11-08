@@ -1,7 +1,13 @@
+/** Cities Zema has curated listings for. Add a city here before listing its events. */
+export const eventCities = ["Washington, DC", "Seattle"] as const;
+export type EventCity = (typeof eventCities)[number];
+export const isEventCity = (value: string | null | undefined): value is EventCity =>
+  (eventCities as readonly string[]).includes(value ?? "");
+
 export type CommunityEvent = {
   id: string;
   title: string;
-  city: "Washington, DC" | "Seattle";
+  city: EventCity;
   category: "culture" | "music" | "community";
   date: string;
   timeZone: string;
@@ -60,8 +66,9 @@ export function eventDate(event: CommunityEvent, lang: "en" | "am") {
   return new Intl.DateTimeFormat(lang === "am" ? "am-ET" : "en-US", { timeZone: "UTC", month: "long", day: "numeric", year: "numeric" }).format(new Date(`${event.date}T12:00:00Z`));
 }
 
-export function eventTime(event: CommunityEvent, lang: "en" | "am") {
-  if (!event.start) return lang === "am" ? "ሰዓቱ ገና አልተገለጸም" : "Time not yet announced";
+/** The local start (and end) time, or null when the organizer hasn't announced one. */
+export function eventTime(event: CommunityEvent, lang: "en" | "am"): string | null {
+  if (!event.start) return null;
   const format = new Intl.DateTimeFormat(lang === "am" ? "am-ET" : "en-US", { timeZone: event.timeZone, hour: "numeric", minute: "2-digit", timeZoneName: "short" });
   return `${format.format(new Date(event.start))}${event.end ? ` – ${format.format(new Date(event.end))}` : ""}`;
 }
