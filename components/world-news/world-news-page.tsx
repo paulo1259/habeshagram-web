@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowUpRight, RefreshCw, Sparkles } from "lucide-react";
 import { SaveStoryButton } from "@/components/library/library-buttons";
 import { ListenToBrief } from "@/components/world-news/listen-to-brief";
 import { AppShell } from "@/components/layout/app-shell";
@@ -13,6 +13,8 @@ import { getWorldNewsDigest, type WorldNewsDigestPayload } from "@/services/ai-d
 import { getWorldNewsFeed } from "@/services/world-news-client-service";
 import type { WorldNewsFeedPayload } from "@/services/world-news-service";
 import type { WorldNewsItem } from "@/types";
+
+import { filterStories, uniqueStories, publishedTime } from "@/lib/news/reader";
 
 type LaneKey = "top" | "ethiopia" | "eastafrica" | "diaspora";
 
@@ -41,7 +43,7 @@ function WhyItMatters({ text }: { text?: string }) {
     <p className="mt-3 flex gap-2 border-t border-white/[0.06] pt-3 text-[12.5px] leading-5 text-stone-500">
       <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-orange-700" aria-hidden="true" />
       <span>
-        <span className="sr-only">{t("news.whyItMatters")} </span>
+        <span className="block font-semibold text-orange-700">{t("news.whyItMatters")} <span className="font-normal">(AI)</span></span>
         {text}
       </span>
     </p>
@@ -49,7 +51,7 @@ function WhyItMatters({ text }: { text?: string }) {
 }
 
 function LeadStory({ item, why }: { item: WorldNewsItem; why?: string }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const lane = LANE_BY_SECTION[item.section] ?? LANE_BY_SECTION.top;
 
   return (
@@ -83,13 +85,13 @@ function LeadStory({ item, why }: { item: WorldNewsItem; why?: string }) {
               {t(lane.labelKey)}
             </span>
             <span className="font-mono text-[11px] text-stone-400">
-              {item.source} · {item.publishLabel}
+              {item.source} · <time dateTime={item.publishedAt}>{publishedTime(item.publishedAt, lang)}</time>
             </span>
           </div>
           <h3 className="mt-3 font-display text-[1.35rem] font-semibold leading-[1.25] tracking-[-0.02em] text-ink transition group-hover:text-brand-700 sm:text-[1.5rem]">
             {item.headline}
           </h3>
-          <p className="mt-2.5 text-sm leading-6 text-stone-500">{item.summary}</p>
+          <p className="mt-4 text-[11px] font-medium uppercase tracking-wide text-stone-400">{lang === "am" ? "ከዜና ምንጩ" : "From the publisher’s feed"}</p><p className="mt-1.5 text-sm leading-6 text-stone-500">{item.summary}</p>
           <WhyItMatters text={why} />
         </div>
       </a>
@@ -99,7 +101,7 @@ function LeadStory({ item, why }: { item: WorldNewsItem; why?: string }) {
 }
 
 function StoryCard({ item, why, surface }: { item: WorldNewsItem; why?: string; surface: string }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const lane = LANE_BY_SECTION[item.section] ?? LANE_BY_SECTION.top;
 
   return (
@@ -128,6 +130,9 @@ function StoryCard({ item, why, surface }: { item: WorldNewsItem; why?: string; 
           {item.source}
           <ArrowUpRight className="h-3 w-3 opacity-0 transition group-hover:opacity-100" aria-hidden="true" />
         </p>
+        <p className="mt-3 text-[11px] font-medium uppercase tracking-wide text-stone-400">{lang === "am" ? "ከዜና ምንጩ" : "From the publisher’s feed"}</p>
+        <p className="mt-1.5 text-sm leading-6 text-stone-500">{item.summary || (lang === "am" ? "ሙሉ ዘገባውን ያንብቡ።" : "Open the original report for details.")}</p>
+        <time dateTime={item.publishedAt} className="mt-3 block text-xs leading-5 text-stone-400">{publishedTime(item.publishedAt, lang)}</time>
         <WhyItMatters text={why} />
       </a>
       <SaveStoryButton item={item} className="absolute right-2 top-2" />
@@ -135,8 +140,8 @@ function StoryCard({ item, why, surface }: { item: WorldNewsItem; why?: string; 
   );
 }
 
-function Brief({ digest, loading }: { digest: WorldNewsDigestPayload | null; loading: boolean }) {
-  const { t } = useLanguage();
+function Brief({ digest, loading, headlines }: { digest: WorldNewsDigestPayload | null; loading: boolean; headlines: WorldNewsItem[] }) {
+  const { t, lang } = useLanguage();
   const hasBrief = Boolean(digest?.headline && digest.paragraphs?.length);
 
   return (
@@ -171,15 +176,19 @@ function Brief({ digest, loading }: { digest: WorldNewsDigestPayload | null; loa
               </p>
             ))}
           </div>
+          {digest?.generatedAt ? <p className="mt-4 text-xs text-stone-400">{lang === "am" ? "የተዘጋጀበት ጊዜ" : "Brief generated"}: {publishedTime(digest.generatedAt, lang)}</p> : null}
           <p className="mt-5 border-t border-white/[0.09] pt-4 text-[11.5px] leading-5 text-stone-400">
             {t("news.briefDisclaimer")}
             {digest?.stale ? t("news.briefStale") : ""}
           </p>
         </>
       ) : (
-        <p className="mt-4 text-sm leading-6 text-stone-500">
-          {t("news.briefEmpty")}
-        </p>
+        <div className="mt-4">
+          <h2 className="font-display text-xl font-semibold">{lang === "am" ? "ዋና ዋና ዜናዎች" : "Headlines at a glance"}</h2>
+          <p className="mt-2 text-xs leading-5 text-stone-400">{lang === "am" ? "የAI አጭር ዜና አሁን አይገኝም። ዋናዎቹን ዘገባዎች ከታች ያንብቡ።" : "The AI brief is unavailable right now. Start with the original reporting below."}</p>
+          <ol className="mt-4 divide-y divide-white/10">{headlines.slice(0,3).map((item,index) => <li key={item.id} className="flex gap-3 py-3"><span className="font-mono text-brand-600">0{index+1}</span><a href={item.link} target="_blank" rel="noopener noreferrer" className="text-sm font-medium leading-6 hover:text-brand-600">{item.headline}<span className="mt-1 block text-xs text-stone-400">{item.source}</span></a></li>)}</ol>
+          {!headlines.length ? <p className="mt-3 text-sm text-stone-400">{t("news.empty")}</p> : null}
+        </div>
       )}
     </section>
   );
@@ -191,6 +200,9 @@ export function WorldNewsPage() {
   const [isDigestLoading, setIsDigestLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [query, setQuery] = useState("");
+  const [source, setSource] = useState("");
+  const [refresh, setRefresh] = useState(0);
   const [lane, setLane] = useState<LaneKey>("top");
   const { t, lang } = useLanguage();
 
@@ -201,7 +213,7 @@ export function WorldNewsPage() {
       try {
         setIsLoading(true);
         setErrorMessage("");
-        const nextPayload = await getWorldNewsFeed();
+        const nextPayload = await getWorldNewsFeed(refresh > 0);
         if (isMounted) setPayload(nextPayload);
       } catch (error) {
         if (isMounted) {
@@ -215,11 +227,12 @@ export function WorldNewsPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [refresh]);
 
   useEffect(() => {
     let isMounted = true;
     setIsDigestLoading(true);
+    setDigest(null);
 
     void (async () => {
       try {
@@ -258,7 +271,9 @@ export function WorldNewsPage() {
     [payload]
   );
 
-  const items = laneItems[lane];
+  const allStories = useMemo(() => uniqueStories(Object.values(laneItems).flat()), [laneItems]);
+  const sources = [...new Set(laneItems[lane].map((item) => item.source))].sort();
+  const items = filterStories(laneItems[lane], query, source);
   const [lead, ...rest] = items;
 
   return (
@@ -270,16 +285,15 @@ export function WorldNewsPage() {
             <p className="mt-2 text-sm text-stone-500">{t("news.subtitle")}</p>
           </div>
 
-          <div role="tablist" aria-label={t("news.lanesLabel")} className="flex flex-wrap gap-2">
+          <div role="group" aria-label={t("news.lanesLabel")} className="flex flex-wrap gap-2">
             {LANES.map((item) => {
               const active = item === lane;
               return (
                 <button
                   key={item}
                   type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setLane(item)}
+                  aria-pressed={active}
+                  onClick={() => { setLane(item); setSource(""); }}
                   className={cn(
                     "min-h-9 rounded-full px-4 text-[13px] font-semibold transition",
                     active ? "bg-brand-500 text-brand-950" : "text-stone-500 ring-1 ring-white/[0.11] hover:text-ink"
@@ -301,7 +315,19 @@ export function WorldNewsPage() {
           <p className="rounded-2xl border border-red-500/20 bg-red-50 px-4 py-3 text-sm text-red-700">{errorMessage}</p>
         ) : null}
 
-        <Brief digest={digest} loading={isDigestLoading} />
+        <Brief digest={digest} loading={isDigestLoading} headlines={laneItems.top} />
+
+        <section aria-label={lang === "am" ? "ዜና ፈልግ" : "Find reporting"} className="rounded-[24px] border border-white/10 bg-card/90 p-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-medium">{lang === "am" ? "ዜና ፈልግ" : "Search this section"}<input type="search" value={query} onChange={(e)=>setQuery(e.target.value)} placeholder={lang === "am" ? "ርዕስ፣ ርዕሰ ጉዳይ ወይም ምንጭ" : "Headline, topic or publisher"} className="mt-2 block min-h-12 w-full rounded-xl border border-white/20 bg-surface px-3" /></label>
+            <label className="text-sm font-medium">{lang === "am" ? "የዜና ምንጭ" : "Publisher"}<select value={source} onChange={(e)=>setSource(e.target.value)} className="mt-2 block min-h-12 w-full rounded-xl border border-white/20 bg-surface px-3"><option value="">{lang === "am" ? "ሁሉም ምንጮች" : "All publishers"}</option>{sources.map((name)=><option key={name}>{name}</option>)}</select></label>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-stone-400">
+            <p role="status">{payload ? <>{payload.stale ? (lang === "am" ? "የተቀመጠ ዜና" : "Showing saved coverage") : (lang === "am" ? "የመጨረሻ ዝማኔ" : "Feed updated")}: {publishedTime(payload.fetchedAt, lang)}</> : null}</p>
+            <button type="button" disabled={isLoading} onClick={()=>setRefresh(value=>value+1)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/15 px-3 disabled:opacity-50"><RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} aria-hidden="true" />{lang === "am" ? "አድስ" : "Refresh news"}</button>
+          </div>
+          {(query || source) ? <button type="button" onClick={()=>{setQuery("");setSource("");}} className="mt-2 min-h-11 text-sm text-brand-600">{lang === "am" ? "ማጣሪያዎችን አጽዳ" : "Clear filters"}</button> : null}
+        </section>
 
         <section aria-live="polite">
           <p className="mb-3 text-[13px] text-stone-400">{t(`news.blurb.${lane}`)}</p>
@@ -317,6 +343,7 @@ export function WorldNewsPage() {
           ) : lead ? (
             <div className="space-y-3">
               <LeadStory item={lead} why={why[lead.id]} />
+              {allStories.filter(item => item.id !== lead.id && item.section === lead.section && item.source !== lead.source).length ? <details className="rounded-2xl border border-white/10 bg-card/70 p-4"><summary className="cursor-pointer text-sm font-semibold text-brand-600">{lang === "am" ? "በዚህ ዘርፍ ከሌሎች ምንጮች" : "More in this section, from other publishers"}</summary><ul className="mt-3 space-y-3">{allStories.filter(item => item.id !== lead.id && item.section === lead.section && item.source !== lead.source).slice(0,3).map(item=><li key={item.id}><a href={item.link} target="_blank" rel="noopener noreferrer" className="text-sm leading-6 hover:text-brand-600">{item.headline}<span className="block text-xs text-stone-400">{item.source}</span></a></li>)}</ul></details> : null}
               {rest.length ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                   {rest.map((item) => (
@@ -327,7 +354,7 @@ export function WorldNewsPage() {
             </div>
           ) : (
             <p className="rounded-[20px] border border-white/[0.07] bg-white/[0.02] px-5 py-8 text-center text-sm text-stone-500">
-              {t("news.empty")}
+              {query || source ? (lang === "am" ? "ከፍለጋዎ ጋር የሚዛመድ ዜና አልተገኘም።" : "No stories match these filters. Try another search or publisher.") : t("news.empty")}
             </p>
           )}
         </section>
