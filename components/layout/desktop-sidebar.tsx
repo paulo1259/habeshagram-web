@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Globe2, House, LogOut, Radio, UserCircle2 } from "lucide-react";
+import { CalendarDays, Globe2, House, LogOut, Radio, UserCircle2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ const items = [
   { href: "/", key: "nav.home", icon: House },
   { href: "/radio", key: "nav.radio", icon: Radio },
   { href: "/world-news", key: "nav.worldNews", icon: Globe2 },
+  { href: "/events", key: "nav.events", icon: CalendarDays },
   { href: "/you", key: "nav.you", icon: UserCircle2 }
 ] as const;
 
