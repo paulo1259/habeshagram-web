@@ -250,7 +250,7 @@ const en = {
 
   // news
   "news.title": "News",
-  "news.subtitle": "Four lanes, refreshed every 90 seconds from free wire feeds.",
+  "news.subtitle": "Original reporting, publisher excerpts and context across four sections.",
   "news.lanesLabel": "News lanes",
   "news.lane.top": "Top",
   "news.lane.ethiopia": "Ethiopia",
@@ -585,7 +585,7 @@ const am: Partial<Record<MessageKey, string>> = {
   "lib.save.signIn": "ዜናዎችን ለማስቀመጥ ይግቡ",
 
   "news.title": "ዜና",
-  "news.subtitle": "አራት ዘርፎች፣ በየ90 ሰከንዱ ከነጻ የዜና ምንጮች ይታደሳሉ።",
+  "news.subtitle": "ዋና ዘገባዎች፣ ከምንጮች የተወሰዱ መግለጫዎችና አውድ በአራት ዘርፎች።",
   "news.lanesLabel": "የዜና ዘርፎች",
   "news.lane.top": "ዋና",
   "news.lane.ethiopia": "ኢትዮጵያ",
